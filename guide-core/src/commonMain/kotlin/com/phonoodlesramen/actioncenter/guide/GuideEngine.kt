@@ -68,6 +68,7 @@ class GuideEngine(
     private val dao = guideDb.dao()
     internal val library = GuideLibrary(plexDb.guideLibrary())
     internal val scheduler = GuideScheduler(library)
+    private val looks = ChannelLooks(plexDb)
 
     /** One change at a time: the worker, a sync, the home and the editor can ask together. */
     private val running = Mutex()
@@ -367,9 +368,10 @@ class GuideEngine(
                     null
                 } else {
                     val rated = ratingsOf(channel, own, now, year, sync)
+                    val look = looks.of(channel.name, channel.rule)
                     GuideChannel(
-                        channel.id, channel.number, channel.name, logo = null, slots = own.map { it.toGuideSlot(playable) },
-                        contentRatings = rated.ratings, unrated = rated.unrated,
+                        channel.id, channel.number, channel.name, logo = look.logo, slots = own.map { it.toGuideSlot(playable) },
+                        contentRatings = rated.ratings, unrated = rated.unrated, glyph = look.glyph,
                     )
                 }
             }

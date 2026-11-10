@@ -1,6 +1,7 @@
 package com.phonoodlesramen.actioncenter.station
 
 import com.phonoodlesramen.actioncenter.guide.ChannelDraft
+import com.phonoodlesramen.actioncenter.guide.ChannelLooks
 import com.phonoodlesramen.actioncenter.guide.EditableChannel
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.guide.GuideChannel
@@ -43,6 +44,8 @@ import kotlinx.coroutines.flow.mapLatest
 class StationGuideSource(
     private val guideDb: GuideDatabase,
     private val copy: Flow<GuideCopy?>,
+    /** Each channel's glyph, and a one-show channel's poster when the station sent none, from this TV's Plex cache. */
+    private val looks: ChannelLooks = ChannelLooks(null),
     private val clock: () -> Long = System::currentTimeMillis,
     private val io: CoroutineDispatcher = Dispatchers.IO,
     private val log: (String) -> Unit = {},
@@ -89,11 +92,13 @@ class StationGuideSource(
             val own = slots[channel.id]
             if (own.isNullOrEmpty()) return@mapNotNull null
             val extras = copy.channels[channel.id] ?: ChannelExtras()
+            val look = looks.of(channel.name, channel.rule)
             GuideChannel(
                 id = channel.id,
                 number = channel.number,
                 name = channel.name,
-                logo = extras.logo,
+                logo = extras.logo ?: look.logo,
+                glyph = look.glyph,
                 slots = own.map { it.toGuideSlot(extras.offAir[it.startMillis]) },
                 contentRatings = extras.contentRatings.toSet(),
                 unrated = extras.unrated,

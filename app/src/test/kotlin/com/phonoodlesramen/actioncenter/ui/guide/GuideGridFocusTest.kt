@@ -173,10 +173,16 @@ class GuideGridFocusTest {
     }
 
     @Test
-    fun `monograms take the first letters of two words`() {
+    fun `monograms take one letter for a word, two for more, and keep a leading number whole`() {
         assertEquals("M", monogram("Movies"))
         assertEquals("SF", monogram("Sci-Fi"))
         assertEquals("RL", monogram("Ridge Line Marathon"))
+        assertEquals("DP", monogram("Dad's Picks"))
+        assertEquals("90s", monogram("90's Family"))
+        assertEquals("80s", monogram("1980s Action"))
+        assertEquals("filler words are left out", "M", monogram("TV Mix"))
+        assertEquals("O", monogram("The Office"))
+        assertEquals("but not when they're all there is", "TT", monogram("The TV"))
         assertEquals("#", monogram(" "))
     }
 }

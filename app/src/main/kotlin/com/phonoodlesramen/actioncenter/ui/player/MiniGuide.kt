@@ -34,6 +34,7 @@ import androidx.tv.material3.Text
 import com.phonoodlesramen.actioncenter.guide.GuideChannel
 import com.phonoodlesramen.actioncenter.player.GuideTuning
 import com.phonoodlesramen.actioncenter.ui.art.TitleArt
+import com.phonoodlesramen.actioncenter.ui.guide.ChannelMark
 import com.phonoodlesramen.actioncenter.ui.home.Eyebrow
 import com.phonoodlesramen.actioncenter.ui.home.rows.LiveClock
 import com.phonoodlesramen.actioncenter.ui.home.rows.LiveNow
@@ -140,7 +141,7 @@ internal fun MiniGuide(
 }
 
 /**
- * One channel: number, name (a favorite's starred), what's on and its time left, and what's
+ * One channel: number, icon, name (a favorite's starred), what's on and its time left, and what's
  * next. The pick fills with the accent, as a sheet's row. [lineUnder] draws the favorites'
  * line in the gap below it.
  */
@@ -178,6 +179,7 @@ private fun ChannelRow(channel: GuideChannel, picked: Boolean, playing: Boolean,
                 maxLines = 1,
             )
         }
+        ChannelMark(channel, ICON_SIZE, lateNight = false)
         Row(Modifier.width(NAME_WIDTH), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
             if (favorite) Icon(AppIcons.Star, contentDescription = "Favorite", tint = if (picked) ink else accent, modifier = Modifier.size(12.dp))
             Text(channel.name, style = MaterialTheme.typography.bodyMedium, color = dim, maxLines = 1, overflow = TextOverflow.Ellipsis)
@@ -217,4 +219,7 @@ private val ROW_GAP = 2.dp
 private val ART_WIDTH = 128.dp
 private val NUMBER_WIDTH = 40.dp
 private val NAME_WIDTH = 132.dp
+
+/** The channel's icon (I5), between its number and its name. */
+private val ICON_SIZE = 20.dp
 private val NEXT_WIDTH = 190.dp

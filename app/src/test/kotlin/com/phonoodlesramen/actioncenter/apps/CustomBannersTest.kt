@@ -138,7 +138,7 @@ class CustomBannersTest {
     @OptIn(ExperimentalCoroutinesApi::class)
     private fun TestScope.stored(permitted: Boolean = true): StoredCustomBanners {
         val sdcard = Files.createTempDirectory("sdcard").toFile()
-        listOf("Netflix.png", "Flat icons/NETFLIX.png", "notes.txt").forEach { path ->
+        listOf("Netflix.png", "Flat icons/NETFLIX.png", "notes.txt", "Channels/Sci-Fi.png").forEach { path ->
             File(sdcard, "${SharedFolders.ICONS}/$path").apply { parentFile!!.mkdirs(); writeText("x") }
         }
         val prefs = File(Files.createTempDirectory("banners").toFile(), "custom_banners.preferences_pb")
@@ -174,6 +174,28 @@ class CustomBannersTest {
         val cleared = banners.state.first { it.choices.size == 1 }
         assertEquals(BannerChoice.Automatic, cleared.choiceFor(netflix))
         assertEquals("Netflix.png", cleared.bannerFor(netflix)?.name)
+    }
+
+    @Test
+    fun `the Channels subfolder holds the guide channels' icons, never an app's banner`() = runTest {
+        val state = stored().state.first { it.files.isNotEmpty() }
+        assertEquals(listOf("Channels/Sci-Fi.png"), state.channelIcons.map { it.name })
+        assertTrue("not in Choose art's list", state.files.none { it.channelIcon })
+        assertEquals("matched as a banner is", "Channels/Sci-Fi.png", state.channelIconFor("SciFi")?.name)
+        assertNull(state.channelIconFor("Horror"))
+        assertNull("not an app's", state.bannerFor(app("com.example.scifi", "Sci-Fi")))
+    }
+
+    @Test
+    fun `a channel icon is a file right in the Icons folder's Channels subfolder`() {
+        assertTrue(BannerFile("Channels/Sci-Fi.png", "x").channelIcon)
+        assertTrue(BannerFile("channels/Sci-Fi.png", "x").channelIcon)
+        assertFalse(BannerFile("Sci-Fi.png", "x").channelIcon)
+        assertFalse(BannerFile("Flat icons/Channels.png", "x").channelIcon)
+        val folders = SharedFolders(File("/sdcard")) { true }
+        assertTrue(folders.isChannelIcon(File("/sdcard/Pictures/Icons/Channels/Sci-Fi.png")))
+        assertFalse(folders.isChannelIcon(File("/sdcard/Pictures/Icons/Sci-Fi.png")))
+        assertFalse(folders.isChannelIcon(File("/sdcard/Pictures/Wallpapers/Channels/Sci-Fi.png")))
     }
 
     @Test

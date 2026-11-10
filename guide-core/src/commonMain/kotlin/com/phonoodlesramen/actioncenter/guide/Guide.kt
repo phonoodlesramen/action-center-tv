@@ -45,6 +45,7 @@ data class GuideChannel(
     val id: String,
     val number: Int,
     val name: String,
+    /** Art over its icon, a Plex path: a one-show channel's show poster ([ChannelLooks]). */
     val logo: String?,
     val slots: List<GuideSlot>,
     /**
@@ -54,6 +55,8 @@ data class GuideChannel(
     val contentRatings: Set<String> = emptySet(),
     /** Whether something it can play has no rating (K4: kids never see it). */
     val unrated: Boolean = false,
+    /** Its glyph from the bundled set ([ChannelGlyphs]); null for its monogram. [logo] is drawn over it. */
+    val glyph: String? = null,
 ) {
     /** What's on at [millis], or null in a gap or past the end of the schedule. */
     fun slotAt(millis: Long): GuideSlot? = slots.firstOrNull { millis >= it.startMillis && millis < it.endMillis }

@@ -57,6 +57,7 @@ import com.phonoodlesramen.actioncenter.guide.GuideEditor
 import com.phonoodlesramen.actioncenter.profiles.AgeBracket
 import com.phonoodlesramen.actioncenter.profiles.AgeBrackets
 import com.phonoodlesramen.actioncenter.station.GuideStationController
+import com.phonoodlesramen.actioncenter.ui.guide.ChannelMark
 import com.phonoodlesramen.actioncenter.ui.home.Eyebrow
 import com.phonoodlesramen.actioncenter.ui.home.PillButton
 import com.phonoodlesramen.actioncenter.ui.home.pillButtonColors
@@ -531,6 +532,11 @@ private fun ChannelRow(
                 color = if (carried) accent else Palette.TextDim,
                 modifier = Modifier.width(44.dp),
             )
+            // An off channel's icon dims with its name.
+            ChannelMark(
+                channel.id, channel.draft.name, channel.glyph, channel.logo, ICON_SIZE, lateNight = false,
+                Modifier.padding(end = 12.dp).alpha(if (channel.enabled || carried) 1f else OFF_ALPHA),
+            )
             Column(Modifier.weight(1f)) {
                 Text(
                     channel.draft.name,
@@ -613,6 +619,12 @@ private fun RatingsChip(choice: RatingsChoice, onClick: () -> Unit, modifier: Mo
 
 /** Wide enough for "Ratings: Ages 10–12" and "Up to PG-13 and TV-PG". */
 private val RATINGS_WIDTH = 196.dp
+
+/** A channel's icon, before its name (I5). */
+private val ICON_SIZE = 24.dp
+
+/** An off channel's icon. */
+private const val OFF_ALPHA = 0.5f
 
 @Composable
 private fun Hint(text: String) {
