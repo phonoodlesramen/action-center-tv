@@ -32,9 +32,9 @@ scripts/.previous-home.*
 # Reports the device scripts write about your TV (device-report, player-intent-probe)
 reports/
 
-# Agent worktrees (Claude Code)
+# AI coding agents' worktrees
 .claude/worktrees/
 
-# A maintainer's private notes and Claude rules, kept out of the repository
+# A maintainer's private notes and agent rules, kept out of the repository
 CLAUDE.local.md
 .claude/private/

@@ -203,7 +203,7 @@ class HomeActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         // Decided before anything is composed: after a crash, the art-forward home and
-        // its view model never start, so a startup crash can't loop (CLAUDE.md).
+        // its view model never start, so a startup crash can't loop (AGENTS.md).
         safeMode = runCatching { container.crashGuard.startupMode() == StartupMode.SAFE }.getOrDefault(true)
         openedBy = intent.openedBy()
         if (intent.action == Intent.ACTION_ALL_APPS) screen = Screen.ALL_APPS
