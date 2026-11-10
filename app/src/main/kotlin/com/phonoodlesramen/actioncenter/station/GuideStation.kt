@@ -339,6 +339,7 @@ class GuideStation(
                 extendedAt = guide.updatedAtMillis,
                 enabled = channel.enabled,
                 filler = channel.filler,
+                icon = channel.icon,
             )
         }
         val slots = guide.channels.associate { channel ->

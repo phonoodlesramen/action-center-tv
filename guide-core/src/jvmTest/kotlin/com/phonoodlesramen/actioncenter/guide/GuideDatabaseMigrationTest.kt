@@ -5,6 +5,7 @@ import androidx.sqlite.driver.bundled.BundledSQLiteDriver
 import androidx.sqlite.execSQL
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +53,46 @@ class GuideDatabaseMigrationTest {
             assertTrue(channel.enabled)
             assertEquals(ChannelEntity.FILLER_TRAILERS, channel.filler)
             assertEquals(listOf("Big Atlas"), guide.dao().slots("movies").map { it.title })
+        } finally {
+            guide.close()
+        }
+    }
+
+    @Test
+    fun `a version 2 guide moves to version 3, every channel's icon Automatic`() = runTest {
+        // Version 2 as Phase 2.7 wrote it (guide-core/schemas/…GuideDatabase/2.json).
+        val path = temp.root.resolve("guide-migration-3-test.db").absolutePath
+        BundledSQLiteDriver().open(path).let { db ->
+            try {
+                db.execSQL(
+                    "CREATE TABLE channels (`id` TEXT NOT NULL, `number` INTEGER NOT NULL, `name` TEXT NOT NULL, `rule` TEXT NOT NULL, " +
+                        "`seed` INTEGER NOT NULL, `alignmentMinutes` INTEGER NOT NULL, `cursor` TEXT NOT NULL, `scheduledUntil` INTEGER, " +
+                        "`extendedAt` INTEGER, `enabled` INTEGER NOT NULL DEFAULT 1, `filler` TEXT NOT NULL DEFAULT 'trailers', PRIMARY KEY(`id`))",
+                )
+                db.execSQL(
+                    "CREATE TABLE slots (`channelId` TEXT NOT NULL, `startMillis` INTEGER NOT NULL, `endMillis` INTEGER NOT NULL, " +
+                        "`kind` TEXT NOT NULL, `itemKey` TEXT, `title` TEXT NOT NULL, `episode` TEXT, `showKey` TEXT, `art` TEXT, " +
+                        "`contentRating` TEXT, `summary` TEXT, PRIMARY KEY(`channelId`, `startMillis`))",
+                )
+                db.execSQL("CREATE INDEX `index_slots_endMillis` ON `slots` (`endMillis`)")
+                db.execSQL("CREATE TABLE room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)")
+                db.execSQL("INSERT INTO room_master_table (id,identity_hash) VALUES(42, '3e38efffbd29459968e225a2bfe830b4')")
+                db.execSQL("INSERT INTO channels VALUES ('movies', 1, 'Movies', '{}', 7, 30, '{}', 1793134800000, 1793047260000, 0, 'up_next')")
+                db.execSQL("PRAGMA user_version = 2")
+            } finally {
+                db.close()
+            }
+        }
+
+        val guide = Room.databaseBuilder<GuideDatabase>(name = path)
+            .setDriver(BundledSQLiteDriver())
+            .build()
+        try {
+            val channel = guide.dao().channels().single()
+            assertEquals("Movies", channel.name)
+            assertEquals(false, channel.enabled)
+            assertEquals(ChannelEntity.FILLER_UP_NEXT, channel.filler)
+            assertNull(channel.icon)
         } finally {
             guide.close()
         }

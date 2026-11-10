@@ -105,6 +105,7 @@ class RoomGuideEditor(
             alignmentMinutes = checked.alignmentMinutes,
             cursor = ChannelCursor().toJson(),
             filler = checked.filler,
+            icon = checked.icon,
         )
         add(channel)
         log("guide editor: channel ${channel.number} made")
@@ -118,7 +119,8 @@ class RoomGuideEditor(
             channel.alignmentMinutes == checked.alignmentMinutes &&
             channel.filler == checked.filler
         if (sameSchedule) {
-            if (checked.name != channel.name) dao.updateChannel(channel.copy(name = checked.name))
+            // A new name or icon needs no new schedule.
+            if (checked.name != channel.name || checked.icon != channel.icon) dao.updateChannel(channel.copy(name = checked.name, icon = checked.icon))
         } else {
             rewrite(
                 channel.copy(
@@ -127,6 +129,7 @@ class RoomGuideEditor(
                     seed = seedFor(checked.rule),
                     alignmentMinutes = checked.alignmentMinutes,
                     filler = checked.filler,
+                    icon = checked.icon,
                 ),
             )
         }
@@ -180,13 +183,13 @@ class RoomGuideEditor(
         val around = dao.slotsBetween(now, now + ON_NOW_REACH_MILLIS).groupBy { it.channelId }
         dao.channels().map { channel ->
             val rule = channel.ruleOrNull()
-            val look = looks.of(channel.name, rule)
+            val look = looks.of(channel.name, rule, channel.icon)
             EditableChannel(
                 id = channel.id,
                 number = channel.number,
                 enabled = channel.enabled,
                 // A rule that can't be read shows as the default; saving over it fixes it.
-                draft = ChannelDraft(channel.name, rule ?: ChannelRule(), channel.alignmentMinutes, channel.filler),
+                draft = ChannelDraft(channel.name, rule ?: ChannelRule(), channel.alignmentMinutes, channel.filler, channel.icon),
                 scheduledUntil = channel.scheduledUntil,
                 onNow = onNow(around[channel.id].orEmpty(), now),
                 glyph = look.glyph,
@@ -229,7 +232,7 @@ class RoomGuideEditor(
 
     private fun gone() = EditRejected("That channel isn't in the lineup anymore.")
 
-    /** [draft] with its name tidied, or the reason it can't be saved. */
+    /** [draft] with its name tidied and an unknown icon dropped, or the reason it can't be saved. */
     private fun checked(draft: ChannelDraft): ChannelDraft {
         val rule = draft.rule
         if (rule.types.any { it != ChannelRule.MOVIE && it != ChannelRule.EPISODE }) {
@@ -247,7 +250,8 @@ class RoomGuideEditor(
         if (draft.filler != ChannelEntity.FILLER_TRAILERS && draft.filler != ChannelEntity.FILLER_UP_NEXT) {
             throw EditRejected("Between programs a channel shows trailers or an Up next card.")
         }
-        return draft.copy(name = checkName(draft.name))
+        // A glyph this build doesn't know (a newer station's) is Automatic here.
+        return draft.copy(name = checkName(draft.name), icon = draft.icon?.takeIf { it in ChannelGlyphs.ALL })
     }
 
     /** A name on one line, with no space around it. */
