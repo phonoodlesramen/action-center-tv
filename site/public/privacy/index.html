@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Privacy: what Action Center and this site collect</title>
+<meta name="description" content="Action Center has no ads, analytics or telemetry. What the app keeps on your TV, what it sends and to whom, and what this website collects: nothing of its own.">
+<link rel="canonical" href="https://actioncentertv.com/privacy/">
+<meta name="theme-color" content="#0e1318">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Action Center">
+<meta property="og:title" content="Privacy: what Action Center and this site collect">
+<meta property="og:description" content="Action Center has no ads, analytics or telemetry. What the app keeps on your TV, what it sends and to whom, and what this website collects: nothing of its own.">
+<meta property="og:url" content="https://actioncentertv.com/privacy/">
+<meta property="og:image" content="https://actioncentertv.com/assets/img/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Action Center home screen: Tonight's Pick, a lens card, Quick Watch, Up Next and the Plex Guide">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="../"><img src="../assets/img/apple-touch-icon.png" width="32" height="32" alt=""><span>Action Center <small>for Android TV</small></span></a>
+    <nav aria-label="Site">
+      <a href="../install/">Install</a>
+      <a href="../works-with/">Works with</a>
+      <a href="./" aria-current="page">Privacy</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <article class="wrap narrow">
+    <div class="page-head">
+      <p class="eyebrow">Privacy</p>
+      <h1>What Action Center and this site collect</h1>
+      <p class="lead">The short version: no ads, no analytics, no telemetry and no crash reporting, in the app or on this website. The details are below, and the full version is in <a href="https://github.com/phonoodlesramen/action-center-tv/blob/main/docs/security-and-privacy.md">the repository</a>.</p>
+    </div>
+
+    <h2 id="site">This website</h2>
+    <ul class="ticks">
+      <li>No analytics, no cookies, no tracking pixels and no advertising.</li>
+      <li>No JavaScript, and no fonts or images from anyone else: everything comes from this site.</li>
+      <li>It's hosted on GitHub Pages. GitHub logs visitors' IP addresses for security, as its <a href="https://docs.github.com/en/pages/getting-started-with-github-pages/about-github-pages">Pages documentation</a> says, under the <a href="https://docs.github.com/en/site-policy/privacy-policies/github-general-privacy-statement">GitHub Privacy Statement</a>.</li>
+      <li>Search engines' own tools tell the project which searches showed the site and how often it was clicked. That data is about searches, not about you.</li>
+    </ul>
+
+    <h2 id="leaves">What leaves your TV</h2>
+    <p>There's no analytics, telemetry, crash reporting or advertising. The app talks only to:</p>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Service</th><th>When</th><th>What it sends</th></tr></thead>
+        <tbody>
+          <tr><td>Your Plex Media Server</td><td>Always, once linked</td><td>Library sync, artwork and playback. A guide program watched to its credits is marked watched; Settings › Plex turns that off.</td></tr>
+          <tr><td>plex.tv</td><td>Sign-in, finding your server, Plex Home users</td><td>Your Plex token</td></tr>
+          <tr><td>Plex's catalog</td><td>When you search</td><td>The words you search for, with your token</td></tr>
+          <tr><td>Open-Meteo</td><td>Every 30 minutes, for the weather</td><td>The name you type when choosing a city, then that city's coordinates</td></tr>
+          <tr><td>ESPN</td><td>Only once you turn the NFL on</td><td>Nothing about you: public scoreboard requests</td></tr>
+          <tr><td>Your guide station</td><td>Only once paired</td><td>The guide, your edits and favorites, over mutual TLS on your network</td></tr>
+          <tr><td>Anthropic (Claude API)</td><td>Only with AI blurbs on, at most once a night</td><td>About 30 picks: title, year, genres, rating, length and the pick's reason. No Plex keys, server or account names, or watch dates</td></tr>
+          <tr><td>Other apps on the TV</td><td>When you open them</td><td>An Android intent: a package name, sometimes a title link</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <h2 id="stored">What's kept on the TV</h2>
+    <ul>
+      <li><strong>Your Plex sign-ins</strong> (and a Claude API key, if you add one) are sealed with AES-256-GCM, with a key made in the Android Keystore that never leaves it.</li>
+      <li><strong>Your library cache, the guide, profiles, suggestions and app usage counts</strong> are in the app's private storage, which other apps can't read.</li>
+      <li><strong>App backup is off,</strong> so none of it goes to a Google backup. Uninstalling the app deletes all of it.</li>
+    </ul>
+
+    <h2 id="permissions">Permissions</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Permission</th><th>What it's for</th></tr></thead>
+        <tbody>
+          <tr><td>Internet and network state</td><td>Plex and the weather; the phone editor's address</td></tr>
+          <tr><td>Usage access</td><td>Ordering the Apps row by what you open, and when</td></tr>
+          <tr><td>TV listings</td><td>Reading Android TV's Watch Next, for Continue in your apps</td></tr>
+          <tr><td>Photos and videos (storage)</td><td>Your own wallpapers and app banners</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Each one except the network is optional, and each can be revoked.</p>
+
+    <h2 id="homewatch">HomeWatch, the accessibility service</h2>
+    <p>HomeWatch is optional and off until you turn it on. It's for TVs whose own launcher has to stay on, such as Google TV. Android warns that an accessibility service can see what's on screen and the keys you press. HomeWatch asks only for window changes and key events, so it can catch the Home button. It doesn't log, store or send any of it.</p>
+
+    <h2 id="trust">What you're trusting</h2>
+    <ul>
+      <li><strong>A sideloaded app as your Home.</strong> It isn't reviewed by the Play Store. Install APKs only from the project's releases, or build them yourself. Releases are signed, and Android refuses an update signed with a different key.</li>
+      <li><strong>Network debugging.</strong> The helper scripts, and recovery if the app ever misbehaves, use Android's network debugging. Anyone who can reach the TV's port 5555 and whose computer you've allowed can control the TV, so keep your home network private, and turn network debugging off when you don't need it. Leaving it on is a recovery choice: it's how you'd undo a broken Home without a USB port.</li>
+      <li><strong>Plex.</strong> Action Center signs in to plex.tv as a Plex app named “Action Center”, and uses Plex's own APIs.</li>
+    </ul>
+    <p>To report a security problem, see <a href="https://github.com/phonoodlesramen/action-center-tv/blob/main/SECURITY.md">SECURITY.md</a>.</p>
+  </article>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <nav aria-label="Footer">
+      <a href="../">Home</a>
+      <a href="../install/">Install</a>
+      <a href="../works-with/">Does it work with…?</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/releases">Releases</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/issues">Issues</a>
+      <a href="https://ko-fi.com/phonoodlesramen">Ko-fi</a>
+    </nav>
+    <p>Action Center is free software under the GPL-3.0-or-later. NVIDIA and SHIELD are trademarks of NVIDIA Corporation. Android, Android TV, Google TV and YouTube TV are trademarks of Google LLC. Plex is a trademark of Plex, Inc. Other names are trademarks of their owners. Action Center isn't endorsed by or affiliated with any of them, and uses their names only to say what it works with.</p>
+  </div>
+</footer>
+</body>
+</html>

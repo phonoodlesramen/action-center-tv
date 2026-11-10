@@ -1,0 +1,168 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Install Action Center on Android TV, SHIELD or Google TV</title>
+<meta name="description" content="Install the ad-free Action Center home screen with your remote and the free Downloader app, or with a computer and ADB. Make it Home, and undo it any time.">
+<link rel="canonical" href="https://actioncentertv.com/install/">
+<meta name="theme-color" content="#0e1318">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Action Center">
+<meta property="og:title" content="Install Action Center on Android TV, SHIELD or Google TV">
+<meta property="og:description" content="Install the ad-free Action Center home screen with your remote and the free Downloader app, or with a computer and ADB. Make it Home, and undo it any time.">
+<meta property="og:url" content="https://actioncentertv.com/install/">
+<meta property="og:image" content="https://actioncentertv.com/assets/img/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Action Center home screen: Tonight's Pick, a lens card, Quick Watch, Up Next and the Plex Guide">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="../"><img src="../assets/img/apple-touch-icon.png" width="32" height="32" alt=""><span>Action Center <small>for Android TV</small></span></a>
+    <nav aria-label="Site">
+      <a href="./" aria-current="page">Install</a>
+      <a href="../works-with/">Works with</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <article class="wrap narrow">
+    <div class="page-head">
+      <p class="eyebrow">Install</p>
+      <h1>Install Action Center</h1>
+      <p class="lead">Two ways: with just the remote, or with a computer for the cleanest Home on a SHIELD. Either takes about 15 minutes, and either can be undone.</p>
+    </div>
+
+    <nav class="toc" aria-label="On this page">
+      <p>On this page</p>
+      <ol>
+        <li><a href="#device">Will it work on my TV?</a></li>
+        <li><a href="#no-computer">The easy way: no computer</a></li>
+        <li><a href="#computer">The full way: with a computer</a></li>
+        <li><a href="#first-run">First run</a></li>
+        <li><a href="#update">Updating</a></li>
+        <li><a href="#undo">Undo everything</a></li>
+        <li><a href="#trouble">Troubleshooting</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="device">Will it work on my TV?</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Device</th><th>Status</th><th>How it becomes Home</th></tr></thead>
+        <tbody>
+          <tr><td>NVIDIA SHIELD TV (2015–2019), SHIELD Experience 9.2.x, Android 11</td><td class="yes">Main target, used daily</td><td>The stock launcher is turned off, from a computer</td></tr>
+          <tr><td>Other Android TV 11+ devices with the stock Android TV launcher</td><td class="partly">Should work, untested</td><td>The same as the SHIELD</td></tr>
+          <tr><td>Google TV devices (Android 12+), such as the Chromecast with Google TV, or TVs with Google TV</td><td class="yes">Works, with HomeWatch</td><td>Google TV's launcher stays on. The optional HomeWatch accessibility service sends the Home button to Action Center</td></tr>
+          <tr><td>Fire TV, and Android TV 10 or older</td><td class="no">Not supported</td><td>—</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The release APK is for ARM (<code>arm64-v8a</code> and <code>armeabi-v7a</code>), which covers these devices. More on devices and apps in <a href="../works-with/">Does it work with…?</a></p>
+
+    <h2 id="no-computer">The easy way: no computer</h2>
+    <p>Everything happens on the TV, with the remote.</p>
+    <ol>
+      <li><strong>Install Downloader</strong> (free) from the TV's Play Store.</li>
+      <li><strong>Let Downloader install apps.</strong> Allow it when it asks, or use TV Settings › Apps › Security &amp; restrictions › Unknown sources. The menu's name varies by TV.</li>
+      <li><strong>Download Action Center.</strong> In Downloader, type the latest release's link and install it:
+        <pre><code>https://github.com/phonoodlesramen/action-center-tv/releases/latest/download/app-release.apk</code></pre></li>
+      <li><strong>Open Action Center</strong> from the TV's apps, then go to <strong>Settings › Setup</strong>. It's a checklist with one row per step (Home button, Continue in your apps, Your pictures, Apps row by habit, and Plex), and each step is one button. A “Finish setup” chip in the top bar brings you back until it's done.</li>
+      <li><strong>Press Home:</strong> Action Center opens.</li>
+    </ol>
+    <div class="note">
+      <p><strong>How it differs from the computer route:</strong> Home goes through HomeWatch, an accessibility service, so you may see the TV's own home for a moment first, and the stock launcher stays on. On a SHIELD, the computer route turns the stock launcher off, for the cleanest Home.</p>
+    </div>
+    <p><strong>Android 13 and later:</strong> some TVs grey out accessibility for apps installed this way (“restricted settings”). Where TV Settings › Apps › Action Center has <strong>⋮ › Allow restricted settings</strong>, that unlocks it. Otherwise, install with a computer: an <code>adb install</code> isn't restricted.</p>
+
+    <h2 id="computer">The full way: with a computer</h2>
+    <p>You need <code>adb</code> (Android SDK Platform-Tools). The helper scripts are optional and need PowerShell 7 on Windows, macOS or Linux, plus a clone of the repository. Every step also has its plain <code>adb</code> command in the <a href="https://github.com/phonoodlesramen/action-center-tv/blob/main/docs/install.md">full install guide</a>.</p>
+
+    <h3>1. Prepare the TV</h3>
+    <ol>
+      <li><strong>Reserve the TV's IP address</strong> in your router, so it doesn't change.</li>
+      <li><strong>Turn on developer options.</strong> On a SHIELD: Settings › Device Preferences › About, and press <strong>Build</strong> seven times. On Google TV: Settings › System › About, and press <strong>Android TV OS build</strong> seven times.</li>
+      <li><strong>Turn on network debugging</strong> in Developer options (on a SHIELD, <strong>Network debugging</strong>).</li>
+    </ol>
+    <p>Keep network debugging on if you can: it's how you'd undo a broken Home from your computer, and many TVs have no usable USB port. <a href="../privacy/#trust">The trade-off</a>.</p>
+
+    <h3>2. Connect, install, make it Home</h3>
+    <pre><code>./scripts/connect.ps1 -Ip 192.168.1.50   # your TV's reserved IP; the TV asks you to allow it
+./scripts/install.ps1 -FromRelease       # downloads the latest release and checks its SHA-256
+./scripts/set-default-home.ps1           # SHIELD and stock Android TV only
+./scripts/grant-permissions.ps1          # usage stats, TV listings, your wallpapers</code></pre>
+    <p>Each script that changes the TV shows the command and its undo, and asks before it runs.</p>
+    <ul>
+      <li><strong><code>set-default-home.ps1</code></strong> saves what Home is now, then turns off the stock launcher (<code>com.google.android.tvlauncher</code>), whose Home priority beats any sideloaded one. If other launchers are installed, it makes Action Center the saved Home, and offers to turn off their accessibility “Home watchers”, which would take Home back. Other launchers stay installed.</li>
+      <li><strong>The permissions</strong> are optional. Usage stats order the Apps row by what you open, TV listings fill Continue in your apps, and storage lets you use your own wallpapers and app banners. <code>-Revoke</code> undoes all three, and Settings › Setup on the TV does the same with the remote.</li>
+    </ul>
+    <div class="warn">
+      <p><strong>On Google TV, don't turn off its launcher</strong> (<code>com.google.android.apps.tv.launcherx</code>). On some models, Home then goes to a recovery screen, and people report black screens and restart loops. <code>set-default-home.ps1</code> refuses on a Google TV; use HomeWatch instead:</p>
+      <pre><code>./scripts/accessibility-fallback.ps1 -Enable</code></pre>
+      <p>Or on the TV: Settings › System › Accessibility › Action Center Home button › On.</p>
+    </div>
+    <div class="warn">
+      <p><strong>Only ever turn off <code>com.google.android.tvlauncher</code>.</strong> Never turn off <code>com.google.android.tvrecommendations</code> (the phone remote), <code>com.google.android.katniss</code> (the mic button) or <code>com.google.android.tungsten.setupwraith</code>.</p>
+    </div>
+
+    <h2 id="first-run">First run</h2>
+    <ol>
+      <li><strong>Plex:</strong> the home shows a code. On your phone or computer, go to plex.tv/link, enter it, then pick your server. The first library sync can take a few minutes on a big library, and the Plex Guide makes its first channels once it's done.</li>
+      <li><strong>Weather:</strong> Settings › Weather, then type your city.</li>
+      <li><strong>Profiles:</strong> Settings › Profiles. Add kids with their birthdays; each can have their own Plex Home user.</li>
+      <li><strong>Optional:</strong> the <a href="https://github.com/phonoodlesramen/action-center-tv/blob/main/docs/guide-station.md">guide station</a> for a house with more than one TV; AI blurbs (Settings › AI blurbs, with your own Anthropic API key, sent from your phone); and the NFL (Settings › NFL › Show the NFL).</li>
+    </ol>
+
+    <h2 id="update">Updating</h2>
+    <p>Install the new release over the old one, the same way you installed it: Downloader with the same link, or <code>./scripts/install.ps1 -FromRelease</code>. Your settings, sign-ins and guide stay.</p>
+    <p>A SHIELD update, or an update to the stock launcher, can turn the stock launcher back on. Action Center then shows a banner. <code>./scripts/verify-home.ps1</code> checks without changing anything, and <code>./scripts/set-default-home.ps1</code> fixes it.</p>
+
+    <h2 id="undo">Undo everything</h2>
+    <pre><code>./scripts/rollback-home.ps1        # puts your previous Home back, and any watcher it turned off
+adb uninstall com.phonoodlesramen.actioncenter</code></pre>
+    <p>Rollback works over network ADB without touching the TV, even if Action Center keeps crashing. Without a computer: turn HomeWatch off in Settings › System › Accessibility, then uninstall Action Center from the TV's Settings › Apps.</p>
+
+    <h2 id="trouble">Troubleshooting</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>What you see</th><th>What to do</th></tr></thead>
+        <tbody>
+          <tr><td>“Home button is off” in the top bar</td><td>Android turned HomeWatch off, after an update or because of the TV's own auto-start settings. Settings › Setup › Turn on HomeWatch.</td></tr>
+          <tr><td>Home goes to the stock launcher again</td><td>A system update turned it back on. Run <code>verify-home.ps1</code>, then <code>set-default-home.ps1</code>.</td></tr>
+          <tr><td>Home goes to another launcher (Projectivy, say)</td><td>Its accessibility “Home watcher” took it back. Run <code>set-default-home.ps1</code> again and let it turn the watcher off.</td></tr>
+          <tr><td>A “Safe mode” screen</td><td>Action Center crashed at startup. All Apps and Settings still work. Please <a href="https://github.com/phonoodlesramen/action-center-tv/issues/new/choose">open an issue</a> with the details from Settings › Diagnostics.</td></tr>
+          <tr><td>A guide channel won't play</td><td>Usually the Plex server's connection or a codec. Settings › Diagnostics › Playback check.</td></tr>
+          <tr><td><code>adb connect</code> times out</td><td>The TV's IP changed, or network debugging went off. Check the reserved IP and Developer options.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>More in the <a href="https://github.com/phonoodlesramen/action-center-tv/blob/main/docs/install.md#troubleshooting">full install guide</a>.</p>
+  </article>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <nav aria-label="Footer">
+      <a href="../">Home</a>
+      <a href="../works-with/">Does it work with…?</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/releases">Releases</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/issues">Issues</a>
+      <a href="https://ko-fi.com/phonoodlesramen">Ko-fi</a>
+    </nav>
+    <p>Action Center is free software under the GPL-3.0-or-later. NVIDIA and SHIELD are trademarks of NVIDIA Corporation. Android, Android TV, Google TV and YouTube TV are trademarks of Google LLC. Plex is a trademark of Plex, Inc. Other names are trademarks of their owners. Action Center isn't endorsed by or affiliated with any of them, and uses their names only to say what it works with.</p>
+  </div>
+</footer>
+</body>
+</html>

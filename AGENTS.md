@@ -47,6 +47,7 @@ means `guide-core/src/commonMain/kotlin/com/phonoodlesramen/actioncenter/`.
 | Theme, tokens, icons | `ui/theme` | `Tokens.kt`, `Icons.kt`, `BrandIcons.kt` |
 | Device scripts (PowerShell 7) | `scripts/` | `ShieldAdb.psm1`, `install.ps1`, `set-default-home.ps1` |
 | CI and releases | `.github/workflows/` | `ci.yml`, `station.yml`, `docs/releasing.md` |
+| The website (GitHub Pages) | `site/` | `site/README.md`, `site/public/`, `site.yml` |
 
 The docs:
 - `docs/design/ui-spec.md`: the decided UI;
@@ -65,6 +66,7 @@ From the repo root. On Windows, use `.\gradlew.bat`.
 ./gradlew :station:test --tests '*PairingTest'                     # one station class
 ./gradlew :app:testDebugUnitTest --tests '*AboutSettingsTest' -Proborazzi.test.record=true  # re-record one class's screenshots
 pwsh scripts/tests/run-tests.ps1                                    # the device scripts, against a fake adb
+python site/check_site.py                                           # the website's pages, links and sitemap
 ./gradlew testDebugUnitTest                                         # all of :app (several minutes)
 ./gradlew lint testDebugUnitTest :guide-core:jvmTest :station:test assembleRelease  # what CI runs
 ./gradlew verifyRoborazziDebug                                      # every screenshot (CI doesn't compare them)

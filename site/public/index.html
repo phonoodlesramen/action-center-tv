@@ -1,0 +1,235 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Action Center: an ad-free home screen for Android TV</title>
+<meta name="description" content="A free, open-source home screen for Android TV, NVIDIA SHIELD and Google TV. No ads: a few cards that pick what to watch from your Plex library, and live TV channels.">
+<link rel="canonical" href="https://actioncentertv.com/">
+<meta name="theme-color" content="#0e1318">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Action Center">
+<meta property="og:title" content="Action Center: an ad-free home screen for Android TV">
+<meta property="og:description" content="A free, open-source home screen for Android TV, NVIDIA SHIELD and Google TV. No ads: a few cards that pick what to watch from your Plex library, and live TV channels.">
+<meta property="og:url" content="https://actioncentertv.com/">
+<meta property="og:image" content="https://actioncentertv.com/assets/img/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Action Center home screen: Tonight's Pick, a lens card, Quick Watch, Up Next and the Plex Guide">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="assets/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="assets/site.css">
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebSite",
+      "@id": "https://actioncentertv.com/#website",
+      "url": "https://actioncentertv.com/",
+      "name": "Action Center",
+      "alternateName": ["Action Center for Android TV", "Action Center TV"]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "@id": "https://actioncentertv.com/#app",
+      "name": "Action Center",
+      "alternateName": "Action Center for Android TV",
+      "description": "An ad-free, card-based home screen for Android TV, built for the NVIDIA SHIELD TV. It picks what to watch from your own Plex library and turns the library into live TV channels.",
+      "url": "https://actioncentertv.com/",
+      "applicationCategory": "MultimediaApplication",
+      "applicationSubCategory": "Home screen (launcher)",
+      "operatingSystem": "Android TV 11 or later, Google TV",
+      "softwareRequirements": "A Plex Media Server and a Plex account for most features",
+      "downloadUrl": "https://github.com/phonoodlesramen/action-center-tv/releases/latest",
+      "installUrl": "https://actioncentertv.com/install/",
+      "screenshot": "https://actioncentertv.com/assets/img/home-1600.webp",
+      "image": "https://actioncentertv.com/assets/img/icon-512.png",
+      "license": "https://www.gnu.org/licenses/gpl-3.0.html",
+      "isAccessibleForFree": true,
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+      "sameAs": ["https://github.com/phonoodlesramen/action-center-tv"]
+    }
+  ]
+}
+</script>
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="./" aria-current="page"><img src="assets/img/apple-touch-icon.png" width="32" height="32" alt=""><span>Action Center <small>for Android TV</small></span></a>
+    <nav aria-label="Site">
+      <a href="install/">Install</a>
+      <a href="works-with/">Works with</a>
+      <a href="privacy/">Privacy</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <div class="hero">
+    <div class="wrap">
+      <p class="eyebrow">For NVIDIA SHIELD, Google TV and Android TV</p>
+      <h1>An ad-free home screen for Android TV</h1>
+      <p class="lead">Instead of rows of ads and app icons, Action Center shows a few cards that answer “what should we watch tonight?” from your own Plex library. It's free, open source, and built for the NVIDIA SHIELD TV.</p>
+      <div class="actions">
+        <a class="btn primary" href="install/">How to install</a>
+        <a class="btn" href="https://github.com/phonoodlesramen/action-center-tv/releases/latest">Download the APK</a>
+        <a class="btn" href="https://github.com/phonoodlesramen/action-center-tv">Source on GitHub</a>
+      </div>
+      <ul class="facts">
+        <li>Free and open source (GPL-3.0)</li>
+        <li>No ads, no tracking</li>
+        <li>Android TV 11 and later</li>
+        <li>Undo it with one command</li>
+      </ul>
+      <figure class="shot hero-shot">
+        <img src="assets/img/home-1600.webp" srcset="assets/img/home-800.webp 800w, assets/img/home-1600.webp 1600w" sizes="(min-width: 1120px) 1072px, 100vw" width="1600" height="900" fetchpriority="high" alt="The Action Center home screen late at night: Tonight's Pick with the reason it was picked, a Comfort Rewatch lens card, Quick Watch, Up Next and the Plex Guide's coming-up list">
+        <figcaption>The home, late at night. Real screens from a Google TV with a Plex library; the titles and artwork belong to their owners.</figcaption>
+      </figure>
+    </div>
+  </div>
+
+  <section class="block" aria-labelledby="features">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">What's on it</p>
+        <h2 id="features">A home screen that answers one question</h2>
+        <p class="lead">Every card renders from a cache on the TV first, so the home never waits on the network.</p>
+      </div>
+      <div class="grid">
+        <div class="card"><h3>Tonight's Pick</h3><p>One title from your library, with the reason it was picked (“You're 2 episodes from the end of the season”). <strong>Not tonight</strong> skips it and teaches the picker.</p></div>
+        <div class="card"><h3>Throwback, Quick Watch, Up Next</h3><p>Something you watched a year ago today, what fits before bedtime, and what you're most likely to carry on with.</p></div>
+        <div class="card"><h3>The Plex Guide</h3><p>Your library as live TV channels, with a full guide and a mini guide, pause and start over, and audio and subtitle choice. It plays inside the launcher.</p></div>
+        <div class="card"><h3>The Live row</h3><p>Your guide channels first, then YouTube TV's networks.</p></div>
+        <div class="card"><h3>Search</h3><p>One box for your library, what's on now, and titles on the streaming apps installed on your TV.</p></div>
+        <div class="card"><h3>Profiles and kids</h3><p>“Who's watching?” on wake. Kid profiles get a rating ceiling that moves up on each birthday, their own Plex user, and a kids' home.</p></div>
+        <div class="card"><h3>The Apps row</h3><p>Ordered by what you open at this time of day, with custom banners if you want them.</p></div>
+        <div class="card"><h3>Optional extras</h3><p>A guide station that gives every TV in the house one guide; NFL scores and standings, off until you turn them on; and one-line blurbs from Claude with your own API key, off by default.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block tint" aria-labelledby="live-tv">
+    <div class="wrap split">
+      <div>
+        <p class="eyebrow">The Plex Guide</p>
+        <h2 id="live-tv">Your Plex library, as live TV</h2>
+        <p>The Plex Guide turns your movies and shows into channels that are always playing something, with a schedule, the way TV used to work. Some people call it pseudo live TV.</p>
+        <ul class="ticks">
+          <li>Flip through channels, or open the full guide with your favorites first.</li>
+          <li>Pause, start over, and pick audio and subtitles.</li>
+          <li>Something hooks you? Carry on in Plezy or Plex from where the channel was.</li>
+          <li>Edit the channels on the TV, or from your phone.</li>
+        </ul>
+      </div>
+      <figure class="shot">
+        <img src="assets/img/guide-1600.webp" srcset="assets/img/guide-800.webp 800w, assets/img/guide-1600.webp 1600w" sizes="(min-width: 820px) 600px, 100vw" width="1600" height="900" loading="lazy" decoding="async" alt="The full Plex Guide: channels made from a Plex library, favorites first, with what's on now and next">
+      </figure>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="screens">
+    <div class="wrap">
+      <div class="section-head">
+        <p class="eyebrow">Screens</p>
+        <h2 id="screens">See it on a TV</h2>
+      </div>
+      <div class="gallery">
+        <figure class="shot">
+          <img src="assets/img/home-guide-card-800.webp" srcset="assets/img/home-guide-card-800.webp 800w, assets/img/home-guide-card-1600.webp 1600w" sizes="(min-width: 820px) 540px, 100vw" width="1600" height="900" loading="lazy" decoding="async" alt="The home with the Plex Guide card focused, and Throwback on the lens card">
+          <figcaption><strong>The home.</strong> The lens card moves on by itself; here it's Throwback.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/img/home-rows-800.webp" srcset="assets/img/home-rows-800.webp 800w, assets/img/home-rows-1600.webp 1600w" sizes="(min-width: 820px) 540px, 100vw" width="1600" height="900" loading="lazy" decoding="async" alt="The Live row of guide channels, and the NFL row">
+          <figcaption><strong>Further down.</strong> Your guide channels, YouTube TV's networks, and the week's games.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/img/search-800.webp" srcset="assets/img/search-800.webp 800w, assets/img/search-1600.webp 1600w" sizes="(min-width: 820px) 540px, 100vw" width="1600" height="900" loading="lazy" decoding="async" alt="Search results from the Plex library">
+          <figcaption><strong>Search.</strong> Your library first, through Plex's own search.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/img/search-on-your-apps-800.webp" srcset="assets/img/search-on-your-apps-800.webp 800w, assets/img/search-on-your-apps-1600.webp 1600w" sizes="(min-width: 820px) 540px, 100vw" width="1600" height="900" loading="lazy" decoding="async" alt="Search results: what's on now, what's on your streaming apps, and Google">
+          <figcaption><strong>Then</strong> what's on now, what's on your streaming apps, and Google.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/img/nfl-800.webp" srcset="assets/img/nfl-800.webp 800w, assets/img/nfl-1600.webp 1600w" sizes="(min-width: 820px) 540px, 100vw" width="1600" height="900" loading="lazy" decoding="async" alt="The NFL screen, with the week's games">
+          <figcaption><strong>The NFL.</strong> Games by week, standings and the playoff picture. Off until you turn it on.</figcaption>
+        </figure>
+        <figure class="shot">
+          <img src="assets/img/guide-800.webp" srcset="assets/img/guide-800.webp 800w, assets/img/guide-1600.webp 1600w" sizes="(min-width: 820px) 540px, 100vw" width="1600" height="900" loading="lazy" decoding="async" alt="The full Plex Guide, with favorites first">
+          <figcaption><strong>The Plex Guide.</strong> Your library as channels, with favorites first.</figcaption>
+        </figure>
+      </div>
+    </div>
+  </section>
+
+  <section class="block tint" aria-labelledby="trust">
+    <div class="wrap">
+      <div class="grid">
+        <div class="card">
+          <p class="eyebrow">Privacy</p>
+          <h3 id="trust">No ads. No tracking.</h3>
+          <p>There's no analytics, telemetry, crash reporting or advertising. The app talks to Plex, to Open-Meteo for the weather, and to the optional services only once you turn them on. <a href="privacy/">What leaves your TV</a></p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Safety</p>
+          <h3>Hard to brick</h3>
+          <p>A crash at startup opens safe mode, with All Apps and Settings still there. Every change the helper scripts make to your TV shows its undo first, and one command puts your old home screen back.</p>
+        </div>
+        <div class="card">
+          <p class="eyebrow">Open source</p>
+          <h3>Read every line</h3>
+          <p>The app, the guide station and the scripts are GPL-3.0. Releases are signed, and each one lists its SHA-256 so you can check what you install. Or build it yourself.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="need">
+    <div class="wrap narrow">
+      <p class="eyebrow">Before you start</p>
+      <h2 id="need">What you need</h2>
+      <ul class="ticks">
+        <li><strong>An Android TV 11 or later device on ARM.</strong> The NVIDIA SHIELD TV is the main target. Google TV devices, such as the Chromecast with Google TV, work through an optional accessibility service. Other Android TV devices should work, but haven't been tested. <a href="works-with/">Check your device</a></li>
+        <li><strong>A Plex Media Server and a Plex account</strong> for most of the cards. Without Plex, the cards wait for a sign-in, while the apps, the weather and Settings still work.</li>
+        <li><strong>Optional:</strong> a computer with <code>adb</code>, for the cleanest Home on a SHIELD, and an always-on Docker host for the guide station.</li>
+      </ul>
+      <div class="actions"><a class="btn primary" href="install/">Install it: about 15 minutes</a></div>
+    </div>
+  </section>
+
+  <section class="block tint" aria-labelledby="faq">
+    <div class="wrap narrow">
+      <p class="eyebrow">Questions</p>
+      <h2 id="faq">Common questions</h2>
+      <details class="faq"><summary>Is it really free?</summary><div><p>Yes. It's free and open source under the GPL-3.0, with no paid tier. Tips on <a href="https://ko-fi.com/phonoodlesramen">Ko-fi</a> support the project; they don't unlock anything.</p></div></details>
+      <details class="faq"><summary>Is it on the Play Store?</summary><div><p>No. It's a hobby project you install yourself: with the free Downloader app on the TV, or with a computer. See <a href="install/">Install</a>.</p></div></details>
+      <details class="faq"><summary>Do I need Plex?</summary><div><p>For most of the cards, yes: they're built from your Plex library. Without Plex, the apps, the weather and Settings still work.</p></div></details>
+      <details class="faq"><summary>Does it work on Google TV or a Chromecast?</summary><div><p>Yes. Google TV's own launcher has to stay on, so an optional accessibility service, HomeWatch, sends the Home button to Action Center. See <a href="works-with/">Does it work with…?</a></p></div></details>
+      <details class="faq"><summary>Does it work with Kodi or Jellyfin?</summary><div><p>They show up in the Apps row like any app, but the cards need a Plex library. <a href="works-with/#apps">The details</a>.</p></div></details>
+      <details class="faq"><summary>Can I go back to my old home screen?</summary><div><p>Yes. With a computer, <code>./scripts/rollback-home.ps1</code> puts your previous Home back, even if Action Center won't start. Without one, turn HomeWatch off and uninstall the app.</p></div></details>
+      <details class="faq"><summary>Does it collect any data?</summary><div><p>No. There's no analytics, telemetry, crash reporting or advertising, and this website has none either. See <a href="privacy/">Privacy</a>.</p></div></details>
+    </div>
+  </section>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <nav aria-label="Footer">
+      <a href="install/">Install</a>
+      <a href="works-with/">Does it work with…?</a>
+      <a href="privacy/">Privacy</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/releases">Releases</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/issues">Issues</a>
+      <a href="https://ko-fi.com/phonoodlesramen">Ko-fi</a>
+    </nav>
+    <p>Action Center is free software under the GPL-3.0-or-later. NVIDIA and SHIELD are trademarks of NVIDIA Corporation. Android, Android TV, Google TV and YouTube TV are trademarks of Google LLC. Plex is a trademark of Plex, Inc. Other names are trademarks of their owners. Action Center isn't endorsed by or affiliated with any of them, and uses their names only to say what it works with.</p>
+  </div>
+</footer>
+</body>
+</html>

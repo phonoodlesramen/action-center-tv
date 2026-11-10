@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Does Action Center work with…? Devices and apps</title>
+<meta name="description" content="Which TVs and apps Action Center works with: NVIDIA SHIELD, Google TV and Chromecast, other Android TV devices, Fire TV, Plex, Plezy, Kodi, Jellyfin and YouTube TV.">
+<link rel="canonical" href="https://actioncentertv.com/works-with/">
+<meta name="theme-color" content="#0e1318">
+<meta property="og:type" content="article">
+<meta property="og:site_name" content="Action Center">
+<meta property="og:title" content="Does Action Center work with…? Devices and apps">
+<meta property="og:description" content="Which TVs and apps Action Center works with: NVIDIA SHIELD, Google TV and Chromecast, other Android TV devices, Fire TV, Plex, Plezy, Kodi, Jellyfin and YouTube TV.">
+<meta property="og:url" content="https://actioncentertv.com/works-with/">
+<meta property="og:image" content="https://actioncentertv.com/assets/img/preview.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="The Action Center home screen: Tonight's Pick, a lens card, Quick Watch, Up Next and the Plex Guide">
+<meta name="twitter:card" content="summary_large_image">
+<link rel="icon" href="../assets/img/favicon-32.png" sizes="32x32" type="image/png">
+<link rel="apple-touch-icon" href="../assets/img/apple-touch-icon.png">
+<link rel="stylesheet" href="../assets/site.css">
+</head>
+<body>
+<a class="skip" href="#main">Skip to the content</a>
+<header class="top">
+  <div class="wrap top-inner">
+    <a class="brand" href="../"><img src="../assets/img/apple-touch-icon.png" width="32" height="32" alt=""><span>Action Center <small>for Android TV</small></span></a>
+    <nav aria-label="Site">
+      <a href="../install/">Install</a>
+      <a href="./" aria-current="page">Works with</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+    </nav>
+  </div>
+</header>
+
+<main id="main">
+  <article class="wrap narrow">
+    <div class="page-head">
+      <p class="eyebrow">Compatibility</p>
+      <h1>Does it work with…?</h1>
+      <p class="lead">The TVs Action Center runs on, and how it gets along with the apps you already have. If yours isn't here, <a href="https://github.com/phonoodlesramen/action-center-tv/issues">ask in an issue</a>.</p>
+    </div>
+
+    <nav class="toc" aria-label="On this page">
+      <p>On this page</p>
+      <ol>
+        <li><a href="#devices">TVs and streaming boxes</a></li>
+        <li><a href="#apps">Media apps: Plex, Plezy, Kodi, Jellyfin</a></li>
+        <li><a href="#streaming">Streaming apps and YouTube TV</a></li>
+        <li><a href="#launchers">Other launchers</a></li>
+        <li><a href="#station">The guide station's host</a></li>
+      </ol>
+    </nav>
+
+    <h2 id="devices">TVs and streaming boxes</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>Device</th><th>Works?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>NVIDIA SHIELD TV and SHIELD TV Pro (2015–2019)</td><td class="yes">Yes</td><td>The main target, used daily, on SHIELD Experience 9.2.x (Android 11). With a computer, it becomes the real Home.</td></tr>
+          <tr><td>Chromecast with Google TV, and TVs with Google TV</td><td class="yes">Yes, with HomeWatch</td><td>Android 12 or later. Google TV's own launcher stays on, and an optional accessibility service, HomeWatch, sends the Home button to Action Center. Tested on a Google TV set running Android 12 (32-bit).</td></tr>
+          <tr><td>Other Android TV devices, Android TV 11 or later</td><td class="partly">Should work</td><td>Untested. Devices with the stock Android TV launcher are set up the same way as a SHIELD.</td></tr>
+          <tr><td>Android TV 10 or older</td><td class="no">No</td><td>Action Center needs Android 11 (API 30) or later.</td></tr>
+          <tr><td>Amazon Fire TV</td><td class="no">No</td><td>Fire TV runs Amazon's Fire OS, not Android TV.</td></tr>
+          <tr><td>Roku, Apple TV, Samsung and LG TVs</td><td class="no">No</td><td>They don't run Android apps.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>The release APK is built for ARM, 32- and 64-bit, which covers these devices. On Android 13 and later, some TVs need one extra step for HomeWatch: see <a href="../install/#no-computer">Install</a>.</p>
+
+    <h2 id="apps">Media apps: Plex, Plezy, Kodi, Jellyfin</h2>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>App</th><th>Works?</th><th>Notes</th></tr></thead>
+        <tbody>
+          <tr><td>Plex Media Server</td><td class="yes">Yes, and needed</td><td>The cards, the Plex Guide and library search are built from your Plex library. You sign in with a code at plex.tv/link. Without Plex, the apps, the weather and Settings still work.</td></tr>
+          <tr><td>Plezy and the Plex app</td><td class="yes">Yes</td><td>Play opens your choice of the two (Settings › Plex › Play in). From the guide's player, you can carry on in either from where the channel was.</td></tr>
+          <tr><td>Kodi</td><td class="partly">As an app</td><td>Kodi shows up in the Apps row and All apps like any app. Its library doesn't feed the cards. Kodi doesn't add what you're watching to Android TV's Watch Next list, so it doesn't show up in Continue in your apps either.</td></tr>
+          <tr><td>Jellyfin and Emby</td><td class="partly">As apps</td><td>They show up in the Apps row like any app. The cards need a Plex library.</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <p>Would you use Action Center with Kodi or Jellyfin as your library? Say so in <a href="https://github.com/phonoodlesramen/action-center-tv/issues">an issue</a>: it helps decide what comes next.</p>
+
+    <h2 id="streaming">Streaming apps and YouTube TV</h2>
+    <ul>
+      <li><strong>Every installed app</strong> is in the Apps row, ordered by what you open at this time of day, and in All apps. You can give any app a custom banner.</li>
+      <li><strong>Continue in your apps</strong> shows what other apps add to Android TV's Watch Next list, such as Disney+, YouTube, Prime Video and Spotify, and OK opens the exact title. Settings › Channels &amp; apps turns each app on or off.</li>
+      <li><strong>Search</strong> lists titles that are on the streaming apps installed on your TV, through Plex's catalog. It needs a Plex sign-in.</li>
+      <li><strong>YouTube TV:</strong> its networks appear in the Live row after your guide channels.</li>
+    </ul>
+
+    <h2 id="launchers">Other launchers</h2>
+    <p>Other launchers, such as Projectivy, can stay installed as a fallback. On a SHIELD, <code>set-default-home.ps1</code> saves your current Home before it changes anything, and offers to turn off another launcher's accessibility “Home watcher”, which would otherwise take Home back. <code>rollback-home.ps1</code> puts both back.</p>
+
+    <h2 id="station">The guide station's host</h2>
+    <p>The guide station is optional: it gives every TV in the house the same Plex Guide. It runs in Docker, or as a Java 21 process, on an always-on machine.</p>
+    <ul>
+      <li><strong>Intel and AMD machines</strong> (Synology “+” NAS models, mini PCs, most home servers): yes, with the published <code>linux/amd64</code> image.</li>
+      <li><strong>ARM machines</strong> (Raspberry Pi, ARM NAS models): there's no image yet, and running it with Java there is untested.</li>
+    </ul>
+    <p><a href="https://github.com/phonoodlesramen/action-center-tv/blob/main/docs/guide-station.md">Do you need the guide station?</a></p>
+  </article>
+</main>
+
+<footer class="site">
+  <div class="wrap">
+    <nav aria-label="Footer">
+      <a href="../">Home</a>
+      <a href="../install/">Install</a>
+      <a href="../privacy/">Privacy</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv">GitHub</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/releases">Releases</a>
+      <a href="https://github.com/phonoodlesramen/action-center-tv/issues">Issues</a>
+      <a href="https://ko-fi.com/phonoodlesramen">Ko-fi</a>
+    </nav>
+    <p>Action Center is free software under the GPL-3.0-or-later. NVIDIA and SHIELD are trademarks of NVIDIA Corporation. Android, Android TV, Google TV and YouTube TV are trademarks of Google LLC. Plex is a trademark of Plex, Inc. Kodi, Jellyfin, Emby, Plezy, Amazon, Fire TV, Roku, Apple TV, Samsung, LG, Disney+, YouTube, Prime Video, Spotify and Projectivy are trademarks of their owners. Action Center isn't endorsed by or affiliated with any of them, and uses their names only to say what it works with.</p>
+  </div>
+</footer>
+</body>
+</html>
