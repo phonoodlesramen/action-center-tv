@@ -1,0 +1,37 @@
+# Dependabot: a pull request a month per ecosystem, so updates come in a few reviewable
+# batches. CI checks each one like any other pull request, without the signing key.
+version: 2
+updates:
+  # The workflows' actions, pinned to commit SHAs with the version in a comment.
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      actions:
+        patterns: ['*']
+
+  # gradle/libs.versions.toml and the Gradle wrapper. Minor and patch updates come together;
+  # a major one (AGP, Kotlin, Compose) comes on its own, since it can need code changes.
+  - package-ecosystem: gradle
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore
+      include: scope
+    groups:
+      gradle:
+        update-types: [minor, patch]
+
+  # The station image's distroless base, pinned by digest.
+  - package-ecosystem: docker
+    directory: /station
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: chore
+      include: scope

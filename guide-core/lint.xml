@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<lint>
+    <!-- Lint reads Room's KSP output for the JVM target as our own source, and Room's
+         generated code calls Room's library-internal API by design. -->
+    <issue id="RestrictedApi">
+        <ignore path="build/generated/**" />
+    </issue>
+</lint>

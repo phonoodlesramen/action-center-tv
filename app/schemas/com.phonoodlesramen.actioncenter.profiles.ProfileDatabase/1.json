@@ -1,0 +1,130 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 1,
+    "identityHash": "bd549111cad1e12f75df12e085a2e6f2",
+    "entities": [
+      {
+        "tableName": "kids",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` TEXT NOT NULL, `name` TEXT NOT NULL, `color` INTEGER NOT NULL, `birthday` INTEGER NOT NULL, `plexUserId` INTEGER, `plexUserTitle` TEXT, `ceilingOverride` TEXT, `apps` TEXT NOT NULL, `sort` INTEGER NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "color",
+            "columnName": "color",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "birthday",
+            "columnName": "birthday",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "plexUserId",
+            "columnName": "plexUserId",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "plexUserTitle",
+            "columnName": "plexUserTitle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "ceilingOverride",
+            "columnName": "ceilingOverride",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "apps",
+            "columnName": "apps",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sort",
+            "columnName": "sort",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "brackets",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`fromAge` INTEGER NOT NULL, `toAge` INTEGER NOT NULL, `ratings` TEXT NOT NULL, PRIMARY KEY(`fromAge`))",
+        "fields": [
+          {
+            "fieldPath": "fromAge",
+            "columnName": "fromAge",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "toAge",
+            "columnName": "toAge",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ratings",
+            "columnName": "ratings",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "fromAge"
+          ]
+        }
+      },
+      {
+        "tableName": "current",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `profileId` TEXT NOT NULL, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "profileId",
+            "columnName": "profileId",
+            "affinity": "TEXT",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'bd549111cad1e12f75df12e085a2e6f2')"
+    ]
+  }
+}

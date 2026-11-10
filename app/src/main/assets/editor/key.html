@@ -1,0 +1,273 @@
+<!doctype html>
+<!--
+  Settings › AI blurbs › Add a key on your phone (Phase 4, M10). Action Center serves this
+  one file from the Shield, on the phone editor's server and sign-in, while that screen is
+  open on the TV. Everything is inline and nothing loads from elsewhere: the server's
+  content policy forbids it. The API is GET and POST /api/key (see ai/AiKeyApi.kt);
+  signing in is /signin. The key goes only to the Shield, and only its last 4 characters
+  ever come back.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>Claude API key</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --surface2: #e9eef3;
+    --text: #0e1318;
+    --dim: #46525e;
+    --line: #c9d2db;
+    --accent: #01579b;
+    --accent-ink: #ffffff;
+    --good: #1b5e20;
+    --bad: #b71c1c;
+    --bad-bg: #fdecea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1318;
+      --surface: #161d25;
+      --surface2: #1f2832;
+      --text: #e6edf3;
+      --dim: #a7b3bf;
+      --line: #34414f;
+      --accent: #4fc3f7;
+      --accent-ink: #06202b;
+      --good: #81c784;
+      --bad: #ef9a9a;
+      --bad-bg: #3a1d1d;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  header { background: var(--bg); border-bottom: 1px solid var(--line); }
+  header div, main { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+  header div { display: flex; align-items: baseline; gap: 10px; min-height: 56px; }
+  h1 { font-size: 20px; margin: 14px 0; }
+  header span { color: var(--dim); font-size: 15px; }
+  main { padding-bottom: 48px; }
+  h2 { font-size: 22px; margin: 20px 0 12px; }
+  h2:focus { outline: none; }
+  p { margin: 8px 0; }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  button {
+    font: inherit;
+    min-height: 44px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .wide { width: 100%; }
+  button:disabled { opacity: 0.45; cursor: default; }
+
+  label.field { display: block; font-weight: 600; margin: 18px 0 6px; }
+  input[type=text], input[type=password] {
+    font: inherit;
+    font-size: 17px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+  }
+  .hint { color: var(--dim); font-size: 15px; }
+  .error { padding: 12px 14px; border-radius: 10px; background: var(--bad-bg); color: var(--bad); margin: 12px 0; }
+  .saved { color: var(--good); }
+  .nowrap { white-space: nowrap; }
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+</style>
+</head>
+<body>
+<header><div><h1>AI blurbs</h1><span>Action Center</span></div></header>
+<main>
+  <div id="view"><p>Loading…</p></div>
+  <noscript><p>This page needs JavaScript turned on.</p></noscript>
+</main>
+<script>
+'use strict';
+
+const OFFLINE = "Can't reach the Shield. Check that Add a key on your phone is still open on the TV.";
+/** Thrown after a 401: the PIN form is already showing, so there's nothing more to say. */
+const SIGNED_OUT = new Error('Sign in first');
+
+const view = document.getElementById('view');
+
+/** Makes an element: props are attributes, properties (booleans) or on* listeners; children are nodes or text. */
+function h(tag, props, ...children) {
+  const el = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (value == null || value === false) continue;
+    if (key === 'class') el.className = value;
+    else if (key.startsWith('on')) el.addEventListener(key.slice(2), value);
+    else if (typeof value === 'boolean' && key in el) el[key] = value;
+    else el.setAttribute(key, String(value));
+  }
+  for (const child of children.flat()) {
+    if (child == null || child === false) continue;
+    el.append(child instanceof Node ? child : String(child));
+  }
+  return el;
+}
+
+/** One API call. JSON both ways; a 401 shows the PIN form; any other failure throws its sentence. */
+async function api(method, path, body) {
+  let response;
+  try {
+    response = await fetch(path, {
+      method,
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch (_) {
+    throw new Error(OFFLINE);
+  }
+  if (response.status === 401 && path.startsWith('/api/')) {
+    showSignIn();
+    throw SIGNED_OUT;
+  }
+  if (response.status === 204) return null;
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (_) {
+    data = null;
+  }
+  if (!response.ok) throw new Error((data && data.error) || 'The Shield answered ' + response.status + '. Try again.');
+  return data;
+}
+
+/** Draws a new view, with focus on its heading so a screen reader starts there. */
+function show(nodes) {
+  view.replaceChildren(...nodes.flat().filter((n) => n != null));
+  const heading = view.querySelector('h2');
+  if (heading) {
+    heading.setAttribute('tabindex', '-1');
+    heading.focus({ preventScroll: true });
+  }
+  window.scrollTo(0, 0);
+}
+
+function problem(error) {
+  if (error === SIGNED_OUT) return;
+  show([h('h2', {}, 'Something went wrong'), h('p', { class: 'error', role: 'alert' }, error.message),
+    h('button', { class: 'primary', onclick: start }, 'Try again')]);
+}
+
+/* Signing in */
+
+function showSignIn() {
+  document.title = 'Sign in · Claude API key';
+  const input = h('input', {
+    id: 'pin', type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 7,
+    'aria-describedby': 'pin-help', required: true,
+  });
+  const error = h('p', { class: 'error', role: 'alert', hidden: true });
+  const button = h('button', { type: 'submit', class: 'primary wide' }, 'Sign in');
+  const form = h('form', {
+    onsubmit: async (event) => {
+      event.preventDefault();
+      error.hidden = true;
+      button.disabled = true;
+      try {
+        await api('POST', '/signin', { pin: input.value });
+        start();
+      } catch (e) {
+        error.textContent = e.message;
+        error.hidden = false;
+        input.select();
+      } finally {
+        button.disabled = false;
+      }
+    },
+  },
+  h('h2', {}, 'Enter the PIN from your TV'),
+  h('p', { id: 'pin-help', class: 'hint' }, 'The TV shows it under Settings › AI blurbs › Add a key on your phone. Scanning the QR code there signs you in without it.'),
+  h('label', { class: 'field', for: 'pin' }, 'PIN'), input, error,
+  h('div', { class: 'actions' }, button));
+  show([form]);
+  input.focus();
+}
+
+/* The key */
+
+function showKeyForm(ending) {
+  document.title = 'Claude API key';
+  const input = h('input', {
+    id: 'key', type: 'password', autocomplete: 'off', autocapitalize: 'off', spellcheck: 'false',
+    'aria-describedby': 'key-help', required: true,
+  });
+  const error = h('p', { class: 'error', role: 'alert', hidden: true });
+  const button = h('button', { type: 'submit', class: 'primary wide' }, 'Send to the Shield');
+  const form = h('form', {
+    onsubmit: async (event) => {
+      event.preventDefault();
+      error.hidden = true;
+      button.disabled = true;
+      try {
+        const saved = await api('POST', '/api/key', { key: input.value });
+        input.value = '';
+        showSaved(saved.ending);
+      } catch (e) {
+        if (e === SIGNED_OUT) return;
+        error.textContent = e.message;
+        error.hidden = false;
+        input.select();
+      } finally {
+        button.disabled = false;
+      }
+    },
+  },
+  h('h2', {}, 'Add your Claude API key'),
+  h('p', { id: 'key-help', class: 'hint' },
+    'Paste an API key from your Claude Console account. It starts with sk-ant-. It goes only to your Shield, ' +
+    'over your home network, and is stored encrypted there. The TV only ever shows its last 4 characters.'),
+  ending ? h('p', { class: 'hint' }, 'The Shield has a key ending ', h('span', { class: 'nowrap' }, '…' + ending), '. Sending a new one replaces it.') : null,
+  h('label', { class: 'field', for: 'key' }, 'API key'), input, error,
+  h('div', { class: 'actions' }, button));
+  show([form]);
+  input.focus();
+}
+
+function showSaved(ending) {
+  document.title = 'Key saved · Claude API key';
+  show([h('h2', { class: 'saved' }, 'Key saved'),
+    h('p', {}, 'Settings on the TV shows it as Key ending ', h('span', { class: 'nowrap' }, '…' + ending), '. You can close this page.')]);
+}
+
+async function start() {
+  try {
+    const stored = await api('GET', '/api/key');
+    showKeyForm(stored && stored.ending);
+  } catch (e) {
+    problem(e);
+  }
+}
+
+start();
+</script>
+</body>
+</html>

@@ -1,0 +1,50 @@
+{
+ "sports":[
+  {
+   "id":"20",
+   "name":"Football",
+   "leagues":[
+    {
+     "id":"28",
+     "name":"National Football League",
+     "abbreviation":"NFL",
+     "year":2026,
+     "teams":[
+      {"team":{"id":"22","location":"Arizona","name":"Cardinals","nickname":"Cardinals","abbreviation":"ARI","displayName":"Arizona Cardinals","color":"a40227","alternateColor":"ffffff"}},
+      {"team":{"id":"1","location":"Atlanta","name":"Falcons","nickname":"Falcons","abbreviation":"ATL","displayName":"Atlanta Falcons","color":"a71930","alternateColor":"000000"}},
+      {"team":{"id":"33","location":"Baltimore","name":"Ravens","nickname":"Ravens","abbreviation":"BAL","displayName":"Baltimore Ravens","color":"29126f","alternateColor":"000000"}},
+      {"team":{"id":"2","location":"Buffalo","name":"Bills","nickname":"Bills","abbreviation":"BUF","displayName":"Buffalo Bills","color":"00338d","alternateColor":"d50a0a"}},
+      {"team":{"id":"29","location":"Carolina","name":"Panthers","nickname":"Panthers","abbreviation":"CAR","displayName":"Carolina Panthers","color":"0085ca","alternateColor":"000000"}},
+      {"team":{"id":"3","location":"Chicago","name":"Bears","nickname":"Bears","abbreviation":"CHI","displayName":"Chicago Bears","color":"0b1c3a","alternateColor":"e64100"}},
+      {"team":{"id":"4","location":"Cincinnati","name":"Bengals","nickname":"Bengals","abbreviation":"CIN","displayName":"Cincinnati Bengals","color":"fb4f14","alternateColor":"000000"}},
+      {"team":{"id":"5","location":"Cleveland","name":"Browns","nickname":"Browns","abbreviation":"CLE","displayName":"Cleveland Browns","color":"472a08","alternateColor":"ff3c00"}},
+      {"team":{"id":"6","location":"Dallas","name":"Cowboys","nickname":"Cowboys","abbreviation":"DAL","displayName":"Dallas Cowboys","color":"002a5c","alternateColor":"b0b7bc"}},
+      {"team":{"id":"7","location":"Denver","name":"Broncos","nickname":"Broncos","abbreviation":"DEN","displayName":"Denver Broncos","color":"0a2343","alternateColor":"fc4c02"}},
+      {"team":{"id":"8","location":"Detroit","name":"Lions","nickname":"Lions","abbreviation":"DET","displayName":"Detroit Lions","color":"0076b6","alternateColor":"bbbbbb"}},
+      {"team":{"id":"9","location":"Green Bay","name":"Packers","nickname":"Packers","abbreviation":"GB","displayName":"Green Bay Packers","color":"204e32","alternateColor":"ffb612"}},
+      {"team":{"id":"34","location":"Houston","name":"Texans","nickname":"Texans","abbreviation":"HOU","displayName":"Houston Texans","color":"021018","alternateColor":"eb0028"}},
+      {"team":{"id":"11","location":"Indianapolis","name":"Colts","nickname":"Colts","abbreviation":"IND","displayName":"Indianapolis Colts","color":"003b75","alternateColor":"ffffff"}},
+      {"team":{"id":"30","location":"Jacksonville","name":"Jaguars","nickname":"Jaguars","abbreviation":"JAX","displayName":"Jacksonville Jaguars","color":"007487","alternateColor":"d7a22a"}},
+      {"team":{"id":"12","location":"Kansas City","name":"Chiefs","nickname":"Chiefs","abbreviation":"KC","displayName":"Kansas City Chiefs","color":"e31837","alternateColor":"ffb612"}},
+      {"team":{"id":"13","location":"Las Vegas","name":"Raiders","nickname":"Raiders","abbreviation":"LV","displayName":"Las Vegas Raiders","color":"000000","alternateColor":"a5acaf"}},
+      {"team":{"id":"24","location":"Los Angeles","name":"Chargers","nickname":"Chargers","abbreviation":"LAC","displayName":"Los Angeles Chargers","color":"0080c6","alternateColor":"ffc20e"}},
+      {"team":{"id":"14","location":"Los Angeles","name":"Rams","nickname":"Rams","abbreviation":"LAR","displayName":"Los Angeles Rams","color":"003594","alternateColor":"ffd100"}},
+      {"team":{"id":"15","location":"Miami","name":"Dolphins","nickname":"Dolphins","abbreviation":"MIA","displayName":"Miami Dolphins","color":"008e97","alternateColor":"fc4c02"}},
+      {"team":{"id":"16","location":"Minnesota","name":"Vikings","nickname":"Vikings","abbreviation":"MIN","displayName":"Minnesota Vikings","color":"4f2683","alternateColor":"ffc62f"}},
+      {"team":{"id":"17","location":"New England","name":"Patriots","nickname":"Patriots","abbreviation":"NE","displayName":"New England Patriots","color":"002a5c","alternateColor":"c60c30"}},
+      {"team":{"id":"18","location":"New Orleans","name":"Saints","nickname":"Saints","abbreviation":"NO","displayName":"New Orleans Saints","color":"d3bc8d","alternateColor":"000000"}},
+      {"team":{"id":"19","location":"New York","name":"Giants","nickname":"Giants","abbreviation":"NYG","displayName":"New York Giants","color":"003c7f","alternateColor":"c9243f"}},
+      {"team":{"id":"20","location":"New York","name":"Jets","nickname":"Jets","abbreviation":"NYJ","displayName":"New York Jets","color":"115740","alternateColor":"ffffff"}},
+      {"team":{"id":"21","location":"Philadelphia","name":"Eagles","nickname":"Eagles","abbreviation":"PHI","displayName":"Philadelphia Eagles","color":"06424d","alternateColor":"000000"}},
+      {"team":{"id":"23","location":"Pittsburgh","name":"Steelers","nickname":"Steelers","abbreviation":"PIT","displayName":"Pittsburgh Steelers","color":"000000","alternateColor":"ffb612"}},
+      {"team":{"id":"25","location":"San Francisco","name":"49ers","nickname":"49ers","abbreviation":"SF","displayName":"San Francisco 49ers","color":"aa0000","alternateColor":"b3995d"}},
+      {"team":{"id":"26","location":"Seattle","name":"Seahawks","nickname":"Seahawks","abbreviation":"SEA","displayName":"Seattle Seahawks","color":"002a5c","alternateColor":"69be28"}},
+      {"team":{"id":"27","location":"Tampa Bay","name":"Buccaneers","nickname":"Buccaneers","abbreviation":"TB","displayName":"Tampa Bay Buccaneers","color":"bd1c36","alternateColor":"3e3a35"}},
+      {"team":{"id":"10","location":"Tennessee","name":"Titans","nickname":"Titans","abbreviation":"TEN","displayName":"Tennessee Titans","color":"4495d2","alternateColor":"001532"}},
+      {"team":{"id":"28","location":"Washington","name":"Commanders","nickname":"Commanders","abbreviation":"WSH","displayName":"Washington Commanders","color":"5a1414","alternateColor":"ffb612"}}
+     ]
+    }
+   ]
+  }
+ ]
+}

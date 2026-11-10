@@ -1,0 +1,7 @@
+{ "MediaContainer": { "size": 5, "allowSync": false, "title1": "Plex Library", "Directory": [
+  { "key": "1", "type": "movie", "title": "Movies", "agent": "tv.plex.agents.movie", "hidden": 0, "updatedAt": 1793000000 },
+  { "key": "2", "type": "show", "title": "TV Shows", "agent": "tv.plex.agents.series", "hidden": 0 },
+  { "key": "3", "type": "artist", "title": "Music", "hidden": false },
+  { "key": "4", "type": "movie", "title": "Old rips", "hidden": 1 },
+  { "key": "5", "type": "movie", "title": "Archive", "hidden": true }
+] } }

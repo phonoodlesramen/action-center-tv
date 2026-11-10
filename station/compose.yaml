@@ -1,0 +1,29 @@
+# The guide station (Phase 8), for Synology Container Manager: Project › Create, with this as
+# its compose file. Set the three placeholders first (station/README.md).
+services:
+  guide-station:
+    image: ghcr.io/phonoodlesramen/guide-station:latest
+    # Build pulls the image every time, so it starts on the newest `latest` (station/README.md, Update).
+    pull_policy: always
+    container_name: guide-station
+    restart: unless-stopped
+    # Placeholder: your DSM user and group (uid:gid), who owns ./data, so the station can write
+    # it and File Station can drop approvals into ./data/approve. 1026:100 is DSM's first user.
+    user: "1026:100"
+    read_only: true
+    tmpfs:
+      - /tmp
+    cap_drop:
+      - ALL
+    security_opt:
+      - no-new-privileges:true
+    mem_limit: 256m
+    ports:
+      - "8443:8443"
+    environment:
+      # Placeholder: the house's time zone. The guide's days start at its midnight.
+      TZ: America/New_York
+      # Placeholder: the NAS's reserved LAN IP (and any name the TVs use), comma-separated.
+      STATION_HOSTS: 192.168.1.10
+    volumes:
+      - ./data:/data

@@ -1,0 +1,6 @@
+{ "MediaContainer": { "size": 3, "identifier": "com.plexapp.system.accounts", "Account": [
+  { "id": 0, "key": "/accounts/0", "name": "", "defaultAudioLanguage": "en", "autoSelectAudio": true, "subtitleMode": 0, "thumb": "" },
+  { "id": 1, "key": "/accounts/1", "name": "Parent", "defaultAudioLanguage": "en", "autoSelectAudio": true, "subtitleMode": 0 },
+  { "id": 31415926, "key": "/accounts/31415926", "name": "Maya", "defaultAudioLanguage": "en", "autoSelectAudio": true, "subtitleMode": 1,
+    "thumb": "https://plex.tv/users/0000aaaa/avatar" }
+] } }

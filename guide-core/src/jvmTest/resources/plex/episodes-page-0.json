@@ -1,0 +1,10 @@
+{ "MediaContainer": { "size": 2, "offset": 0, "totalSize": 2, "librarySectionID": 2, "Metadata": [
+  { "ratingKey": "8801", "type": "episode", "title": "Pilot", "grandparentRatingKey": "8800", "grandparentTitle": "Harbour Lights",
+    "parentIndex": 1, "index": 1, "duration": 1500000, "addedAt": 1780000000, "updatedAt": 1780000000, "contentRating": "TV-PG",
+    "summary": "The lighthouse keeper's first night.", "thumb": "/library/metadata/8801/thumb/1",
+    "Media": [ { "duration": 1500000, "bitrate": 4000, "audioChannels": 6, "audioCodec": "eac3", "videoCodec": "h264",
+      "videoProfile": "high", "videoResolution": "1080", "container": "mp4",
+      "Part": [ { "key": "/library/parts/9201/1780000000/file.mp4", "size": 750000000, "container": "mp4" } ] } ] },
+  { "ratingKey": "8802", "type": "episode", "title": "Fog", "grandparentRatingKey": "8800", "grandparentTitle": "Harbour Lights",
+    "parentIndex": 1, "index": 2, "duration": 1520000, "addedAt": 1780000000, "updatedAt": 1780000000 }
+] } }

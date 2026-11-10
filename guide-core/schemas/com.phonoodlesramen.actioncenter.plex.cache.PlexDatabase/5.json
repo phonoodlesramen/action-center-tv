@@ -1,0 +1,482 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 5,
+    "identityHash": "97efd70a67b23b914036702138f4e3f5",
+    "entities": [
+      {
+        "tableName": "items",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`ratingKey` TEXT NOT NULL, `sectionKey` TEXT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `year` INTEGER, `durationMs` INTEGER, `viewCount` INTEGER NOT NULL, `lastViewedAt` INTEGER, `addedAt` INTEGER, `updatedAt` INTEGER, `contentRating` TEXT, `audienceRating` REAL, `rating` REAL, `thumb` TEXT, `art` TEXT, `genres` TEXT NOT NULL, `syncedAt` INTEGER NOT NULL, `trailerKey` TEXT, `showKey` TEXT, `showTitle` TEXT, `season` INTEGER, `episode` INTEGER, `summary` TEXT, `partKey` TEXT, `container` TEXT, `videoCodec` TEXT, `videoProfile` TEXT, `videoResolution` TEXT, `audioCodec` TEXT, `audioChannels` INTEGER, `sizeBytes` INTEGER, `viewOffsetMs` INTEGER, `userRating` REAL, `lastRatedAt` INTEGER, `releaseDate` TEXT, `collections` TEXT NOT NULL, `labels` TEXT NOT NULL, `directors` TEXT NOT NULL, `actors` TEXT NOT NULL, `episodeCount` INTEGER, `watchedEpisodeCount` INTEGER, `detailsAt` INTEGER, PRIMARY KEY(`ratingKey`))",
+        "fields": [
+          {
+            "fieldPath": "ratingKey",
+            "columnName": "ratingKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "sectionKey",
+            "columnName": "sectionKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "viewCount",
+            "columnName": "viewCount",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastViewedAt",
+            "columnName": "lastViewedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "addedAt",
+            "columnName": "addedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updatedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "contentRating",
+            "columnName": "contentRating",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "audienceRating",
+            "columnName": "audienceRating",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "rating",
+            "columnName": "rating",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "thumb",
+            "columnName": "thumb",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "art",
+            "columnName": "art",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "genres",
+            "columnName": "genres",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "syncedAt",
+            "columnName": "syncedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "trailerKey",
+            "columnName": "trailerKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "showKey",
+            "columnName": "showKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "showTitle",
+            "columnName": "showTitle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "season",
+            "columnName": "season",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "episode",
+            "columnName": "episode",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "summary",
+            "columnName": "summary",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "partKey",
+            "columnName": "partKey",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "container",
+            "columnName": "container",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "videoCodec",
+            "columnName": "videoCodec",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "videoProfile",
+            "columnName": "videoProfile",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "videoResolution",
+            "columnName": "videoResolution",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "audioCodec",
+            "columnName": "audioCodec",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "audioChannels",
+            "columnName": "audioChannels",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "sizeBytes",
+            "columnName": "sizeBytes",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "viewOffsetMs",
+            "columnName": "viewOffsetMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "userRating",
+            "columnName": "userRating",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "lastRatedAt",
+            "columnName": "lastRatedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "releaseDate",
+            "columnName": "releaseDate",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "collections",
+            "columnName": "collections",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "labels",
+            "columnName": "labels",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "directors",
+            "columnName": "directors",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "actors",
+            "columnName": "actors",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "episodeCount",
+            "columnName": "episodeCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "watchedEpisodeCount",
+            "columnName": "watchedEpisodeCount",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "detailsAt",
+            "columnName": "detailsAt",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "ratingKey"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_items_sectionKey",
+            "unique": false,
+            "columnNames": [
+              "sectionKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_items_sectionKey` ON `${TABLE_NAME}` (`sectionKey`)"
+          },
+          {
+            "name": "index_items_type_addedAt",
+            "unique": false,
+            "columnNames": [
+              "type",
+              "addedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_items_type_addedAt` ON `${TABLE_NAME}` (`type`, `addedAt`)"
+          },
+          {
+            "name": "index_items_showKey",
+            "unique": false,
+            "columnNames": [
+              "showKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_items_showKey` ON `${TABLE_NAME}` (`showKey`)"
+          }
+        ]
+      },
+      {
+        "tableName": "continue_watching",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`position` INTEGER NOT NULL, `ratingKey` TEXT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `showTitle` TEXT, `season` INTEGER, `episode` INTEGER, `year` INTEGER, `durationMs` INTEGER, `viewOffsetMs` INTEGER, `contentRating` TEXT, `thumb` TEXT, `art` TEXT, `showArt` TEXT, `lastViewedAt` INTEGER, `showKey` TEXT, PRIMARY KEY(`position`))",
+        "fields": [
+          {
+            "fieldPath": "position",
+            "columnName": "position",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ratingKey",
+            "columnName": "ratingKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "showTitle",
+            "columnName": "showTitle",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "season",
+            "columnName": "season",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "episode",
+            "columnName": "episode",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "year",
+            "columnName": "year",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "durationMs",
+            "columnName": "durationMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "viewOffsetMs",
+            "columnName": "viewOffsetMs",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "contentRating",
+            "columnName": "contentRating",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "thumb",
+            "columnName": "thumb",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "art",
+            "columnName": "art",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "showArt",
+            "columnName": "showArt",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "lastViewedAt",
+            "columnName": "lastViewedAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "showKey",
+            "columnName": "showKey",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "position"
+          ]
+        }
+      },
+      {
+        "tableName": "plays",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`historyKey` TEXT NOT NULL, `ratingKey` TEXT NOT NULL, `type` TEXT NOT NULL, `title` TEXT NOT NULL, `viewedAt` INTEGER NOT NULL, `thumb` TEXT, PRIMARY KEY(`historyKey`))",
+        "fields": [
+          {
+            "fieldPath": "historyKey",
+            "columnName": "historyKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "ratingKey",
+            "columnName": "ratingKey",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "title",
+            "columnName": "title",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "viewedAt",
+            "columnName": "viewedAt",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "thumb",
+            "columnName": "thumb",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "historyKey"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_plays_viewedAt",
+            "unique": false,
+            "columnNames": [
+              "viewedAt"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_plays_viewedAt` ON `${TABLE_NAME}` (`viewedAt`)"
+          },
+          {
+            "name": "index_plays_ratingKey",
+            "unique": false,
+            "columnNames": [
+              "ratingKey"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_plays_ratingKey` ON `${TABLE_NAME}` (`ratingKey`)"
+          }
+        ]
+      },
+      {
+        "tableName": "sync_state",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `lastAttemptAt` INTEGER, `lastSuccessAt` INTEGER, `lastFullAt` INTEGER, `itemsUpdatedSince` INTEGER, `error` TEXT, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastAttemptAt",
+            "columnName": "lastAttemptAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastSuccessAt",
+            "columnName": "lastSuccessAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "lastFullAt",
+            "columnName": "lastFullAt",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "itemsUpdatedSince",
+            "columnName": "itemsUpdatedSince",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "error",
+            "columnName": "error",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '97efd70a67b23b914036702138f4e3f5')"
+    ]
+  }
+}

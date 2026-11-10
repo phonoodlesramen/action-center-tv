@@ -1,0 +1,8 @@
+blank_issues_enabled: false
+contact_links:
+  - name: Report a security problem
+    url: https://github.com/phonoodlesramen/action-center-tv/security/advisories/new
+    about: Privately, through GitHub's vulnerability reporting. Please don't open a public issue.
+  - name: Installing and troubleshooting
+    url: https://github.com/phonoodlesramen/action-center-tv/blob/main/docs/install.md
+    about: Making it Home, undoing it, and fixes for the usual problems.

@@ -1,0 +1,11 @@
+{"MediaContainer":{"size":4,"Hub":[
+ {"hubIdentifier":"movie","type":"movie","title":"Movies","size":2,"more":false,"Metadata":[
+  {"ratingKey":"8101","key":"/library/metadata/8101","type":"movie","title":"Harbor Lights","year":1995,"contentRating":"R","thumb":"/library/metadata/8101/thumb/1","art":"/library/metadata/8101/art/1"},
+  {"ratingKey":"8102","key":"/library/metadata/8102","type":"movie","title":"Night Shift Runner","year":1997,"contentRating":"PG-13","thumb":"/library/metadata/8102/thumb/1","reason":"actor","reasonTitle":"Dana Example","reasonID":"55"}]},
+ {"hubIdentifier":"show","type":"show","title":"Shows","size":1,"more":false,"Directory":[
+  {"ratingKey":"8200","key":"/library/metadata/8200/children","type":"show","title":"Harbor Watch","year":2019,"contentRating":"TV-14","thumb":"/library/metadata/8200/thumb/1"}]},
+ {"hubIdentifier":"episode","type":"episode","title":"Episodes","size":1,"more":false,"Metadata":[
+  {"ratingKey":"8301","type":"episode","title":"Lights Out","grandparentTitle":"Harbor Watch","grandparentRatingKey":"8200","grandparentThumb":"/library/metadata/8200/thumb/1","parentIndex":2,"index":5,"contentRating":"TV-14"}]},
+ {"hubIdentifier":"actor","type":"actor","title":"Actors","size":1,"more":false,"Directory":[
+  {"id":"55","tag":"Dana Example","type":"tag","tagType":6}]}
+]}}

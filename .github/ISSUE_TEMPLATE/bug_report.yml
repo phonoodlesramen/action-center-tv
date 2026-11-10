@@ -1,0 +1,63 @@
+name: Bug report
+description: Something doesn't work as it should.
+labels: [bug]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for reporting. **Security problems go through SECURITY.md, not here.**
+        Never paste a Plex token, an API key, or files from the station's `data/station/` folder.
+  - type: textarea
+    id: what
+    attributes:
+      label: What happened
+      description: What you did, what you expected, and what you saw instead.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. From the home, press Up to the top bar
+        2. Open Search
+        3. ...
+  - type: input
+    id: version
+    attributes:
+      label: Action Center version
+      description: Settings › About.
+    validations:
+      required: true
+  - type: input
+    id: device
+    attributes:
+      label: Device and Android version
+      placeholder: NVIDIA SHIELD TV Pro (2019), SHIELD Experience 9.2.4, Android 11
+    validations:
+      required: true
+  - type: dropdown
+    id: home
+    attributes:
+      label: How Action Center is your Home
+      options:
+        - set-default-home (stock launcher turned off)
+        - HomeWatch (Google TV)
+        - Not Home, opened as an app
+    validations:
+      required: true
+  - type: dropdown
+    id: station
+    attributes:
+      label: Guide station
+      options:
+        - Not used
+        - Paired (say the station's version below)
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Diagnostics and logs
+      description: |
+        Settings › Diagnostics' details, a photo of the screen, or `adb logcat` lines from around the problem.
+        Check them for tokens and keys before you paste.
+      render: text

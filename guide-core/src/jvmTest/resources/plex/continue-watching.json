@@ -1,0 +1,14 @@
+{ "MediaContainer": { "size": 1, "Hub": [ {
+  "hubIdentifier": "continueWatching", "title": "Continue Watching", "type": "mixed", "size": 3,
+  "Metadata": [
+    { "ratingKey": "5101", "key": "/library/metadata/5101", "type": "episode", "title": "Hello Darkness", "grandparentTitle": "Slow Horses", "grandparentRatingKey": "5000",
+      "parentIndex": 4, "index": 2, "duration": 2940000, "viewOffset": 480000, "viewCount": 0, "lastViewedAt": 1793040000,
+      "thumb": "/library/metadata/5101/thumb/1793000000", "art": "/library/metadata/5000/art/1793000000",
+      "grandparentThumb": "/library/metadata/5000/thumb/1793000000", "grandparentArt": "/library/metadata/5000/art/1793000000" },
+    { "ratingKey": "6202", "key": "/library/metadata/6202", "type": "episode", "title": "Sundae", "grandparentTitle": "The Bear",
+      "parentIndex": 2, "index": 3, "duration": 1560000, "viewCount": 0,
+      "thumb": "/library/metadata/6202/thumb/1793000000", "grandparentArt": "/library/metadata/6000/art/1793000000" },
+    { "ratingKey": 7303, "key": "/library/metadata/7303", "type": "movie", "title": "Arrival", "year": 2016, "contentRating": "PG-13",
+      "duration": 6960000, "viewOffset": 4500000, "art": "/library/metadata/7303/art/1793000000", "thumb": "/library/metadata/7303/thumb/1793000000",
+      "Genre": [ { "id": 1, "tag": "Drama" }, { "id": 2, "tag": "Science Fiction" } ] }
+  ] } ] } }

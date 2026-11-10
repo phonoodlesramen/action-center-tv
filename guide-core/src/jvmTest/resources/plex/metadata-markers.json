@@ -1,0 +1,12 @@
+{ "MediaContainer": { "size": 3, "Metadata": [
+  { "ratingKey": "8801", "type": "episode", "title": "Pilot", "grandparentTitle": "Harbour Lights", "duration": 3360000, "viewOffset": 3300000,
+    "Marker": [
+      { "id": 11, "type": "intro", "startTimeOffset": 30000, "endTimeOffset": 95000 },
+      { "id": 13, "type": "credits", "startTimeOffset": 3330000, "endTimeOffset": 3360000, "final": true },
+      { "id": 12, "type": "credits", "startTimeOffset": 3240000, "endTimeOffset": 3300000 }
+    ] },
+  { "ratingKey": 7303, "type": "movie", "title": "Arrival", "duration": 6960000, "viewOffset": 4500000,
+    "Marker": [ { "id": 21, "type": "intro", "startTimeOffset": 0, "endTimeOffset": 60000 } ] },
+  { "ratingKey": "7505", "type": "movie", "title": "Heat", "duration": 10200000, "viewOffset": 9000000,
+    "Marker": [ { "id": 31, "type": "credit", "startTimeOffset": 9600000, "endTimeOffset": 10200000 } ] }
+] } }

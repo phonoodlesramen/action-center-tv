@@ -1,0 +1,208 @@
+name: CI
+
+# Lint, unit tests and a release build, plus the ADB scripts' tests.
+# - Pull requests, from forks or not, are built and never signed.
+# - Pushes to main sign the APK and upload it (scripts/install.ps1 -FromCi).
+# - A `v*` tag on main also publishes a GitHub Release (docs/releasing.md).
+# Only the sign job reads the signing key, and it runs no code from the repository: the
+# build, its plugins and its dependencies never run beside the key.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Lint, unit tests, release APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      # All of history and the tags, for the version (app/build.gradle.kts).
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Also validates the Gradle wrapper checksum.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Lint, unit tests, release build
+        env:
+          # A tag's build is named after it: v1.2.0 is 1.2.0.
+          ACTION_CENTER_VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '' }}
+        # testDebugUnitTest is :app's only: :guide-core's and :station's tests run on the JVM.
+        run: ./gradlew lint testDebugUnitTest :guide-core:jvmTest :station:test assembleRelease
+
+      - name: Check the version
+        run: |
+          aapt2="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)/aapt2"
+          version="$("$aapt2" dump badging app/build/outputs/apk/release/app-release-unsigned.apk |
+            grep -o "versionCode='[0-9]*' versionName='[^']*'")"
+          echo "$version"
+          if [ "$GITHUB_REF_TYPE" = tag ] && [[ "$version" != *"versionName='${GITHUB_REF_NAME#v}'" ]]; then
+            echo "::error title=Wrong version::The APK isn't named ${GITHUB_REF_NAME#v}."
+            exit 1
+          fi
+
+      # For the sign job. A pull request's APK isn't signed, so it isn't kept.
+      - name: Upload the unsigned APK
+        if: github.event_name != 'pull_request'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: action-center-unsigned
+          path: app/build/outputs/apk/release/app-release-unsigned.apk
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Upload lint and test reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: reports
+          path: |
+            app/build/reports
+            app/build/test-results
+            guide-core/build/reports
+            guide-core/build/test-results
+            station/build/reports
+            station/build/test-results
+
+  sign:
+    name: Sign the APK
+    # Never for a pull request. No checkout: this job only aligns, signs and verifies the APK
+    # the android job built, with the Android SDK's own tools.
+    if: github.event_name != 'pull_request'
+    needs: android
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      # Secrets can't be read in step `if:` conditions, so say here whether there's a key.
+      HAS_KEY: ${{ secrets.RELEASE_KEYSTORE_BASE64 != '' }}
+    steps:
+      - name: A release needs the signing key
+        if: github.ref_type == 'tag' && env.HAS_KEY != 'true'
+        run: |
+          echo "::error title=No signing key::A release is signed: set the RELEASE_* secrets (docs/releasing.md)."
+          exit 1
+
+      - name: Note the unsigned build
+        if: env.HAS_KEY != 'true'
+        run: >
+          echo "::warning title=Unsigned build::The RELEASE_* secrets aren't set, so the
+          release APK is unsigned and not uploaded. See docs/releasing.md."
+
+      - if: env.HAS_KEY == 'true'
+        uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: action-center-unsigned
+          path: dist
+
+      - name: Align, sign and verify
+        if: env.HAS_KEY == 'true'
+        env:
+          RELEASE_KEYSTORE_BASE64: ${{ secrets.RELEASE_KEYSTORE_BASE64 }}
+          RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
+          RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+        run: |
+          tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
+          keystore="$RUNNER_TEMP/release.jks"
+          echo "$RELEASE_KEYSTORE_BASE64" | base64 --decode > "$keystore"
+          trap 'rm -f "$keystore"' EXIT
+          # Native libraries stay aligned to 16 KB pages, as AGP packs them.
+          "$tools/zipalign" -f -P 16 4 dist/app-release-unsigned.apk dist/aligned.apk
+          # v2 as AGP signs, and v3 too: Android 11 and later read v3 first.
+          "$tools/apksigner" sign --v2-signing-enabled true --v3-signing-enabled true \
+            --ks "$keystore" --ks-pass env:RELEASE_KEYSTORE_PASSWORD \
+            --ks-key-alias "$RELEASE_KEY_ALIAS" --key-pass env:RELEASE_KEY_PASSWORD \
+            --out dist/app-release.apk dist/aligned.apk
+          "$tools/apksigner" verify --verbose --print-certs dist/app-release.apk
+
+      # scripts/install.ps1 -FromCi downloads this artifact by name, and the release job
+      # publishes it.
+      - name: Upload the signed APK
+        if: env.HAS_KEY == 'true'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: action-center-release
+          path: dist/app-release.apk
+          if-no-files-found: error
+
+  scripts:
+    name: ADB script dry-run tests
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Run the scripts against the fake adb
+        shell: pwsh
+        run: ./scripts/tests/run-tests.ps1
+
+  release:
+    name: GitHub Release
+    if: github.ref_type == 'tag'
+    needs: [sign, scripts]
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Releases come from main
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error title=Not on main::$GITHUB_REF_NAME isn't a commit on main."
+            exit 1
+          fi
+
+      - uses: actions/download-artifact@9000827ccba6bdab643e8b6fd33ac0654aef8333 # v8.0.2
+        with:
+          name: action-center-release
+          path: dist
+
+      # scripts/install.ps1 -FromRelease reads these names: app-release.apk, and its SHA-256
+      # in sha256sum's format.
+      - name: Publish the release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd dist
+          sha256sum app-release.apk > app-release.apk.sha256
+          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)/apksigner"
+          certs="$("$apksigner" verify --print-certs app-release.apk)"
+          signer="$(grep -m 1 'certificate SHA-256 digest' <<< "$certs" | sed 's/.*: //')"
+          cp ../LICENSE LICENSE.txt
+          version="${GITHUB_REF_NAME#v}"
+          owner="${GITHUB_REPOSITORY_OWNER,,}"
+          docs="https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs"
+          cat > notes.md <<EOF
+          **Install or update:** [the install guide]($docs/install.md). Android TV 11 or later, on ARM.
+
+          **SHA-256** of \`app-release.apk\`: \`$(cut -d ' ' -f 1 app-release.apk.sha256)\`. It's signed by the certificate with SHA-256 \`$signer\` ([checking a download]($docs/releasing.md#checking-a-download)).
+
+          **The guide station** (optional): \`ghcr.io/$owner/guide-station:$version\`, see [the guide station]($docs/guide-station.md).
+
+          Action Center is free software under the GPL-3.0-or-later (\`LICENSE.txt\`). Its source is this release's source code.
+          EOF
+          flags=()
+          # v1.2.0-rc.1 and the like are pre-releases, which releases/latest skips.
+          if [[ "$version" == *-* ]]; then flags+=(--prerelease); fi
+          gh release create "$GITHUB_REF_NAME" app-release.apk app-release.apk.sha256 LICENSE.txt \
+            --verify-tag --title "Action Center $version" --notes-file notes.md --generate-notes "${flags[@]}"

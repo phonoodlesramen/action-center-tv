@@ -1,0 +1,8 @@
+{ "MediaContainer": { "size": 1, "offset": 0, "totalSize": 1, "librarySectionID": 2, "Metadata": [
+  { "ratingKey": "8801", "type": "show", "title": "Harbor Lights", "year": 2019, "contentRating": "TV-14",
+    "addedAt": 1690000000, "updatedAt": 1790000000, "primaryExtraKey": "/library/metadata/8890",
+    "leafCount": 18, "viewedLeafCount": 7, "originallyAvailableAt": "2019-04-02",
+    "Genre": [ { "tag": "Drama" } ], "Role": [ { "tag": "Tess Morrow" }, { "tag": "Owen Pike" } ],
+    "Image": [ { "alt": "Harbor Lights", "type": "coverPoster", "url": "/library/metadata/8801/thumb/1" },
+      { "alt": "Harbor Lights", "type": "backgroundSquare", "url": "/library/metadata/8801/squareArt/1" } ] }
+] } }

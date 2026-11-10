@@ -1,0 +1,21 @@
+{ "MediaContainer": { "size": 2, "offset": 0, "totalSize": 3, "librarySectionID": 1, "Metadata": [
+  { "ratingKey": "7303", "type": "movie", "title": "Arrival", "year": 2016, "duration": 6960000, "viewCount": 1, "lastViewedAt": 1700000000,
+    "addedAt": 1690000000, "updatedAt": 1790000000, "contentRating": "PG-13", "audienceRating": 8.2, "rating": 9.4,
+    "thumb": "/library/metadata/7303/thumb/1", "art": "/library/metadata/7303/art/1", "primaryExtraKey": "/library/metadata/7310",
+    "summary": "A linguist is asked to talk to visitors.", "studio": "Northlight Pictures",
+    "viewOffset": 1200000, "userRating": 9.0, "lastRatedAt": 1700000500, "originallyAvailableAt": "2016-11-11",
+    "Genre": [ { "tag": "Drama" }, { "tag": "Science Fiction" } ],
+    "Collection": [ { "tag": "First Contact" } ],
+    "Label": [ { "tag": "Favourites" }, { "tag": " " } ],
+    "Director": [ { "tag": "Dena Varga" } ],
+    "Role": [ { "tag": "Mara Quint", "role": "The Linguist" }, { "tag": "Joel Barrow" }, { "tag": "Ines Okafor" } ],
+    "Image": [ { "alt": "Arrival", "type": "coverPoster", "url": "/library/metadata/7303/thumb/1" },
+      { "alt": "Arrival", "type": "background", "url": "/library/metadata/7303/art/1" },
+      { "alt": "Arrival", "type": "clearLogo", "url": "/library/metadata/7303/clearLogo/1790000000" } ],
+    "Media": [ { "id": 9001, "duration": 6960000, "bitrate": 24000, "width": 3840, "height": 1600, "audioChannels": 8,
+      "audioCodec": "truehd", "videoCodec": "hevc", "videoProfile": "main 10", "videoResolution": "4k", "container": "mkv",
+      "Part": [ { "id": 9101, "key": "/library/parts/9101/1690000000/file.mkv", "duration": 6960000,
+        "file": "/data/movies/Arrival (2016)/Arrival.mkv", "size": 52000000000, "container": "mkv" } ] } ] },
+  { "ratingKey": "7404", "type": "movie", "title": "Jaws", "year": 1975, "duration": 7440000,
+    "addedAt": 1792000000, "updatedAt": 1792000000, "contentRating": "PG", "audienceRating": 9.0, "studio": " " }
+] } }

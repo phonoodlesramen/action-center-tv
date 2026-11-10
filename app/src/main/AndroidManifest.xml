@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <uses-feature
+        android:name="android.software.leanback"
+        android:required="true" />
+    <uses-feature
+        android:name="android.hardware.touchscreen"
+        android:required="false" />
+
+    <!-- Weather from Open-Meteo (D16). -->
+    <uses-permission android:name="android.permission.INTERNET" />
+
+    <!-- The phone editor shows the Shield's own address on the home network (Phase 2.7, G1). -->
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
+    <!-- Watch Next probe. Not requested at runtime: granted over ADB with `pm grant`. -->
+    <uses-permission android:name="android.permission.READ_TV_LISTINGS" />
+
+    <!-- The Apps row by what you open, and when (M5). A sideloaded app can't ask for it:
+         `appops set ... GET_USAGE_STATS allow` over ADB (scripts/grant-permissions.ps1).
+         Declared so TvSettings' Usage access screen lists Action Center. -->
+    <uses-permission
+        android:name="android.permission.PACKAGE_USAGE_STATS"
+        tools:ignore="ProtectedPermissions" />
+
+    <!-- Wallpapers and custom app banners from the TV's shared storage (L2, L7). Settings ›
+         Setup asks for it, or `pm grant` over ADB. Android 13 replaced it with the two
+         READ_MEDIA ones below, for newer Google TV sets. -->
+    <uses-permission
+        android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
+    <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
+
+    <!-- Package visibility (API 30): every TV-launchable app; the stock launcher, so we
+         can tell whether it has been re-enabled; and the handoff targets. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+        </intent>
+        <!-- HomeWatch reads which app is the TV's own Home. -->
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.HOME" />
+        </intent>
+        <intent>
+            <action android:name="android.intent.action.VIEW" />
+            <data android:scheme="vnd.youtube" />
+        </intent>
+        <!-- Settings › Setup: whether this TV opens Accessibility from an app (the SHIELD doesn't). -->
+        <intent>
+            <action android:name="android.settings.ACCESSIBILITY_SETTINGS" />
+        </intent>
+        <package android:name="com.google.android.tvlauncher" />
+        <package android:name="com.google.android.youtube.tv" />
+        <package android:name="com.edde746.plezy" />
+        <package android:name="com.plexapp.android" />
+        <provider android:authorities="android.media.tv" />
+    </queries>
+
+    <!-- Lint targets Android 12+; on API 30, allowBackup is still the backup switch. -->
+    <application
+        android:name=".ActionCenterApp"
+        android:allowBackup="false"
+        tools:ignore="DataExtractionRules"
+        android:banner="@drawable/banner"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/Theme.ActionCenter">
+
+        <activity
+            android:name=".HomeActivity"
+            android:exported="true"
+            android:launchMode="singleTask"
+            android:screenOrientation="landscape"
+            tools:ignore="DiscouragedApi">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.HOME" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LEANBACK_LAUNCHER" />
+            </intent-filter>
+            <!-- Phase 0 test: does long-press Home reach us once tvlauncher is disabled? -->
+            <intent-filter>
+                <action android:name="android.intent.action.ALL_APPS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
+        </activity>
+
+        <!-- The Plex Guide's player (Phase 2.6, G5): in the home's task, so Home ends it,
+             paused and its spot saved for the home's Back-to card (Phase 7, P3).
+             singleTop: tuning in again while it's in front changes channel. It handles
+             configuration changes itself, so an HDMI mode switch never restarts playback. -->
+        <activity
+            android:name=".player.GuidePlayerActivity"
+            android:configChanges="density|keyboard|keyboardHidden|navigation|orientation|screenLayout|screenSize|smallestScreenSize|uiMode"
+            android:exported="false"
+            android:launchMode="singleTop"
+            android:screenOrientation="landscape"
+            tools:ignore="DiscouragedApi" />
+
+        <!-- HomeWatch's Configure in TV Settings › Accessibility: opens Settings › Setup, and
+             nothing else, so TV Settings may start it. -->
+        <activity
+            android:name=".setup.OpenSetupActivity"
+            android:excludeFromRecents="true"
+            android:exported="true"
+            android:noHistory="true"
+            android:theme="@android:style/Theme.NoDisplay" />
+
+        <!-- HomeWatch: the Home button on a Google TV, whose launcher has to stay on
+             (docs/install.md, "Google TV"). Off until turned on in Settings ›
+             Accessibility; only the system can bind it. -->
+        <service
+            android:name=".home.HomeWatchService"
+            android:exported="true"
+            android:label="@string/home_watch_label"
+            android:permission="android.permission.BIND_ACCESSIBILITY_SERVICE">
+            <intent-filter>
+                <action android:name="android.accessibilityservice.AccessibilityService" />
+            </intent-filter>
+            <meta-data
+                android:name="android.accessibilityservice"
+                android:resource="@xml/home_watch_service" />
+        </service>
+    </application>
+
+</manifest>

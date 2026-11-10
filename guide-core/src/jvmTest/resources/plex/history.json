@@ -1,0 +1,6 @@
+{ "MediaContainer": { "size": 2, "Metadata": [
+  { "historyKey": "/status/sessions/history/901", "key": "/library/metadata/7303", "ratingKey": "7303", "librarySectionID": "1",
+    "title": "Arrival", "type": "movie", "thumb": "/library/metadata/7303/thumb/1", "viewedAt": 1793040000, "accountID": 1, "deviceID": 3 },
+  { "historyKey": "/status/sessions/history/880", "key": "/library/metadata/7505", "ratingKey": "7505", "librarySectionID": "1",
+    "title": "Heat", "type": "movie", "viewedAt": 1761400000, "accountID": 1, "deviceID": 3 }
+] } }

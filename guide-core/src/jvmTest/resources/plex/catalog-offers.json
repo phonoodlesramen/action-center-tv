@@ -1,0 +1,4 @@
+{"MediaContainer":{"size":3,"Availability":[
+ {"platform":"netflix","title":"Netflix","offerType":"subscription","country":"US","platformUrl":"https://www.netflix.com/title/00000001"},
+ {"platform":"amazon","title":"Amazon Video","offerType":"rent","country":"US","price":3.99,"platformUrl":"https://www.amazon.com/example"},
+ {"platform":"","title":"Blank","offerType":"buy"}]}}

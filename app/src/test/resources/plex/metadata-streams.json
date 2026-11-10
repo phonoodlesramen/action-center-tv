@@ -1,0 +1,20 @@
+{ "MediaContainer": { "size": 1, "Metadata": [
+  { "ratingKey": "7303", "type": "movie", "title": "Arrival", "year": 2016, "duration": 6960000,
+    "Media": [ { "audioCodec": "truehd", "audioChannels": 8, "videoCodec": "hevc", "container": "mkv",
+      "Part": [ { "id": 9101, "key": "/library/parts/9101/1690000000/file.mkv", "size": 52000000000, "container": "mkv",
+        "Stream": [
+          { "id": 40001, "streamType": 1, "index": 0, "codec": "hevc", "default": true, "displayTitle": "4K DoVi/HDR10 (HEVC Main 10)" },
+          { "id": 40002, "streamType": 2, "index": 1, "codec": "truehd", "channels": 8, "selected": true, "default": true,
+            "language": "English", "languageTag": "en", "languageCode": "eng",
+            "displayTitle": "English (TRUEHD 7.1)", "extendedDisplayTitle": "English (TRUEHD 7.1)" },
+          { "id": 40003, "streamType": 2, "index": 2, "codec": "ac3", "channels": 2, "title": "Commentary",
+            "language": "English", "languageCode": "eng",
+            "displayTitle": "English (AC3 Stereo)", "extendedDisplayTitle": "Commentary (English AC3 Stereo)" },
+          { "id": 40004, "streamType": 3, "index": 3, "codec": "pgs", "forced": "1",
+            "language": "English", "languageCode": "eng", "displayTitle": "English Forced (PGS)" },
+          { "id": 40005, "streamType": 3, "index": 4, "codec": "eia_608", "embeddedInVideo": "1",
+            "language": "English", "languageCode": "eng", "displayTitle": "English (EIA-608)" },
+          { "id": 40006, "streamType": 3, "codec": "srt", "key": "/library/streams/40006",
+            "language": "Spanish", "languageCode": "spa", "displayTitle": "Español (SRT External)" },
+          { "id": 40007, "streamType": 4, "index": 5, "codec": "chapters" } ] } ] } ] }
+] } }

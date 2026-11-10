@@ -1,0 +1,925 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Home Prototype</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+  /* ---------- Page chrome (not part of the TV design) ---------- */
+  :root { --k: 1; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; background: #07090c; color: #dfe6ee; }
+  body { font: 14px/1.45 Roboto, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .page { display: grid; grid-template-columns: minmax(0, 1fr) 290px; gap: 20px; padding: 16px; min-height: 100vh; }
+  .stage-head h1 { font-size: 18px; margin: 0 0 4px; font-weight: 500; }
+  .stage-head p, .note { margin: 0 0 12px; color: #8d99a6; font-size: 13px; }
+  .note { margin-top: 12px; }
+  kbd { font: 12px ui-monospace, Consolas, monospace; background: #1a2129; border: 1px solid #2c3640; border-radius: 4px; padding: 0 5px; color: #dfe6ee; }
+  .tv-wrap { width: calc(960px * var(--k)); height: calc(540px * var(--k)); border-radius: 4px; overflow: hidden; outline: 10px solid #000; box-shadow: 0 24px 60px rgba(0,0,0,.7); margin: 10px auto 0; }
+  .tv-wrap:focus-visible { outline-color: #2a3540; }
+  .panel { background: #0f1419; border: 1px solid #1f2830; border-radius: 12px; padding: 14px; align-self: start; position: sticky; top: 16px; max-height: calc(100vh - 32px); overflow: auto; }
+  .panel h2 { font-size: 12px; text-transform: uppercase; letter-spacing: .08em; color: #8d99a6; margin: 14px 0 8px; font-weight: 500; }
+  .panel h2:first-child { margin-top: 0; }
+  .ctl { margin: 0 0 12px; }
+  .ctl-label { display: block; font-size: 13px; margin: 0 0 6px; color: #c9d3dd; }
+  .seg { display: flex; flex-wrap: wrap; gap: 4px; }
+  .seg button { font: inherit; font-size: 12.5px; padding: 5px 9px; border-radius: 7px; border: 1px solid #26313b; background: #151c23; color: #c9d3dd; cursor: pointer; }
+  .seg button[aria-pressed="true"] { background: #e6edf3; color: #0b0f13; border-color: #e6edf3; }
+  .seg button .rec { color: #2dd4bf; font-weight: 700; margin-left: 3px; }
+  .seg button[aria-pressed="true"] .rec { color: #0f766e; }
+  .sw { width: 26px; height: 26px; border-radius: 50%; border: 2px solid #26313b; cursor: pointer; padding: 0; }
+  .sw[aria-pressed="true"] { border-color: #fff; box-shadow: 0 0 0 2px #07090c inset; }
+  .keys { font-size: 12.5px; color: #8d99a6; margin: 0; padding-left: 16px; }
+  .keys li { margin: 0 0 3px; }
+  .panel a { color: #7dd3fc; }
+  @media (max-width: 1100px) { .page { grid-template-columns: 1fr; } .panel { position: static; max-height: none; } }
+
+  /* ---------- TV design tokens ---------- */
+  .tv {
+    --bg: #0e1318; --surface: #161d25; --surface-2: #1f2832; --surface-3: #2a3542;
+    --text: #e6edf3; --text-dim: #9aa7b4; --text-faint: #6b7886;
+    --accent-base: #4fc3f7; --accent: var(--accent-base); --accent-ink: #06202b;
+    --warm: #2b1f17; --warm-2: #3a2a1d; --warm-text: #f2d6b8;
+    --good: #81c784; --warn: #ffb74d; --bad: #e57373;
+    --radius: 12px; --radius-sm: 8px;
+    --focus-scale: 1.04;
+    --focus-shadow: 0 0 0 2.5px var(--accent), 0 10px 26px rgba(0,0,0,.5);
+    --btn-focus-bg: var(--accent); --btn-focus-ink: var(--accent-ink);
+    --card-bg: var(--surface); --card-border: rgba(255,255,255,.04);
+    width: 960px; height: 540px; transform: scale(var(--k)); transform-origin: 0 0;
+    position: relative; overflow: hidden; background: var(--bg); color: var(--text);
+    font-family: Roboto, system-ui, sans-serif; -webkit-font-smoothing: antialiased; user-select: none;
+  }
+  .tv.late { --accent: color-mix(in srgb, var(--accent-base) 62%, #4a5563); }
+  .tv.focus-glow { --focus-scale: 1.08; --focus-shadow: 0 0 0 1px rgba(255,255,255,.55), 0 0 26px color-mix(in srgb, var(--accent) 60%, transparent), 0 12px 28px rgba(0,0,0,.5); --btn-focus-bg: #f1f5f9; --btn-focus-ink: #0b0f13; }
+  .tv.focus-flat { --focus-scale: 1; --focus-shadow: 0 0 0 3px var(--accent); }
+  .tv.dir-ambient { --card-bg: rgba(12,17,24,.52); --card-border: rgba(255,255,255,.08); --bg: #0b0f14; }
+  .tv.dir-art { --radius: 10px; }
+  .tv.kid { --radius: 18px; --radius-sm: 12px; }
+
+  /* TV type scale (tv-material tokens, sp = px here) */
+  .t-dl { font-size: 57px; line-height: 64px; letter-spacing: -.2px; }
+  .t-ds { font-size: 36px; line-height: 44px; }
+  .t-hl { font-size: 32px; line-height: 40px; }
+  .t-hm { font-size: 28px; line-height: 36px; }
+  .t-hs { font-size: 24px; line-height: 32px; }
+  .t-tl { font-size: 22px; line-height: 28px; }
+  .t-tm { font-size: 16px; line-height: 24px; font-weight: 500; letter-spacing: .2px; }
+  .t-ts { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: .1px; }
+  .t-bl { font-size: 16px; line-height: 24px; letter-spacing: .5px; }
+  .t-bm { font-size: 14px; line-height: 20px; letter-spacing: .2px; }
+  .t-bs { font-size: 12px; line-height: 16px; letter-spacing: .2px; }
+  .t-ll { font-size: 14px; line-height: 20px; font-weight: 500; letter-spacing: .1px; }
+  .t-lm { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: .5px; }
+  .dim { color: var(--text-dim); } .faint { color: var(--text-faint); }
+  .eyebrow { font-size: 12px; line-height: 16px; font-weight: 500; letter-spacing: 1.2px; text-transform: uppercase; color: var(--text-dim); }
+  .ellip { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .ic { width: 1em; height: 1em; display: inline-block; vertical-align: -0.14em; fill: currentColor; flex: none; }
+
+  /* ---------- Layers ---------- */
+  .ambient { position: absolute; inset: -60px; background-size: cover; filter: blur(30px) saturate(1.35) brightness(1.15); opacity: 0; transition: opacity .45s ease; }
+  .ambient.on { opacity: 1; }
+  .ambient-scrim { position: absolute; inset: 0; background: radial-gradient(ellipse at 35% 25%, rgba(8,11,15,.25), rgba(8,11,15,.72) 78%); opacity: 0; transition: opacity .45s; }
+  .dir-ambient .ambient-scrim { opacity: 1; }
+
+  .content { position: absolute; left: 48px; top: 27px; width: 864px; height: 486px; display: grid;
+    grid-template-columns: 497.33px 350.67px; grid-template-rows: 44px 236px 174px; gap: 16px; }
+  .kid .content { grid-template-rows: 44px 214px 196px; }
+
+  /* ---------- Focus ---------- */
+  .f { transition: transform .15s ease-out, box-shadow .15s ease-out, background-color .15s, color .15s; outline: none; }
+  .f.is-focused { transform: scale(var(--focus-scale)); box-shadow: var(--focus-shadow); z-index: 5; position: relative; }
+  @media (prefers-reduced-motion: reduce) { .f, .ambient, .sheet, .overlay { transition: none !important; } }
+
+  /* ---------- Top bar ---------- */
+  .topbar { grid-column: 1 / -1; display: flex; align-items: center; gap: 16px; }
+  .clock { display: flex; align-items: baseline; gap: 6px; }
+  .greet { flex: 1; min-width: 0; }
+  .chip { display: inline-flex; align-items: center; gap: 6px; height: 28px; padding: 0 12px; border-radius: 999px; background: var(--surface-2); color: var(--text); }
+  .dir-ambient .chip { background: rgba(255,255,255,.08); }
+  .chip .dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); }
+  .meta-item { display: inline-flex; align-items: center; gap: 6px; color: var(--text-dim); }
+  .status-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--good); }
+  .status-dot.off { background: var(--bad); } .status-dot.none { background: var(--text-faint); }
+  .avatar { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-weight: 700; font-size: 15px; color: #0b0f13; flex: none; }
+  .avatar.small { width: 28px; height: 28px; font-size: 12px; opacity: .85; }
+  .gear { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: var(--surface-2); color: var(--text-dim); font-size: 18px; }
+  .avatars { display: flex; gap: 8px; align-items: center; }
+
+  /* ---------- Cards ---------- */
+  .card { background: var(--card-bg); border: 1px solid var(--card-border); border-radius: var(--radius); position: relative; overflow: hidden; }
+  .panel-focus { transition: box-shadow .15s; }
+  .panel-focus.has-focus { box-shadow: 0 0 0 1px rgba(255,255,255,.10); }
+
+  .btn { display: inline-flex; align-items: center; gap: 6px; height: 36px; padding: 0 16px; border-radius: 999px; background: rgba(255,255,255,.10); color: var(--text); white-space: nowrap; }
+  .btn.sm { height: 30px; padding: 0 12px; font-size: 13px; }
+  .btn.primary { background: rgba(255,255,255,.16); }
+  .btn.is-focused { background: var(--btn-focus-bg); color: var(--btn-focus-ink); box-shadow: 0 6px 18px rgba(0,0,0,.45); }
+  .focus-flat .btn.is-focused { box-shadow: 0 0 0 3px var(--accent); }
+  .btns { display: flex; gap: 8px; }
+
+  /* Hero */
+  .hero { grid-row: 2; grid-column: 1; }
+  .hero-art { position: absolute; inset: 0 0 0 30%; background-size: cover; }
+  .hero-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, var(--hero-fade, var(--surface)) 0%, color-mix(in srgb, var(--hero-fade, var(--surface)) 70%, transparent) 30%, transparent 70%), linear-gradient(0deg, color-mix(in srgb, var(--hero-fade, var(--surface)) 55%, transparent), transparent 45%); }
+  .dir-ambient .hero { --hero-fade: #121a23; }
+  .dir-art .hero-art { inset: 0; }
+  .dir-art .hero-art::after { background: linear-gradient(90deg, rgba(8,11,15,.92) 0%, rgba(8,11,15,.7) 40%, rgba(8,11,15,.1) 80%), linear-gradient(0deg, rgba(8,11,15,.6), transparent 50%); }
+  .late .hero-art { filter: brightness(.75) saturate(.8); }
+  .hero-body { position: absolute; left: 20px; top: 18px; bottom: 18px; width: 356px; display: flex; flex-direction: column; }
+  .hero-title { margin: 6px 0 2px; }
+  .dir-art .hero-title { font-weight: 700; }
+  .reason { display: flex; gap: 8px; align-items: flex-start; margin-top: 10px; }
+  .reason .ic { color: var(--accent); margin-top: 3px; font-size: 16px; }
+  .hero .spacer { flex: 1; }
+  .hero .note { margin-bottom: 8px; }
+  .hero.setup .code { font-size: 44px; line-height: 52px; font-weight: 700; letter-spacing: 10px; color: var(--accent); margin: 8px 0 4px; }
+
+  /* Right column (adult) */
+  .col-right { grid-row: 2; grid-column: 2; display: grid; grid-template-rows: 124px 96px; gap: 16px; }
+  .throwback { background: linear-gradient(135deg, var(--warm-2), var(--warm) 60%, var(--card-bg)); }
+  .dir-ambient .throwback { background: linear-gradient(135deg, rgba(74,52,34,.75), rgba(43,31,23,.6)); }
+  .throwback .tb-art { position: absolute; inset: 0 0 0 45%; background-size: cover; filter: sepia(.55) saturate(1.1) brightness(.8); opacity: 0; }
+  .dir-art .throwback .tb-art { opacity: 1; }
+  .throwback .tb-art::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, #2e2118, rgba(46,33,24,.2)); }
+  .tb-body { position: absolute; inset: 12px 14px; display: flex; flex-direction: column; }
+  .throwback .eyebrow { color: #e7b98a; }
+  .throwback .line { color: var(--warm-text); opacity: .85; margin-top: 2px; }
+  .throwback .btns { margin-top: auto; }
+  .throwback .btn { background: rgba(255,220,180,.12); color: #fbe7d3; }
+  .throwback .btn.is-focused { background: #f6c08f; color: #2b1a0d; }
+  .focus-glow .throwback .btn.is-focused { background: #fff3e6; }
+
+  .quick { padding: 10px 12px 10px 14px; display: flex; flex-direction: column; }
+  .quick-items { display: flex; flex-direction: column; gap: 4px; margin-top: 6px; }
+  .qw { height: 28px; border-radius: 8px; background: rgba(255,255,255,.05); padding: 0 10px 0 8px; display: flex; align-items: center; gap: 8px; min-width: 0; }
+  .qw .thumb { width: 36px; height: 20px; border-radius: 4px; background-size: cover; flex: none; display: none; }
+  .dir-art .qw .thumb { display: block; }
+  .qw .t { flex: 1; min-width: 0; }
+  .qw.is-focused { background-color: var(--surface-3); }
+  .focus-glow .qw.is-focused, .focus-flat .qw.is-focused { background-color: var(--surface-3); }
+
+  /* Up Next */
+  .upnext { grid-row: 3; grid-column: 1; display: flex; flex-direction: column; }
+  .un-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-top: 8px; }
+  .kid .un-cards { grid-template-columns: repeat(2, 1fr); }
+  .un { min-width: 0; }
+  .still { aspect-ratio: 16 / 9; border-radius: var(--radius-sm); background-size: cover; position: relative; overflow: hidden; }
+  .still .prog { position: absolute; left: 0; right: 0; bottom: 0; height: 4px; background: rgba(255,255,255,.22); }
+  .still .prog span { display: block; height: 100%; background: var(--accent); }
+  .still .left-chip { position: absolute; right: 6px; top: 6px; background: rgba(8,11,15,.78); border-radius: 6px; padding: 1px 6px; }
+  .un .cap { margin-top: 6px; }
+  .un.f.is-focused { box-shadow: none; }
+  .un.f.is-focused .still { box-shadow: var(--focus-shadow); }
+  .kid .un .cap { display: flex; justify-content: space-between; }
+
+  /* Launchpad */
+  .launch { grid-row: 3; grid-column: 2; display: flex; flex-direction: column; }
+  .tiles { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-top: 8px; }
+  .kid .tiles { grid-template-columns: repeat(2, 1fr); }
+  .tile { aspect-ratio: 16 / 9; border-radius: var(--radius-sm); display: grid; place-items: center; font-weight: 700; font-size: 15px; letter-spacing: .2px; overflow: hidden; }
+  .kid .tile { aspect-ratio: auto; height: 74px; font-size: 18px; }
+  .tile.all { background: var(--surface-2); color: var(--text); font-weight: 500; font-size: 13px; gap: 2px; }
+  .dir-ambient .tile.all { background: rgba(255,255,255,.08); }
+  .tiles.icons .tile { aspect-ratio: auto; height: 61px; background: transparent !important; display: flex; flex-direction: column; gap: 4px; font-weight: 500; font-size: 12px; color: var(--text-dim) !important; }
+  .tiles.icons .tile .appicon { width: 36px; height: 36px; border-radius: 10px; display: grid; place-items: center; font-weight: 700; font-size: 17px; }
+  .tiles.icons .tile.is-focused { background: var(--surface-2) !important; color: var(--text) !important; }
+  .kid .tiles.icons .tile { height: 74px; }
+
+  /* Kid right column */
+  .kid-side { grid-row: 2; grid-column: 2; }
+  .kid-side .tb-body { inset: 16px 18px; }
+  .bedtime { background: linear-gradient(160deg, #1d2552, #141a33 60%, var(--card-bg)); }
+  .bedtime .moon { position: absolute; right: 18px; top: 16px; width: 54px; height: 54px; border-radius: 50%; box-shadow: inset -14px 6px 0 0 #f4e6b0; transform: rotate(-20deg); }
+  .bedtime .btn { background: rgba(200,210,255,.14); }
+  .bedtime .btn.is-focused { background: #dbe2ff; color: #141a33; }
+
+  /* Placeholders (first run) */
+  .ph { border: 1.5px dashed rgba(255,255,255,.14); background: transparent !important; display: grid; place-items: center; text-align: center; color: var(--text-faint); padding: 10px; }
+
+  /* ---------- Overlays ---------- */
+  .overlay { position: absolute; inset: 0; z-index: 20; }
+  .scrim { position: absolute; inset: 0; background: rgba(5,7,10,.62); }
+  .sheet { position: absolute; top: 0; right: 0; bottom: 0; width: 336px; background: #121920; border-left: 1px solid rgba(255,255,255,.06); padding: 27px 28px; display: flex; flex-direction: column; animation: slidein .2s ease-out; }
+  @keyframes slidein { from { transform: translateX(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+  .popup { position: absolute; width: 240px; background: #182029; border-radius: 12px; padding: 10px; box-shadow: 0 18px 50px rgba(0,0,0,.6); animation: pop .15s ease-out; }
+  @keyframes pop { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+  .row-item { height: 44px; border-radius: 10px; display: flex; align-items: center; gap: 12px; padding: 0 14px; color: var(--text); }
+  .row-item .ic { font-size: 18px; color: var(--text-dim); }
+  .row-item.is-focused { background: var(--btn-focus-bg); color: var(--btn-focus-ink); box-shadow: none; transform: none; }
+  .row-item.is-focused .ic { color: inherit; }
+  .center-box { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); text-align: center; }
+  .who { display: flex; gap: 36px; justify-content: center; margin-top: 28px; }
+  .who .person { display: flex; flex-direction: column; align-items: center; gap: 10px; padding: 8px; border-radius: 16px; }
+  .who .person.is-focused { box-shadow: none; transform: scale(1.08); }
+  .who .person.is-focused .avatar { box-shadow: 0 0 0 3px var(--bg), 0 0 0 6px var(--text); }
+  .who .avatar { width: 96px; height: 96px; font-size: 36px; transition: box-shadow .15s; }
+  .who-actions { margin-top: 26px; display: flex; justify-content: center; }
+  .pin-dots { display: flex; gap: 14px; justify-content: center; margin: 16px 0 22px; }
+  .pin-dots span { width: 16px; height: 16px; border-radius: 50%; border: 2px solid var(--text-dim); }
+  .pin-dots span.on { background: var(--text); border-color: var(--text); }
+  .keypad { display: grid; grid-template-columns: repeat(3, 64px); gap: 10px; justify-content: center; }
+  .key { height: 52px; border-radius: 12px; background: var(--surface-2); display: grid; place-items: center; font-size: 22px; }
+  .key.is-focused { background: var(--btn-focus-bg); color: var(--btn-focus-ink); }
+  .settings { position: absolute; inset: 0; background: var(--bg); padding: 27px 48px; display: grid; grid-template-columns: 260px 1fr; gap: 32px; }
+  .settings .list { display: flex; flex-direction: column; gap: 4px; margin-top: 18px; }
+  .settings .detail { padding-top: 64px; }
+
+  /* All apps */
+  .allapps { position: absolute; inset: 0; background: var(--bg); }
+  .allapps .scroller { position: absolute; inset: 0; overflow: hidden; }
+  .allapps .inner { padding: 27px 48px 40px; transition: transform .2s ease-out; }
+  .allapps .grid { display: grid; grid-template-columns: repeat(5, 160px); gap: 16px; margin: 10px 0 22px; }
+  .allapps .tile { width: 160px; height: 90px; aspect-ratio: auto; font-size: 18px; }
+
+  .toast { position: absolute; left: 50%; bottom: 36px; transform: translateX(-50%); background: #e6edf3; color: #0b0f13; padding: 10px 18px; border-radius: 999px; font-size: 14px; font-weight: 500; z-index: 40; box-shadow: 0 10px 30px rgba(0,0,0,.5); animation: pop .15s ease-out; white-space: nowrap; }
+</style>
+</head>
+<body>
+<div class="page">
+  <main>
+    <div class="stage-head">
+      <h1>Action Center: home screen prototype</h1>
+      <p>
+        <kbd>←↑→↓</kbd> D-pad &nbsp; <kbd>Enter</kbd> OK (hold for quick actions) &nbsp; <kbd>M</kbd> Menu &nbsp;
+        <kbd>Esc</kbd>/<kbd>Backspace</kbd> Back &nbsp; <kbd>H</kbd> Home. Click the TV if keys stop responding.
+      </p>
+    </div>
+    <div class="tv-wrap" id="tvWrap" tabindex="0" aria-label="TV screen prototype"><div class="tv" id="tv"></div></div>
+    <p class="note">
+      Drawn at the Shield's 960×540 dp canvas (1 px here = 1 dp, shown at 2× on the TV) with tv-material's type scale and the brief's
+      starting geometry. Artwork is placeholder gradients, and app tiles stand in for each app's real banner. Names and titles are sample data.
+    </p>
+  </main>
+  <aside class="panel" id="panel" aria-label="Prototype controls"></aside>
+</div>
+
+<script>
+/* ======================= Data ======================= */
+const ART = {
+  severance: ['#1d4e6b', '#0a1a26', 'grid'], oceans: ['#7a4a14', '#1d1208', 'sun'], arrival: ['#3b4a5c', '#0f141b', 'rings'],
+  heat: ['#284a6e', '#0b1522', 'stripes'], amelie: ['#6e2a1c', '#241008', 'dots'], prestige: ['#3c2a4f', '#120c19', 'rings'],
+  bear: ['#5a3a1e', '#1a120b', 'stripes'], abbott: ['#2f6a5a', '#0d211b', 'dots'], paperman: ['#4a4a52', '#141418', 'waves'],
+  slow: ['#3e4a2e', '#12170d', 'peaks'], bake: ['#7a5a3a', '#251a10', 'dots'], shogun: ['#6b1d1d', '#1c0707', 'waves'],
+  paddington: ['#2b5c8a', '#0d1d2d', 'sun'], wallace: ['#6a6a2a', '#1e1e0b', 'rings'], coco: ['#6a2e6a', '#1d0c1d', 'dots'],
+  bluey: ['#3a7bd5', '#11284a', 'waves'], shaun: ['#4f8a3a', '#152611', 'peaks'], taskmaster: ['#8a6a1d', '#261d07', 'stripes'],
+  shadows: ['#3a1f3f', '#0f0811', 'rings'], spiderverse: ['#8a1d5a', '#1d0718', 'grid'], avatar: ['#1d6a8a', '#071d26', 'waves'],
+  hilda: ['#2a6a7a', '#0a1d22', 'peaks'], sleepy: ['#2c3f7a', '#0b1024', 'rings'],
+};
+const MOTIF = {
+  rings: 'radial-gradient(circle at 72% 40%, transparent 0 16%, rgba(255,255,255,.12) 16% 17%, transparent 17% 29%, rgba(255,255,255,.08) 29% 30%, transparent 30%)',
+  stripes: 'repeating-linear-gradient(115deg, rgba(255,255,255,.07) 0 6px, transparent 6px 24px)',
+  sun: 'radial-gradient(circle at 72% 38%, rgba(255,230,180,.55) 0 8%, rgba(255,200,120,.18) 8% 22%, transparent 42%)',
+  grid: 'linear-gradient(rgba(255,255,255,.07) 1px, transparent 1px) 0 0 / 18px 18px, linear-gradient(90deg, rgba(255,255,255,.07) 1px, transparent 1px) 0 0 / 18px 18px',
+  waves: 'radial-gradient(ellipse at 55% 125%, rgba(255,255,255,.16) 0 32%, transparent 33%), radial-gradient(ellipse at 25% 135%, rgba(255,255,255,.09) 0 42%, transparent 43%)',
+  dots: 'radial-gradient(rgba(255,255,255,.13) 1.5px, transparent 2px) 0 0 / 14px 14px',
+  peaks: 'linear-gradient(160deg, transparent 56%, rgba(0,0,0,.35) 56%), linear-gradient(22deg, transparent 62%, rgba(255,255,255,.09) 62%)',
+};
+function art(id) {
+  const [a, b, m] = ART[id] || ['#334155', '#0f172a', 'dots'];
+  return `${MOTIF[m]}, linear-gradient(135deg, ${a}, ${b})`;
+}
+
+const APPS = {
+  plezy: { name: 'Plezy', bg: '#2b1d4f', fg: '#e9ddff' }, plex: { name: 'Plex', bg: '#1f1f1f', fg: '#e5a00d' },
+  youtube: { name: 'YouTube', bg: '#c4302b', fg: '#ffffff' }, netflix: { name: 'NETFLIX', bg: '#000000', fg: '#e50914' },
+  spotify: { name: 'Spotify', bg: '#121212', fg: '#1ed760' }, disney: { name: 'Disney+', bg: '#0b1a4a', fg: '#ffffff' },
+  prime: { name: 'prime video', bg: '#0f2a3d', fg: '#7fd3ff' }, ytkids: { name: 'YT Kids', bg: '#ff4e45', fg: '#ffffff' },
+  pbskids: { name: 'PBS KIDS', bg: '#2638c4', fg: '#ffffff' }, kodi: { name: 'Kodi', bg: '#17b2e7', fg: '#ffffff' },
+  twitch: { name: 'Twitch', bg: '#6441a5', fg: '#ffffff' }, hulu: { name: 'hulu', bg: '#0b0c0f', fg: '#1ce783' },
+  max: { name: 'max', bg: '#0026ff', fg: '#ffffff' }, peacock: { name: 'peacock', bg: '#000000', fg: '#ffffff' },
+  pluto: { name: 'Pluto TV', bg: '#1c1c1c', fg: '#fff200' }, steam: { name: 'Steam Link', bg: '#171a21', fg: '#66c0f4' },
+  geforce: { name: 'GeForce NOW', bg: '#0b0b0b', fg: '#76b900' }, vlc: { name: 'VLC', bg: '#f08a00', fg: '#ffffff' },
+  apple: { name: 'Apple TV', bg: '#111111', fg: '#ffffff' }, tubi: { name: 'tubi', bg: '#2d0a4e', fg: '#ffff13' },
+  minecraft: { name: 'Minecraft', bg: '#3c8527', fg: '#ffffff' },
+};
+
+const PEOPLE = {
+  alex: { name: 'Alex', initial: 'A', color: '#4fc3f7', kid: false },
+  maya: { name: 'Maya', initial: 'M', color: '#ff8a65', kid: true, age: 9 },
+  leo: { name: 'Leo', initial: 'L', color: '#aed581', kid: true, age: 7 },
+};
+
+const SCENES = {
+  adult: {
+    weeknight: {
+      time: '8:41', ampm: 'PM', greeting: 'Good evening, Alex', chip: 'Weeknight · Wind-down', weather: ['cloud', '54°'], cutoff: '10:30',
+      heroes: [
+        { id: 'severance', title: 'Severance', meta: 'Season 2 · 2 episodes left · TV-MA', reason: "You're 2 episodes from the end of the season", play: 'Play S2E9' },
+        { id: 'oceans', title: "Ocean's Eleven", meta: '2001 · 1h 56m · PG-13', reason: 'Because you finished three heist films this month', play: 'Play' },
+        { id: 'arrival', title: 'Arrival', meta: '2016 · 1h 56m · PG-13', reason: 'Because you rated Interstellar 5 stars', play: 'Play' },
+      ],
+      throwbacks: [
+        { id: 'heat', line: 'One year ago today you watched', title: 'Heat', meta: '1995 · 2h 50m' },
+        { id: 'amelie', line: 'Released 25 years ago · you watched it twice', title: 'Amélie', meta: '2001 · 2h 2m' },
+        { id: 'prestige', line: 'You loved it, then never went back', title: 'The Prestige', meta: '2006 · 2h 10m' },
+      ],
+      quick: [{ id: 'bear', title: 'The Bear', meta: 'S2E3 · 26m' }, { id: 'abbott', title: 'Abbott Elementary', meta: 'S3E4 · 22m' }, { id: 'paperman', title: 'Paperman', meta: 'Short · 7m' }],
+      upnext: [{ id: 'slow', title: 'Slow Horses', ep: 'S4E2', left: '41m left', p: .35 }, { id: 'shogun', title: 'Shōgun', ep: 'S1E7', left: '12m left', p: .84 }, { id: 'bake', title: 'Great British Bake Off', ep: 'S12E3', left: '52m left', p: .08 }],
+      apps: ['plezy', 'youtube', 'netflix', 'plex', 'spotify'],
+    },
+    weekend: {
+      time: '9:32', ampm: 'AM', greeting: 'Good morning, Alex', chip: 'Weekend morning · Family', weather: ['sun', '61°'], cutoff: '11:00',
+      heroes: [
+        { id: 'paddington', title: 'Paddington 2', meta: '2017 · 1h 43m · PG', reason: 'A family favourite: everyone rated it 5 stars', play: 'Play' },
+        { id: 'wallace', title: 'Wallace & Gromit: Vengeance Most Fowl', meta: '2024 · 1h 19m · PG', reason: "New this month, and you've seen every Wallace & Gromit", play: 'Play' },
+      ],
+      throwbacks: [{ id: 'coco', line: 'Two years ago this weekend, all four of you watched', title: 'Coco', meta: '2017 · 1h 45m' }, { id: 'heat', line: 'One year ago today you watched', title: 'Heat', meta: '1995 · 2h 50m' }],
+      quick: [{ id: 'bluey', title: 'Bluey', meta: 'S3E12 · 7m' }, { id: 'shaun', title: 'Shaun the Sheep', meta: 'S6E2 · 7m' }, { id: 'abbott', title: 'Abbott Elementary', meta: 'S3E4 · 22m' }],
+      upnext: [{ id: 'slow', title: 'Slow Horses', ep: 'S4E2', left: '41m left', p: .35 }, { id: 'bake', title: 'Great British Bake Off', ep: 'S12E3', left: '52m left', p: .08 }, { id: 'shogun', title: 'Shōgun', ep: 'S1E7', left: '12m left', p: .84 }],
+      apps: ['plezy', 'disney', 'youtube', 'spotify', 'netflix'],
+    },
+    late: {
+      time: '11:48', ampm: 'PM', greeting: 'Good evening, Alex', chip: 'Late night', weather: ['moon', '47°'], cutoff: '12:30',
+      heroes: [
+        { id: 'taskmaster', title: 'Taskmaster', meta: 'S15E3 · 46m · TV-14', reason: 'Short and light: after 11 you usually pick comedy', play: 'Play S15E3' },
+        { id: 'shadows', title: 'What We Do in the Shadows', meta: 'S5E2 · 22m · TV-MA', reason: "Fits before 12:15, and you're halfway through season 5", play: 'Play S5E2' },
+      ],
+      throwbacks: [{ id: 'prestige', line: 'You loved it, then never went back', title: 'The Prestige', meta: '2006 · 2h 10m' }],
+      quick: [{ id: 'paperman', title: 'Paperman', meta: 'Short · 7m' }, { id: 'abbott', title: 'Abbott Elementary', meta: 'S3E4 · 22m' }, { id: 'bear', title: 'The Bear', meta: 'S2E3 · 26m' }],
+      upnext: [{ id: 'shogun', title: 'Shōgun', ep: 'S1E7', left: '12m left', p: .84 }, { id: 'slow', title: 'Slow Horses', ep: 'S4E2', left: '41m left', p: .35 }, { id: 'bake', title: 'Great British Bake Off', ep: 'S12E3', left: '52m left', p: .08 }],
+      apps: ['plezy', 'youtube', 'spotify', 'netflix', 'plex'],
+    },
+  },
+  kid: {
+    weeknight: {
+      time: '8:41', ampm: 'PM', greeting: 'Hi {name}!', chip: 'School night · bedtime 9:00', weather: ['cloud', '54°'],
+      heroes: [
+        { id: 'sleepy', title: 'Bluey: Sleepytime', meta: 'S2E26 · 7m · TV-Y', reason: "Fits before bedtime, and it's your favourite", play: 'Play' },
+        { id: 'shaun', title: 'Shaun the Sheep', meta: 'S6E2 · 7m · TV-Y', reason: 'Short and silly, just right for now', play: 'Play' },
+      ],
+      side: { kind: 'bedtime', big: '19 minutes', line: 'until bedtime at 9:00', sub: 'Calm picks only from now on', action: 'Wind down' },
+      upnext: [{ id: 'avatar', title: 'Avatar: The Last Airbender', ep: 'S1E8', left: '14m left', p: .45 }, { id: 'hilda', title: 'Hilda', ep: 'S2E3', left: '20m left', p: .12 }],
+      apps: ['plezy', 'ytkids', 'disney', 'pbskids'],
+    },
+    weekend: {
+      time: '9:32', ampm: 'AM', greeting: 'Good morning, {name}!', chip: 'Saturday', weather: ['sun', '61°'],
+      heroes: [
+        { id: 'spiderverse', title: 'Spider-Man: Into the Spider-Verse', meta: '2018 · 1h 57m · PG', reason: 'Because you loved Puss in Boots: The Last Wish', play: 'Play' },
+        { id: 'wallace', title: 'Wallace & Gromit: Vengeance Most Fowl', meta: '2024 · 1h 19m · PG', reason: 'New, and very silly', play: 'Play' },
+      ],
+      side: { kind: 'remember', eyebrow: 'Remember when', line: 'A year ago you watched', title: 'Paddington 2', sub: 'three times in one week!', id: 'paddington', action: 'Watch again' },
+      upnext: [{ id: 'avatar', title: 'Avatar: The Last Airbender', ep: 'S1E8', left: '14m left', p: .45 }, { id: 'hilda', title: 'Hilda', ep: 'S2E3', left: '20m left', p: .12 }],
+      apps: ['plezy', 'disney', 'ytkids', 'minecraft'],
+    },
+    late: {
+      time: '11:48', ampm: 'PM', greeting: "It's late, {name}", chip: 'Past bedtime', weather: ['moon', '47°'],
+      heroes: [{ id: 'sleepy', title: 'Bluey: Sleepytime', meta: 'S2E26 · 7m · TV-Y', reason: 'A calm one, then off to bed', play: 'Play' }],
+      side: { kind: 'bedtime', big: 'Past bedtime', line: 'It was 9:00', sub: 'Ask a grown-up for more time', action: 'Ask a grown-up' },
+      upnext: [{ id: 'avatar', title: 'Avatar: The Last Airbender', ep: 'S1E8', left: '14m left', p: .45 }, { id: 'hilda', title: 'Hilda', ep: 'S2E3', left: '20m left', p: .12 }],
+      apps: ['plezy', 'ytkids', 'disney', 'pbskids'],
+    },
+  },
+};
+const ALL_APPS = ['apple', 'disney', 'geforce', 'hulu', 'kodi', 'max', 'minecraft', 'netflix', 'peacock', 'plex', 'plezy', 'pluto', 'prime', 'spotify', 'steam', 'tubi', 'twitch', 'vlc', 'youtube', 'ytkids'];
+const KID_ALLOW = ['disney', 'minecraft', 'pbskids', 'plezy', 'ytkids'];
+
+const ICON = {
+  play: '<svg class="ic" viewBox="0 0 24 24"><path d="M8 5.5v13l10.5-6.5z"/></svg>',
+  spark: '<svg class="ic" viewBox="0 0 24 24"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9zM19 15l.9 2.6 2.6.9-2.6.9L19 22l-.9-2.6-2.6-.9 2.6-.9z"/></svg>',
+  cloud: '<svg class="ic" viewBox="0 0 24 24"><path d="M19 18H7a5 5 0 1 1 .9-9.9A6 6 0 0 1 19.4 10 4 4 0 0 1 19 18z"/></svg>',
+  sun: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="12" r="4.5"/><path d="M12 1.5v3M12 19.5v3M1.5 12h3M19.5 12h3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>',
+  moon: '<svg class="ic" viewBox="0 0 24 24"><path d="M20 15.5A8.5 8.5 0 0 1 8.5 4a8.5 8.5 0 1 0 11.5 11.5z"/></svg>',
+  gear: '<svg class="ic" viewBox="0 0 24 24"><path d="M19.4 13a7.7 7.7 0 0 0 0-2l2-1.6-2-3.4-2.4 1a7.4 7.4 0 0 0-1.7-1L15 3.5h-4L10.7 6a7.4 7.4 0 0 0-1.7 1l-2.4-1-2 3.4L4.6 11a7.7 7.7 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.4 7.4 0 0 0 1.7 1l.3 2.5h4l.3-2.5a7.4 7.4 0 0 0 1.7-1l2.4 1 2-3.4zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>',
+  grid: '<svg class="ic" viewBox="0 0 24 24"><path d="M4 4h4v4H4zM10 4h4v4h-4zM16 4h4v4h-4zM4 10h4v4H4zM10 10h4v4h-4zM16 10h4v4h-4zM4 16h4v4H4zM10 16h4v4h-4zM16 16h4v4h-4z"/></svg>',
+  restart: '<svg class="ic" viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a5 5 0 1 1-5 5H5a7 7 0 1 0 7-7z"/></svg>',
+  check: '<svg class="ic" viewBox="0 0 24 24"><path d="M9.5 16.2 5.3 12l-1.4 1.4 5.6 5.6 11-11-1.4-1.4z"/></svg>',
+  hide: '<svg class="ic" viewBox="0 0 24 24"><path d="M12 6c4.5 0 8.3 2.9 10 6-.7 1.3-1.7 2.5-2.9 3.5L17.6 14A4.2 4.2 0 0 0 12 8.4L10.1 6.5C10.7 6.2 11.3 6 12 6zM3.3 3.3 2 4.6l2.6 2.6C3.4 8.2 2.5 9.4 2 12c1.7 3.1 5.5 6 10 6 1.6 0 3.1-.4 4.5-1l2.9 2.9 1.3-1.3z"/></svg>',
+  info: '<svg class="ic" viewBox="0 0 24 24"><path d="M11 10h2v8h-2zM11 6h2v2h-2z"/><circle cx="12" cy="12" r="10" fill="none" stroke="currentColor" stroke-width="2"/></svg>',
+  move: '<svg class="ic" viewBox="0 0 24 24"><path d="M12 2l3.5 3.5H13v5h5V8l3.5 4-3.5 4v-2.5h-5v5h2.5L12 22l-3.5-3.5H11v-5H6V16l-3.5-4L6 8v2.5h5v-5H8.5z"/></svg>',
+  person: '<svg class="ic" viewBox="0 0 24 24"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0z"/></svg>',
+  tv: '<svg class="ic" viewBox="0 0 24 24"><path d="M3 5h18v12H3zM8 20h8v1.5H8z"/></svg>',
+};
+
+/* ======================= State ======================= */
+// Defaults are the picks the design settled on.
+const DEFAULTS = { direction: 'art', focus: 'ring', accent: '#4fc3f7', tiles: 'banner', sheet: 'side', settings: 'gear', profile: 'alex', context: 'weeknight', status: 'normal' };
+const SAVE_KEY = 'sac-home-prototype-v2';
+let opts = { ...DEFAULTS };
+try { opts = { ...DEFAULTS, ...(JSON.parse(localStorage.getItem(SAVE_KEY) || '{}') || {}) }; } catch (e) {}
+function saveOpts() { try { localStorage.setItem(SAVE_KEY, JSON.stringify(opts)); } catch (e) {} }
+
+const ui = {
+  screen: 'home',          // home | allapps
+  overlay: null,           // null | {type, ...}
+  focus: 'hero-play',
+  groupMemory: {},
+  heroIndex: 0, throwIndex: 0,
+  undo: null,              // { until, skipped }
+  pin: '',
+  toast: null,
+};
+let toastTimer = null, undoTimer = null;
+
+const ACCENTS = [['#4fc3f7', 'Cyan'], ['#ffb74d', 'Amber'], ['#b39ddb', 'Violet'], ['#81c784', 'Green'], ['#ff8a65', 'Coral']];
+
+const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+const person = () => PEOPLE[opts.profile];
+const isKid = () => person().kid;
+function scene() {
+  const s = SCENES[isKid() ? 'kid' : 'adult'][opts.context];
+  const name = person().name;
+  return { ...s, greeting: s.greeting.replace('{name}', name) };
+}
+
+/* ======================= Rendering ======================= */
+const tv = document.getElementById('tv');
+
+function attrs(fid, group, act, extra = '') {
+  return `data-fid="${fid}" data-group="${group}"${act ? ` data-act="${esc(act)}"` : ''} ${extra}`;
+}
+function banner(appId, fid, group, cls = '') {
+  const a = APPS[appId];
+  if (opts.tiles === 'icon') {
+    return `<div class="tile f ${cls}" ${attrs(fid, group, 'open:' + appId, `data-qa="app:${appId}"`)}>` +
+      `<span class="appicon" style="background:${a.bg};color:${a.fg}">${esc(a.name[0].toUpperCase())}</span><span class="ellip" style="max-width:100%">${esc(a.name)}</span></div>`;
+  }
+  return `<div class="tile f ${cls}" style="background:${a.bg};color:${a.fg}" ${attrs(fid, group, 'open:' + appId, `data-qa="app:${appId}"`)}>${esc(a.name)}</div>`;
+}
+
+function topbar(d) {
+  const p = person();
+  const status = opts.status === 'first' ? ['none', 'Plex not connected'] : opts.status === 'offline' ? ['off', 'Plex offline'] : ['', 'Plex'];
+  const others = Object.entries(PEOPLE).filter(([k]) => k !== opts.profile);
+  const quickSwitch = opts.context === 'weekend' && !isKid()
+    ? `<div class="avatars">${others.map(([k, o]) => `<div class="avatar small f" style="background:${o.color}" ${attrs('qs-' + k, 'top', 'switch:' + k)} title="${o.name}">${o.initial}</div>`).join('')}</div>`
+    : '';
+  const gear = opts.settings === 'gear' ? `<div class="gear f" ${attrs('gear', 'top', 'settings')}>${ICON.gear}</div>` : '';
+  return `<div class="topbar">
+      <div class="clock"><span class="t-tl">${d.time}</span><span class="t-ts dim">${d.ampm}</span></div>
+      <div class="greet t-tm ellip">${esc(d.greeting)}</div>
+      <span class="chip t-ll"><span class="dot"></span>${esc(d.chip)}</span>
+      <span class="meta-item t-tm">${ICON[d.weather[0]]}${d.weather[1]}</span>
+      <span class="meta-item t-ll"><span class="status-dot ${status[0]}"></span>${status[1]}</span>
+      ${quickSwitch}${gear}
+      <div class="avatar f" style="background:${p.color}" ${attrs('profile', 'top', 'profiles')} title="${p.name}">${p.initial}</div>
+    </div>`;
+}
+
+function hero(d) {
+  if (opts.status === 'first' && !isKid()) {
+    return `<section class="hero card setup" data-panel="hero"><div class="hero-body" style="width:440px">
+      <div class="eyebrow">Set up</div>
+      <div class="t-hs hero-title">Connect your Plex account</div>
+      <div class="t-bm dim">On your phone or computer, go to <b style="color:var(--text)">plex.tv/link</b> and enter:</div>
+      <div class="code">K7QF</div>
+      <div class="t-bm dim">Waiting for Plex… Your apps below already work.</div>
+      <div class="btns" style="margin-top:auto"><div class="btn f" ${attrs('hero-play', 'hero', 'toast:A new code is shown every 15 minutes')}>Get a new code</div></div>
+    </div></section>`;
+  }
+  const h = d.heroes[ui.heroIndex % d.heroes.length];
+  const kid = isKid();
+  const undoing = ui.undo && ui.undo.until > Date.now();
+  const skipLabel = undoing ? 'Undo' : kid ? 'Not now' : 'Not tonight';
+  const note = undoing ? `Skipping ${esc(ui.undo.skipped)} for 2 weeks` : (opts.status === 'offline' ? 'Saved pick · Plex is offline, updated 2 h ago' : '');
+  return `<section class="hero card" data-panel="hero">
+      <div class="hero-art" style="background:${art(h.id)}"></div>
+      <div class="hero-body">
+        <div class="eyebrow">${kid ? 'Pick for you' : "Tonight's pick"}</div>
+        <div class="${kid ? 't-hl' : 't-hm'} hero-title ${h.title.length > 24 ? 'shrink' : ''}" style="${h.title.length > 24 ? `font-size:${kid ? 24 : 22}px;line-height:${kid ? 30 : 28}px` : ''}">${esc(h.title)}</div>
+        <div class="t-bm dim">${esc(h.meta)}</div>
+        <div class="reason t-tm">${ICON.spark}<span>${esc(h.reason)}</span></div>
+        <div class="spacer"></div>
+        ${note ? `<div class="note t-bs dim">${note}</div>` : ''}
+        <div class="btns">
+          <div class="btn primary f" ${attrs('hero-play', 'hero', 'play:' + h.title, `data-qa="hero:${h.id}"`)}>${ICON.play}${esc(h.play)}</div>
+          <div class="btn f" ${attrs('hero-trailer', 'hero', 'toast:Trailer opens in YouTube (Plex extras first)', `data-qa="hero:${h.id}"`)}>Trailer</div>
+          <div class="btn f" ${attrs('hero-skip', 'hero', undoing ? 'undo' : 'skip', `data-qa="hero:${h.id}"`)}>${skipLabel}</div>
+        </div>
+      </div>
+    </section>`;
+}
+
+function throwback(d) {
+  if (opts.status === 'first') return `<section class="card ph t-bm">Throwbacks appear once Plex is connected</section>`;
+  const t = d.throwbacks[ui.throwIndex % d.throwbacks.length];
+  return `<section class="card throwback" data-panel="throwback">
+      <div class="tb-art" style="background:${art(t.id)}"></div>
+      <div class="tb-body">
+        <div class="eyebrow">Throwback</div>
+        <div class="line t-bs ellip">${esc(t.line)}</div>
+        <div class="ellip"><span class="t-tl">${esc(t.title)}</span> <span class="t-bs dim" style="color:#d9bfa3">${esc(t.meta)}</span></div>
+        <div class="btns">
+          <div class="btn sm f" ${attrs('tb-watch', 'throwback', 'play:' + t.title, `data-qa="throwback:${t.id}"`)}>Watch again</div>
+          <div class="btn sm f" ${attrs('tb-next', 'throwback', 'nextmemory')}>Next memory</div>
+        </div>
+      </div>
+    </section>`;
+}
+
+function quickwatch(d) {
+  if (opts.status === 'first') return `<section class="card ph t-bm">Quick Watch appears once Plex is connected</section>`;
+  return `<section class="card quick" data-panel="quick">
+      <div class="eyebrow">Quick Watch · fits before ${d.cutoff}</div>
+      <div class="quick-items">${d.quick.slice(0, 2).map((q, i) =>
+        `<div class="qw f" ${attrs('qw-' + i, 'quick', 'play:' + q.title, `data-qa="quick:${q.id}" data-art="${q.id}"`)}>
+           <span class="thumb" style="background:${art(q.id)}"></span>
+           <span class="t t-ts ellip">${esc(q.title)}</span><span class="t-bs dim">${esc(q.meta)}</span></div>`).join('')}</div>
+    </section>`;
+}
+
+function kidSide(d) {
+  const s = d.side;
+  if (s.kind === 'bedtime') {
+    return `<section class="card kid-side bedtime" data-panel="side"><div class="moon"></div>
+      <div class="tb-body">
+        <div class="eyebrow" style="color:#b9c3ff">Bedtime</div>
+        <div class="t-ds" style="margin-top:8px">${esc(s.big)}</div>
+        <div class="t-bl" style="color:#cfd6ff">${esc(s.line)}</div>
+        <div class="t-bm dim" style="margin-top:6px">${esc(s.sub)}</div>
+        <div class="btns" style="margin-top:auto"><div class="btn f" ${attrs('side-act', 'side', 'toast:Only calm, short picks until bedtime')}>${esc(s.action)}</div></div>
+      </div></section>`;
+  }
+  return `<section class="card kid-side throwback" data-panel="side">
+      <div class="tb-art" style="background:${art(s.id)};opacity:.9"></div>
+      <div class="tb-body">
+        <div class="eyebrow">${esc(s.eyebrow)}</div>
+        <div class="line t-bm" style="margin-top:10px">${esc(s.line)}</div>
+        <div class="t-hs" style="margin-top:2px">${esc(s.title)}</div>
+        <div class="t-bm" style="color:#f2d6b8">${esc(s.sub)}</div>
+        <div class="btns" style="margin-top:auto"><div class="btn f" ${attrs('side-act', 'side', 'play:' + s.title)}>${esc(s.action)}</div></div>
+      </div></section>`;
+}
+
+function upnext(d) {
+  if (opts.status === 'first') {
+    return `<section class="upnext"><div class="eyebrow">Up next</div><div class="un-cards">${[0, 1, 2].map(() =>
+      `<div class="un"><div class="still ph t-bs">Your shows in progress</div></div>`).join('')}</div></section>`;
+  }
+  return `<section class="upnext" data-panel="upnext"><div class="eyebrow">Up next</div><div class="un-cards">${d.upnext.map((u, i) =>
+    `<div class="un f" ${attrs('un-' + i, 'upnext', 'resume:' + u.title, `data-qa="upnext:${u.id}" data-art="${u.id}"`)}>
+       <div class="still" style="background:${art(u.id)}">${isKid() ? `<span class="left-chip t-lm">${esc(u.left)}</span>` : ''}<div class="prog"><span style="width:${u.p * 100}%"></span></div></div>
+       <div class="cap">${isKid()
+         ? `<span class="t-tm ellip">${esc(u.title)}</span><span class="t-bs dim">${esc(u.ep)}</span>`
+         : `<div class="t-ts ellip">${esc(u.title)}</div><div class="t-bs dim">${esc(u.ep)} · ${esc(u.left)}</div>`}</div>
+     </div>`).join('')}</div></section>`;
+}
+
+function launchpad(d) {
+  const kid = isKid();
+  const apps = d.apps.slice(0, kid ? 3 : 5);
+  return `<section class="launch" data-panel="launch"><div class="eyebrow">${kid ? 'My apps' : 'Apps · most used at this time'}</div>
+      <div class="tiles ${opts.tiles === 'icon' ? 'icons' : ''}">
+        ${apps.map((a, i) => banner(a, 'app-' + i, 'launch')).join('')}
+        <div class="tile all f" ${attrs('app-all', 'launch', 'allapps')}>${opts.tiles === 'icon' ? `<span class="appicon" style="background:var(--surface-3);color:var(--text)">${ICON.grid}</span>` : ''}<span>${ICON.grid} All apps</span></div>
+      </div></section>`;
+}
+
+function homeHTML() {
+  const d = scene();
+  const kid = isKid();
+  return `
+    <div class="ambient" id="ambient"></div><div class="ambient-scrim"></div>
+    <div class="content">
+      ${topbar(d)}
+      ${hero(d)}
+      ${kid ? kidSide(d) : `<div class="col-right">${throwback(d)}${quickwatch(d)}</div>`}
+      ${upnext(d)}
+      ${launchpad(d)}
+    </div>`;
+}
+
+function allAppsHTML() {
+  const kid = isKid();
+  const list = kid ? KID_ALLOW : ALL_APPS;
+  const most = kid ? ['plezy', 'ytkids', 'disney'] : ['plezy', 'youtube', 'netflix', 'plex', 'spotify'];
+  return `<div class="allapps"><div class="scroller"><div class="inner" id="aaInner">
+      <div style="display:flex;align-items:baseline;gap:10px"><span class="t-hm">${kid ? 'My apps' : 'All apps'}</span><span class="t-tm dim">${list.length}</span></div>
+      ${kid ? '' : `<div class="eyebrow" style="margin-top:18px">Most used</div><div class="grid">${most.map((a, i) => banner(a, 'aa-m' + i, 'aa-most')).join('')}</div>`}
+      <div class="eyebrow" style="margin-top:${kid ? 18 : 0}px">A–Z</div>
+      <div class="grid">${list.map((a, i) => banner(a, 'aa-' + i, 'aa-az')).join('')}</div>
+      ${kid ? '<div class="t-bm dim">Only the apps a grown-up picked for you are shown here.</div>' : '<div class="t-bm dim">Hold OK on an app to move it, hide it, or open its settings.</div>'}
+    </div></div></div>`;
+}
+
+const QA = {
+  hero: [['play', 'Play'], ['info', 'Why this pick?'], ['restart', 'Start from the beginning'], ['tv', 'More like this'], ['hide', 'Not tonight']],
+  upnext: [['play', 'Resume'], ['restart', 'Start this episode over'], ['tv', 'Go to show in Plezy'], ['check', 'Mark as watched'], ['hide', 'Remove from Up Next']],
+  quick: [['play', 'Play'], ['info', 'Details'], ['hide', 'Hide from Quick Watch']],
+  throwback: [['play', 'Watch again'], ['info', 'Details'], ['hide', "Don't show this memory"]],
+  app: [['play', 'Open'], ['move', 'Move'], ['hide', 'Hide from launchpad'], ['gear', 'App info']],
+};
+function qaTitle(kind, id) {
+  if (kind === 'app') return APPS[id].name;
+  const d = scene();
+  const pool = [...(d.heroes || []), ...(d.upnext || []), ...(d.quick || []), ...(d.throwbacks || [])];
+  return (pool.find(x => x.id === id) || { title: '' }).title;
+}
+
+function overlayHTML() {
+  const o = ui.overlay;
+  if (!o) return '';
+  if (o.type === 'qa') {
+    const items = QA[o.kind].map(([ic, label], i) =>
+      `<div class="row-item f" ${attrs('qa-' + i, 'qa', 'qa:' + label)}>${ICON[ic]}<span class="t-ll">${esc(label)}</span></div>`).join('');
+    if (opts.sheet === 'popup') {
+      return `<div class="overlay"><div class="scrim" style="background:rgba(5,7,10,.35)"></div>
+        <div class="popup" style="left:${o.x}px;top:${o.y}px"><div class="t-ts dim ellip" style="padding:4px 14px 8px">${esc(o.title)}</div>${items}</div></div>`;
+    }
+    return `<div class="overlay"><div class="scrim"></div><div class="sheet">
+        <div class="eyebrow">Quick actions</div><div class="t-tl" style="margin:4px 0 18px">${esc(o.title)}</div>${items}
+        <div class="t-bs faint" style="margin-top:auto">Back to close</div></div></div>`;
+  }
+  if (o.type === 'profiles') {
+    const kid = isKid();
+    const people = Object.entries(PEOPLE).map(([k, p]) =>
+      `<div class="person f" ${attrs('who-' + k, 'who', 'switch:' + k)}><div class="avatar" style="background:${p.color}">${p.initial}</div>
+         <div class="t-tm">${p.name}${k === opts.profile ? ' <span class="dim t-bs">(now)</span>' : ''}</div>
+         <div class="t-bs dim">${p.kid ? `Kid · ${p.age}` : (kid ? 'Parent PIN' : 'Adult')}</div></div>`).join('');
+    const settingsBtn = opts.settings === 'avatar'
+      ? `<div class="who-actions"><div class="btn f" ${attrs('who-settings', 'who-act', 'settings')}>${ICON.gear} Settings${kid ? ' (parent PIN)' : ''}</div></div>` : '';
+    return `<div class="overlay"><div class="scrim" style="background:rgba(5,7,10,.88)"></div>
+      <div class="center-box"><div class="t-hm">Who's watching?</div><div class="who">${people}</div>${settingsBtn}</div></div>`;
+  }
+  if (o.type === 'pin') {
+    const dots = [0, 1, 2, 3].map(i => `<span class="${i < ui.pin.length ? 'on' : ''}"></span>`).join('');
+    const keys = ['1', '2', '3', '4', '5', '6', '7', '8', '9', '⌫', '0', '✓'];
+    return `<div class="overlay"><div class="scrim" style="background:rgba(5,7,10,.92)"></div>
+      <div class="center-box"><div class="t-hs">Parent PIN</div><div class="t-bm dim" style="margin-top:4px">${esc(o.why)}</div>
+      <div class="pin-dots">${dots}</div>
+      <div class="keypad">${keys.map(k => `<div class="key f" ${attrs('key-' + k, 'pin', 'key:' + k)}>${k}</div>`).join('')}</div>
+      <div class="t-bs faint" style="margin-top:14px">Prototype: any four digits work</div></div></div>`;
+  }
+  if (o.type === 'settings') {
+    const sections = ['Look', 'Profiles', 'Plex', 'Time & modes', 'Weather', 'AI blurbs', 'Diagnostics'];
+    return `<div class="overlay"><div class="settings">
+      <div><div class="t-hm">Settings</div><div class="list">${sections.map((s, i) => `<div class="row-item f" ${attrs('set-' + i, 'set', 'toast:' + s + ' settings are designed in Phase 1')}><span class="t-ll">${s}</span></div>`).join('')}</div></div>
+      <div class="detail"><div class="t-tl">Look</div><div class="t-bm dim" style="margin-top:6px;max-width:420px">Accent colour, layout scale. The full settings screens are designed in the Phase 1 plan; this is only where they live.</div></div>
+    </div></div>`;
+  }
+  return '';
+}
+
+function render() {
+  tv.className = 'tv' +
+    (opts.direction === 'ambient' ? ' dir-ambient' : opts.direction === 'art' ? ' dir-art' : '') +
+    (opts.focus === 'glow' ? ' focus-glow' : opts.focus === 'flat' ? ' focus-flat' : '') +
+    (isKid() ? ' kid' : '') + (opts.context === 'late' ? ' late' : '');
+  tv.style.setProperty('--accent-base', isKid() ? person().color : opts.accent);
+  tv.innerHTML = (ui.screen === 'allapps' ? allAppsHTML() : homeHTML()) + overlayHTML() +
+    (ui.toast ? `<div class="toast">${esc(ui.toast)}</div>` : '');
+  applyFocus(ui.focus, false);
+}
+
+/* ======================= Focus & D-pad ======================= */
+function layer() {
+  return tv.querySelector('.overlay') || tv;
+}
+function focusables() { return [...layer().querySelectorAll('[data-fid]')]; }
+function byFid(fid) { return layer().querySelector(`[data-fid="${CSS.escape(fid)}"]`); }
+
+function applyFocus(fid, remember = true) {
+  let el = fid && byFid(fid);
+  if (!el) el = defaultFocus();
+  if (!el) return;
+  tv.querySelectorAll('.is-focused').forEach(e => e.classList.remove('is-focused'));
+  tv.querySelectorAll('.has-focus').forEach(e => e.classList.remove('has-focus'));
+  el.classList.add('is-focused');
+  const panel = el.closest('[data-panel]'); if (panel) panel.classList.add('has-focus');
+  ui.focus = el.dataset.fid;
+  if (remember) ui.groupMemory[el.dataset.group] = ui.focus;
+  updateAmbient(el);
+  keepVisible(el);
+}
+function defaultFocus() {
+  const o = ui.overlay;
+  if (o && o.type === 'profiles') return byFid('who-' + opts.profile) || focusables()[0];
+  if (o && o.type === 'pin') return byFid('key-1');
+  if (o) return focusables()[0];
+  if (ui.screen === 'allapps') return byFid('aa-m0') || byFid('aa-0');
+  return byFid('hero-play') || focusables()[0];
+}
+
+function rect(el) { return el.getBoundingClientRect(); }
+function move(dir) {
+  const cur = byFid(ui.focus);
+  if (!cur) { applyFocus(null); return; }
+  const a = rect(cur);
+  let best = null, bestScore = Infinity;
+  for (const el of focusables()) {
+    if (el === cur) continue;
+    const b = rect(el);
+    let gap, inBeam, off;
+    const tol = 6;
+    if (dir === 'right') { gap = b.left - a.right; inBeam = b.top < a.bottom && b.bottom > a.top; off = Math.abs((b.top + b.bottom) / 2 - (a.top + a.bottom) / 2); }
+    if (dir === 'left') { gap = a.left - b.right; inBeam = b.top < a.bottom && b.bottom > a.top; off = Math.abs((b.top + b.bottom) / 2 - (a.top + a.bottom) / 2); }
+    if (dir === 'down') { gap = b.top - a.bottom; inBeam = b.left < a.right && b.right > a.left; off = Math.abs((b.left + b.right) / 2 - (a.left + a.right) / 2); }
+    if (dir === 'up') { gap = a.top - b.bottom; inBeam = b.left < a.right && b.right > a.left; off = Math.abs((b.left + b.right) / 2 - (a.left + a.right) / 2); }
+    if (gap < -tol) continue;
+    const score = (inBeam ? 0 : 100000) + Math.max(gap, 0) + off * (inBeam ? 0.2 : 1.2);
+    if (score < bestScore) { bestScore = score; best = el; }
+  }
+  if (!best) return;
+  // Focus groups remember their last child (Compose focusRestorer).
+  const g = best.dataset.group;
+  if (g !== cur.dataset.group && ui.groupMemory[g] && byFid(ui.groupMemory[g])) best = byFid(ui.groupMemory[g]);
+  applyFocus(best.dataset.fid);
+}
+
+function keepVisible(el) {
+  const inner = tv.querySelector('#aaInner');
+  if (!inner || !inner.contains(el)) return;
+  const top = el.offsetTop, bottom = top + el.offsetHeight;
+  const cur = -(parseFloat((inner.style.transform.match(/-?[\d.]+/) || [0])[0]) || 0);
+  let next = cur;
+  if (bottom - cur > 540 - 40) next = bottom - 540 + 60;
+  if (top - cur < 60) next = Math.max(0, top - 80);
+  inner.style.transform = `translateY(${-next}px)`;
+}
+
+function updateAmbient(el) {
+  const amb = tv.querySelector('#ambient');
+  if (!amb) return;
+  if (opts.direction !== 'ambient' || opts.status === 'first') { amb.classList.remove('on'); return; }
+  let id = el && el.dataset.art;
+  if (!id) { const d = scene(); id = (d.heroes[ui.heroIndex % d.heroes.length] || {}).id; }
+  amb.style.background = art(id);
+  amb.classList.add('on');
+}
+
+/* ======================= Actions ======================= */
+function toast(msg) {
+  ui.toast = msg;
+  const old = tv.querySelector('.toast'); if (old) old.remove();
+  tv.insertAdjacentHTML('beforeend', `<div class="toast">${esc(msg)}</div>`);
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => { ui.toast = null; const t = tv.querySelector('.toast'); if (t) t.remove(); }, 2600);
+}
+function openOverlay(o) { ui.overlay = { ...o, returnTo: ui.focus }; ui.focus = null; render(); }
+function closeOverlay() { const back = ui.overlay && ui.overlay.returnTo; ui.overlay = null; ui.focus = back; render(); }
+
+function activate(el) {
+  const act = el.dataset.act || '';
+  const [verb, ...rest] = act.split(':'); const arg = rest.join(':');
+  switch (verb) {
+    case 'play': toast(`Opens "${arg}" in Plezy`); break;
+    case 'resume': toast(`Resumes "${arg}" in Plezy where you left off`); break;
+    case 'open': toast(`Opens ${APPS[arg].name}`); break;
+    case 'toast': toast(arg); break;
+    case 'skip': {
+      const d = scene(); const h = d.heroes[ui.heroIndex % d.heroes.length];
+      ui.heroIndex++; ui.undo = { until: Date.now() + 8000, skipped: h.title };
+      clearTimeout(undoTimer); undoTimer = setTimeout(() => { ui.undo = null; if (ui.screen === 'home' && !ui.overlay) render(); }, 8000);
+      render(); break;
+    }
+    case 'undo': ui.heroIndex = Math.max(0, ui.heroIndex - 1); ui.undo = null; clearTimeout(undoTimer); render(); break;
+    case 'nextmemory': ui.throwIndex++; render(); break;
+    case 'allapps': ui.screen = 'allapps'; ui.returnFromAll = ui.focus; ui.focus = null; render(); break;
+    case 'profiles': openOverlay({ type: 'profiles' }); break;
+    case 'switch': switchProfile(arg); break;
+    case 'settings':
+      if (isKid()) { ui.overlay = null; openOverlay({ type: 'pin', why: 'Settings need a grown-up', then: 'settings' }); }
+      else { ui.overlay = null; openOverlay({ type: 'settings' }); }
+      break;
+    case 'key': pinKey(arg); break;
+    case 'qa': closeOverlay(); toast(arg === 'Not tonight' ? 'Use the Not tonight button: it offers Undo' : `${arg} (prototype)`); break;
+  }
+}
+
+function switchProfile(k) {
+  if (k === opts.profile) { if (ui.overlay) closeOverlay(); return; }
+  if (isKid() && !PEOPLE[k].kid) {
+    ui.overlay = null; openOverlay({ type: 'pin', why: `Leaving ${person().name}'s profile`, then: 'switch:' + k }); return;
+  }
+  opts.profile = k; saveOpts(); syncPanel();
+  ui.overlay = null; ui.screen = 'home'; ui.heroIndex = 0; ui.groupMemory = {}; ui.focus = 'hero-play'; render();
+  toast(`Now watching as ${PEOPLE[k].name}`);
+}
+
+function pinKey(k) {
+  if (k === '⌫') ui.pin = ui.pin.slice(0, -1);
+  else if (k === '✓') { if (ui.pin.length < 4) { toast('Enter four digits'); return; } }
+  else if (ui.pin.length < 4) ui.pin += k;
+  if (ui.pin.length === 4) {
+    const then = ui.overlay.then; ui.pin = ''; ui.overlay = null;
+    if (then === 'settings') openOverlay({ type: 'settings' });
+    else { const k2 = then.split(':')[1]; opts.profile = k2; saveOpts(); syncPanel(); ui.screen = 'home'; ui.heroIndex = 0; ui.groupMemory = {}; ui.focus = 'hero-play'; render(); toast(`Now watching as ${PEOPLE[k2].name}`); }
+    return;
+  }
+  const f = ui.focus; render(); applyFocus(f);
+}
+
+function quickActions() {
+  const el = byFid(ui.focus);
+  const qa = el && el.dataset.qa;
+  if (!qa || ui.overlay) { toast('No quick actions here'); return; }
+  const [kind, id] = qa.split(':');
+  const r = el.getBoundingClientRect(), t = tv.getBoundingClientRect(), k = t.width / 960;
+  let x = (r.right - t.left) / k + 12, y = (r.top - t.top) / k;
+  if (x + 240 > 940) x = (r.left - t.left) / k - 252;
+  y = Math.min(Math.max(16, y), 540 - 300);
+  openOverlay({ type: 'qa', kind, title: qaTitle(kind, id), x, y });
+}
+
+function back() {
+  if (ui.overlay) { ui.pin = ''; closeOverlay(); return; }
+  if (ui.screen === 'allapps') { ui.screen = 'home'; ui.focus = ui.returnFromAll || 'app-all'; render(); return; }
+  toast('Home is the top: Back does nothing here');
+}
+function home() {
+  ui.overlay = null; ui.screen = 'home'; ui.pin = ''; ui.focus = 'hero-play'; render();
+  const inner = tv.querySelector('#aaInner'); if (inner) inner.style.transform = '';
+}
+
+/* ======================= Input ======================= */
+let okTimer = null, longFired = false;
+function inPanel(e) { return e.target.closest && e.target.closest('#panel'); }
+document.addEventListener('keydown', e => {
+  if (inPanel(e) && (e.key === 'Tab' || e.key === ' ')) return;
+  const map = { ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right' };
+  if (map[e.key]) { e.preventDefault(); move(map[e.key]); return; }
+  if (e.key === 'Enter') {
+    e.preventDefault();
+    if (e.repeat) return;
+    longFired = false;
+    okTimer = setTimeout(() => { longFired = true; quickActions(); }, 550);
+    return;
+  }
+  if (e.key === 'Escape' || e.key === 'Backspace') { e.preventDefault(); back(); return; }
+  if (e.key === 'm' || e.key === 'M') { e.preventDefault(); quickActions(); return; }
+  if (e.key === 'h' || e.key === 'H') { e.preventDefault(); home(); return; }
+});
+document.addEventListener('keyup', e => {
+  if (e.key !== 'Enter') return;
+  if (okTimer) { clearTimeout(okTimer); okTimer = null; }
+  if (!longFired) { const el = byFid(ui.focus); if (el) activate(el); }
+  longFired = false;
+});
+tv.addEventListener('click', e => {
+  const el = e.target.closest('[data-fid]');
+  document.getElementById('tvWrap').focus();
+  if (!el) return;
+  applyFocus(el.dataset.fid); activate(el);
+});
+tv.addEventListener('contextmenu', e => {
+  const el = e.target.closest('[data-fid]');
+  if (!el) return;
+  e.preventDefault(); applyFocus(el.dataset.fid); quickActions();
+});
+
+/* ======================= Controls panel ======================= */
+const CONTROLS = [
+  { head: 'Design options (✓ = your pick)' },
+  { key: 'direction', label: 'U1 · Visual direction', options: [['calm', 'Calm'], ['ambient', 'Ambient'], ['art', 'Art-forward', true]] },
+  { key: 'focus', label: 'U2 · Focus treatment', options: [['ring', 'Ring + lift', true], ['glow', 'Glow + scale'], ['flat', 'Ring only']] },
+  { key: 'accent', label: 'U3 · Default accent', swatches: true },
+  { key: 'tiles', label: 'U7 · Launchpad tiles', options: [['banner', 'App banners', true], ['icon', 'Icon + name']] },
+  { key: 'sheet', label: 'U6 · Quick actions panel', options: [['side', 'Side sheet', true], ['popup', 'Popup']] },
+  { key: 'settings', label: 'U9 · Settings entry', options: [['avatar', 'Profile menu'], ['gear', 'Gear icon', true]] },
+  { head: 'Scenario' },
+  { key: 'profile', label: 'Profile', options: [['alex', 'Alex (adult)'], ['maya', 'Maya (9)'], ['leo', 'Leo (7)']] },
+  { key: 'context', label: 'Context mode', options: [['weeknight', 'Weeknight 8:41 PM'], ['weekend', 'Weekend 9:32 AM'], ['late', 'Late night 11:48 PM']] },
+  { key: 'status', label: 'State', options: [['normal', 'Normal'], ['first', 'First run'], ['offline', 'Plex offline']] },
+];
+function buildPanel() {
+  const p = document.getElementById('panel');
+  p.innerHTML = CONTROLS.map(c => {
+    if (c.head) return `<h2>${c.head}</h2>`;
+    if (c.swatches) {
+      return `<div class="ctl"><span class="ctl-label">${c.label} <span style="color:#8d99a6">(kids use their own colour)</span></span><div class="seg">${ACCENTS.map(([hex, name], i) =>
+        `<button class="sw" data-key="accent" data-val="${hex}" style="background:${hex}" title="${name}${i === 0 ? ' (your pick)' : ''}" aria-label="${name}"></button>`).join('')}</div></div>`;
+    }
+    return `<div class="ctl"><span class="ctl-label">${c.label}</span><div class="seg">${c.options.map(([v, l, pick]) =>
+      `<button data-key="${c.key}" data-val="${v}">${l}${pick ? '<span class="rec" title="Your pick">✓</span>' : ''}</button>`).join('')}</div></div>`;
+  }).join('') + `
+    <h2>Try this</h2>
+    <ul class="keys">
+      <li>Move around with the arrows; note where focus lands.</li>
+      <li>Hold <kbd>Enter</kbd> (or <kbd>M</kbd>) on a card for quick actions.</li>
+      <li>"Not tonight" swaps the pick and turns into Undo for 8 s.</li>
+      <li>Open your avatar to switch to Maya, then back (parent PIN).</li>
+      <li>Press <kbd>H</kbd> anywhere: focus returns to Play.</li>
+    </ul>
+    <p class="keys" style="padding:0;margin-top:10px">✓ = the design's pick. The full design is in <code>docs/design/ui-spec.md</code>.</p>`;
+  p.addEventListener('click', e => {
+    const b = e.target.closest('button[data-key]');
+    if (!b) return;
+    opts[b.dataset.key] = b.dataset.val; saveOpts(); syncPanel();
+    if (b.dataset.key === 'profile' || b.dataset.key === 'context' || b.dataset.key === 'status') { ui.heroIndex = 0; ui.throwIndex = 0; ui.undo = null; ui.groupMemory = {}; ui.focus = 'hero-play'; ui.screen = 'home'; ui.overlay = null; }
+    render(); b.blur(); document.getElementById('tvWrap').focus();
+  });
+  syncPanel();
+}
+function syncPanel() {
+  document.querySelectorAll('#panel button[data-key]').forEach(b => b.setAttribute('aria-pressed', String(opts[b.dataset.key] === b.dataset.val)));
+}
+
+/* ======================= Fit to window ======================= */
+function fit() {
+  const wrap = document.getElementById('tvWrap');
+  const main = wrap.parentElement;
+  const availW = main.clientWidth - 24;
+  const availH = window.innerHeight - 150;
+  const k = Math.max(0.3, Math.min(availW / 960, availH / 540));
+  document.documentElement.style.setProperty('--k', k.toFixed(4));
+}
+window.addEventListener('resize', fit);
+
+buildPanel(); fit(); render();
+document.getElementById('tvWrap').focus();
+</script>
+</body>
+</html>

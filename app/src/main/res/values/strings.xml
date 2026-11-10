@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Action Center</string>
+    <!-- HomeWatch, in Settings › Accessibility (a Google TV whose launcher stays on). -->
+    <string name="home_watch_label">Action Center Home button</string>
+    <string name="home_watch_description">Opens Action Center when you press Home. Hold Home for the TV\'s own home screen. It only looks at which app is on screen, and sends nothing anywhere.</string>
+</resources>

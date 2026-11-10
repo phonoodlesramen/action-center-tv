@@ -1,0 +1,40 @@
+[
+  {
+    "name": "Basement",
+    "product": "Plex Media Server",
+    "productVersion": "1.43.5.10000",
+    "platform": "Linux",
+    "clientIdentifier": "aaaa1111bbbb2222cccc3333dddd4444",
+    "provides": "server",
+    "owned": true,
+    "home": false,
+    "accessToken": "fixture-server-token",
+    "httpsRequired": false,
+    "dnsRebindingProtection": false,
+    "connections": [
+      { "protocol": "https", "address": "203.0.113.7", "port": 32400, "uri": "https://203-0-113-7.aaaa1111.plex.direct:32400", "local": false, "relay": false, "IPv6": false },
+      { "protocol": "https", "address": "192.168.1.20", "port": 32400, "uri": "https://192-168-1-20.aaaa1111.plex.direct:32400", "local": true, "relay": false, "IPv6": false },
+      { "protocol": "https", "address": "203.0.113.200", "port": 8443, "uri": "https://203-0-113-200.relay.plex.direct:8443", "local": false, "relay": true, "IPv6": false },
+      { "protocol": "https", "address": "fd00::20", "port": 32400, "uri": "https://fd00--20.aaaa1111.plex.direct:32400", "local": true, "relay": false, "IPv6": true }
+    ]
+  },
+  {
+    "name": "Friend's server",
+    "product": "Plex Media Server",
+    "clientIdentifier": "eeee5555ffff6666",
+    "provides": "server",
+    "owned": false,
+    "accessToken": "fixture-shared-token",
+    "connections": [
+      { "protocol": "https", "address": "198.51.100.4", "port": 32400, "uri": "https://198-51-100-4.eeee5555.plex.direct:32400", "local": false, "relay": false, "IPv6": false }
+    ]
+  },
+  {
+    "name": "Living room",
+    "product": "Plex for Android (TV)",
+    "clientIdentifier": "9999aaaa",
+    "provides": "client,player",
+    "owned": true,
+    "connections": []
+  }
+]

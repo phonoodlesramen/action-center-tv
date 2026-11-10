@@ -1,0 +1,926 @@
+<!doctype html>
+<!--
+  The Plex Guide's phone editor (Phase 2.7, G1, G18). Action Center serves this one file
+  from the Shield while Settings › Plex Guide › Edit on your phone is open. Everything is
+  inline and nothing loads from elsewhere: the server's content policy forbids it.
+  The API is JSON under /api (see guide/editor/EditorApi.kt); signing in is /signin.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light dark">
+<meta name="referrer" content="no-referrer">
+<title>Plex Guide channels</title>
+<style>
+  :root {
+    color-scheme: light dark;
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --surface2: #e9eef3;
+    --text: #0e1318;
+    --dim: #46525e;
+    --line: #c9d2db;
+    --track: #7d8995;
+    --accent: #01579b;
+    --accent-ink: #ffffff;
+    --good: #1b5e20;
+    --bad: #b71c1c;
+    --bad-bg: #fdecea;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0e1318;
+      --surface: #161d25;
+      --surface2: #1f2832;
+      --text: #e6edf3;
+      --dim: #a7b3bf;
+      --line: #34414f;
+      --track: #4f5d6b;
+      --accent: #4fc3f7;
+      --accent-ink: #06202b;
+      --good: #81c784;
+      --bad: #ef9a9a;
+      --bad-bg: #3a1d1d;
+    }
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--text);
+    font: 17px/1.45 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+    background: var(--bg);
+    border-bottom: 1px solid var(--line);
+  }
+  header div, main { max-width: 640px; margin: 0 auto; padding: 0 16px; }
+  header div { display: flex; align-items: baseline; gap: 10px; min-height: 56px; }
+  h1 { font-size: 20px; margin: 14px 0; }
+  header span { color: var(--dim); font-size: 15px; }
+  main { padding-bottom: 48px; }
+  h2 { font-size: 22px; margin: 20px 0 12px; }
+  h2:focus { outline: none; }
+  h3 { font-size: 17px; margin: 16px 0 8px; }
+  p { margin: 8px 0; }
+  a { color: var(--accent); }
+  :focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+
+  button, .button {
+    font: inherit;
+    min-height: 44px;
+    min-width: 44px;
+    padding: 0 16px;
+    border-radius: 10px;
+    border: 1px solid var(--line);
+    background: var(--surface);
+    color: var(--text);
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); font-weight: 600; }
+  .danger { background: transparent; border-color: var(--bad); color: var(--bad); }
+  .link { border: 0; background: transparent; color: var(--accent); padding: 0 4px; }
+  .wide { width: 100%; }
+  button:disabled { opacity: 0.45; cursor: default; }
+  .arrow { padding: 0; width: 44px; font-size: 20px; }
+
+  label.field { display: block; font-weight: 600; margin: 18px 0 6px; }
+  input[type=text], input[type=search], input[type=number] {
+    font: inherit;
+    font-size: 17px;
+    width: 100%;
+    min-height: 48px;
+    padding: 0 12px;
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    background: var(--surface);
+    color: var(--text);
+  }
+  .pair { display: flex; gap: 12px; }
+  .pair > div { flex: 1; }
+  .short { max-width: 10em; }
+  .hint { color: var(--dim); font-size: 15px; }
+
+  .notice { padding: 12px 14px; border-radius: 10px; background: var(--surface2); margin: 16px 0 0; }
+  .error { padding: 12px 14px; border-radius: 10px; background: var(--bad-bg); color: var(--bad); margin: 12px 0; }
+
+  .head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+
+  .lineup { list-style: none; margin: 0; padding: 0; }
+  .channel { background: var(--surface); border: 1px solid var(--line); border-radius: 14px; padding: 12px; margin: 0 0 12px; }
+  .channel.off .what { opacity: 0.6; }
+  .top { display: flex; align-items: center; gap: 12px; }
+  .num { font-weight: 700; font-size: 20px; min-width: 2.6em; text-align: center; font-variant-numeric: tabular-nums; }
+  .what { flex: 1; min-width: 0; }
+  .name { font-weight: 600; overflow-wrap: anywhere; }
+  .now { color: var(--dim); font-size: 15px; overflow-wrap: anywhere; }
+  .tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)) 44px 44px; gap: 8px; margin-top: 10px; }
+  .tools > * { padding: 0 6px; font-size: 15px; }
+  .tools .arrow { font-size: 20px; }
+  @media (max-width: 359px) {
+    .tools { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  }
+
+  .switch { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; cursor: pointer; }
+  input.toggle {
+    -webkit-appearance: none;
+    appearance: none;
+    flex: none;
+    width: 52px;
+    height: 32px;
+    margin: 0;
+    border-radius: 16px;
+    background: var(--track);
+    position: relative;
+    cursor: pointer;
+    transition: background 0.15s;
+  }
+  input.toggle::before {
+    content: "";
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #ffffff;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    transition: transform 0.15s;
+  }
+  input.toggle:checked { background: var(--accent); }
+  input.toggle:checked::before { transform: translateX(20px); }
+
+  fieldset { border: 0; padding: 0; margin: 18px 0 0; min-width: 0; }
+  legend { font-weight: 600; padding: 0; margin-bottom: 8px; }
+  .chips { display: flex; flex-wrap: wrap; gap: 8px; }
+  .chip { position: relative; display: inline-flex; }
+  .chip input { position: absolute; inset: 0; width: 100%; height: 100%; margin: 0; opacity: 0; cursor: pointer; }
+  .chip span {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding: 0 14px;
+    border: 1px solid var(--line);
+    border-radius: 22px;
+    background: var(--surface);
+  }
+  .chip input:checked + span { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .chip input:checked + span::before { content: "\2713\00a0"; }
+  .chip input:focus-visible + span { outline: 3px solid var(--accent); outline-offset: 2px; }
+  .results { margin-top: 8px; }
+
+  .actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 24px; }
+  .preview-out { margin-top: 12px; }
+  .preview { list-style: none; margin: 0; padding: 0; }
+  .preview li { display: flex; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--line); }
+  .preview time { flex: none; min-width: 5.2em; font-variant-numeric: tabular-nums; color: var(--dim); }
+  .preview .filler { color: var(--dim); }
+  .tag { display: inline-block; font-size: 13px; padding: 0 8px; margin-left: 6px; border: 1px solid var(--line); border-radius: 10px; }
+  .episode { color: var(--dim); }
+
+  .start-over { margin-top: 36px; padding-top: 8px; border-top: 1px solid var(--line); }
+
+  dialog {
+    width: min(92vw, 420px);
+    border: 0;
+    border-radius: 16px;
+    padding: 20px;
+    background: var(--surface);
+    color: var(--text);
+  }
+  dialog::backdrop { background: rgba(0, 0, 0, 0.55); }
+  dialog h2 { margin-top: 0; }
+
+  @media (prefers-reduced-motion: reduce) {
+    * { transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<header><div><h1>Plex Guide</h1><span>Action Center</span></div></header>
+<main>
+  <p id="notice" class="notice" aria-live="polite" hidden></p>
+  <div id="view"><p>Loading…</p></div>
+  <noscript><p>The editor needs JavaScript turned on.</p></noscript>
+</main>
+<dialog id="dialog"></dialog>
+<script>
+'use strict';
+
+const OFFLINE = "Can't reach the Shield. Check that Edit on your phone is still open on the TV.";
+/** Thrown after a 401: the PIN form is already showing, so there's nothing more to say. */
+const SIGNED_OUT = new Error('Sign in first');
+
+const view = document.getElementById('view');
+const notice = document.getElementById('notice');
+const dialog = document.getElementById('dialog');
+
+let lineup = [];
+let choices = null;
+/** A message to show once the next view is drawn ("Saved"). */
+let pending = null;
+
+/** Makes an element: props are attributes, properties (booleans) or on* listeners; children are nodes or text. */
+function h(tag, props, ...children) {
+  const el = document.createElement(tag);
+  for (const [key, value] of Object.entries(props || {})) {
+    if (value == null || value === false) continue;
+    if (key === 'class') el.className = value;
+    else if (key.startsWith('on')) el.addEventListener(key.slice(2), value);
+    else if (typeof value === 'boolean' && key in el) el[key] = value;
+    else el.setAttribute(key, String(value));
+  }
+  for (const child of children.flat()) {
+    if (child == null || child === false) continue;
+    el.append(child instanceof Node ? child : String(child));
+  }
+  return el;
+}
+
+function say(text, isError) {
+  notice.textContent = text || '';
+  notice.className = isError ? 'notice error' : 'notice';
+  notice.hidden = !text;
+}
+
+/** One API call. JSON both ways; a 401 shows the PIN form; any other failure throws its sentence. */
+async function api(method, path, body) {
+  let response;
+  try {
+    response = await fetch(path, {
+      method,
+      credentials: 'same-origin',
+      cache: 'no-store',
+      headers: body === undefined ? {} : { 'Content-Type': 'application/json' },
+      body: body === undefined ? undefined : JSON.stringify(body),
+    });
+  } catch (_) {
+    throw new Error(OFFLINE);
+  }
+  if (response.status === 401 && path.startsWith('/api/')) {
+    showSignIn();
+    throw SIGNED_OUT;
+  }
+  if (response.status === 204) return null;
+  let data = null;
+  try {
+    data = await response.json();
+  } catch (_) {
+    data = null;
+  }
+  if (!response.ok) throw new Error((data && data.error) || 'The Shield answered ' + response.status + '. Try again.');
+  return data;
+}
+
+function channelPath(channel, action) {
+  return '/api/channels/' + encodeURIComponent(channel.id) + (action ? '/' + action : '');
+}
+
+/** Goes to [hash], then shows [message]. */
+function navigate(hash, message) {
+  pending = message || null;
+  if (location.hash === hash) route();
+  else location.hash = hash;
+}
+
+function route() {
+  const message = pending;
+  pending = null;
+  say('');
+  const match = location.hash.match(/^#\/channel\/(.+)$/);
+  let shown;
+  if (location.hash === '#/new') shown = openEditor(null);
+  else if (match) shown = openEditor(decodeURIComponent(match[1]));
+  else shown = showLineup();
+  shown.then(() => { if (message) say(message); });
+}
+
+/**
+ * Draws a new view at the top, with focus on its heading so a screen reader starts there.
+ * A redraw in place ([inPlace]) keeps the scroll, and the caller puts focus back.
+ */
+function show(nodes, inPlace) {
+  view.replaceChildren(...nodes.flat().filter((n) => n != null));
+  if (inPlace) return;
+  const heading = view.querySelector('h2');
+  if (heading) {
+    heading.setAttribute('tabindex', '-1');
+    heading.focus({ preventScroll: true });
+  }
+  window.scrollTo(0, 0);
+}
+
+function problem(error, retry) {
+  if (error === SIGNED_OUT) return;
+  show([h('h2', {}, 'Something went wrong'), h('p', { class: 'error', role: 'alert' }, error.message),
+    h('button', { class: 'primary', onclick: retry }, 'Try again')]);
+}
+
+/* Signing in */
+
+function showSignIn() {
+  document.title = 'Sign in · Plex Guide';
+  say('');
+  const input = h('input', {
+    id: 'pin', type: 'text', inputmode: 'numeric', autocomplete: 'one-time-code', maxlength: 7,
+    'aria-describedby': 'pin-help', required: true,
+  });
+  const error = h('p', { class: 'error', role: 'alert', hidden: true });
+  const button = h('button', { type: 'submit', class: 'primary wide' }, 'Sign in');
+  const form = h('form', {
+    onsubmit: async (event) => {
+      event.preventDefault();
+      error.hidden = true;
+      button.disabled = true;
+      try {
+        await api('POST', '/signin', { pin: input.value });
+        route();
+      } catch (e) {
+        error.textContent = e.message;
+        error.hidden = false;
+        input.select();
+      } finally {
+        button.disabled = false;
+      }
+    },
+  },
+  h('h2', {}, 'Enter the PIN from your TV'),
+  h('p', { id: 'pin-help', class: 'hint' }, 'The TV shows it under Settings › Plex Guide › Edit on your phone. Scanning the QR code there signs you in without it.'),
+  h('label', { class: 'field', for: 'pin' }, 'PIN'), input, error,
+  h('div', { class: 'actions' }, button));
+  show([form]);
+  input.focus();
+}
+
+/* The lineup */
+
+async function showLineup(focus) {
+  document.title = 'Channels · Plex Guide';
+  try {
+    lineup = await api('GET', '/api/lineup');
+  } catch (e) {
+    problem(e, () => showLineup(focus));
+    return;
+  }
+  drawLineup(focus);
+}
+
+function drawLineup(focus) {
+  const list = h('ol', { class: 'lineup' }, lineup.map(channelRow));
+  show([
+    h('div', { class: 'head' }, h('h2', {}, 'Channels'), h('a', { href: '#/new', class: 'button primary' }, 'New channel')),
+    lineup.length ? list : h('p', {}, 'No channels yet: they appear after your library syncs.'),
+    h('section', { class: 'start-over' },
+      h('h3', {}, 'Start over'),
+      h('p', { class: 'hint' }, 'Replace every channel with a new starter lineup made from your library.'),
+      h('button', { class: 'danger', 'data-action': 'remake', onclick: remake }, 'Remake the starter lineup')),
+  ], Boolean(focus));
+  if (focus) refocus(focus);
+}
+
+function channelRow(channel, index) {
+  const name = channel.draft.name;
+  const id = channel.id;
+  const now = channel.onNow ? 'On now: ' + channel.onNow : channel.enabled ? 'Nothing on right now' : 'Off: not in the guide';
+  return h('li', { class: channel.enabled ? 'channel' : 'channel off' },
+    h('div', { class: 'top' },
+      h('span', { class: 'num' }, channel.number),
+      h('div', { class: 'what' }, h('div', { class: 'name' }, name), h('div', { class: 'now' }, now)),
+      h('label', { class: 'switch' },
+        h('input', {
+          type: 'checkbox', role: 'switch', class: 'toggle', checked: channel.enabled,
+          'aria-label': 'Channel ' + channel.number + ', ' + name + ', on',
+          'data-id': id, 'data-action': 'enabled',
+          onchange: (event) => act(() => api('PUT', channelPath(channel, 'enabled'), { enabled: event.target.checked }),
+            { id, action: 'enabled' }),
+        }))),
+    h('div', { class: 'tools' },
+      h('a', { class: 'button', href: '#/channel/' + encodeURIComponent(id), 'data-id': id, 'data-action': 'edit', 'aria-label': 'Edit ' + name }, 'Edit'),
+      h('button', { 'data-id': id, 'data-action': 'rename', 'aria-label': 'Rename ' + name, onclick: () => rename(channel) }, 'Rename'),
+      h('button', { 'data-id': id, 'data-action': 'number', 'aria-label': 'Renumber ' + name, onclick: () => renumber(channel) }, 'Number'),
+      h('button', {
+        class: 'arrow', 'aria-label': 'Move ' + name + ' up', disabled: index === 0, 'data-id': id, 'data-action': 'up',
+        onclick: () => act(() => api('POST', channelPath(channel, 'move'), { index: index - 1 }), { id, action: 'up' }),
+      }, '↑'),
+      h('button', {
+        class: 'arrow', 'aria-label': 'Move ' + name + ' down', disabled: index === lineup.length - 1, 'data-id': id, 'data-action': 'down',
+        onclick: () => act(() => api('POST', channelPath(channel, 'move'), { index: index + 1 }), { id, action: 'down' }),
+      }, '↓')));
+}
+
+/** After a redraw, focus goes back to the control that was used, or its nearest neighbour. */
+function refocus(focus) {
+  const actions = focus.id == null ? [focus.action] : [focus.action, 'up', 'down', 'edit'];
+  for (const action of actions) {
+    const el = [...view.querySelectorAll('[data-action="' + action + '"]')].find((x) => focus.id == null || x.dataset.id === focus.id);
+    if (el && !el.disabled) {
+      el.focus();
+      return;
+    }
+  }
+}
+
+/** Runs a lineup change, then redraws from the Shield either way, so the list always shows what's saved. */
+async function act(change, focus, done) {
+  let error = null;
+  try {
+    await change();
+  } catch (e) {
+    if (e === SIGNED_OUT) return;
+    error = e;
+  }
+  try {
+    lineup = await api('GET', '/api/lineup');
+  } catch (e) {
+    if (e === SIGNED_OUT) return;
+    error = error || e;
+  }
+  drawLineup(focus);
+  say(error ? error.message : done, Boolean(error));
+}
+
+async function rename(channel) {
+  const renamed = await ask({
+    title: 'Rename channel ' + channel.number,
+    label: 'Name',
+    value: channel.draft.name,
+    ok: 'Rename',
+    submit: (name) => api('PUT', channelPath(channel, 'name'), { name: name.trim() }),
+  });
+  if (renamed) act(async () => {}, { id: channel.id, action: 'rename' }, 'Renamed.');
+}
+
+async function renumber(channel) {
+  const renumbered = await ask({
+    title: 'Renumber ' + channel.draft.name,
+    label: 'Number, from 1 to 9999',
+    value: channel.number,
+    numeric: true,
+    ok: 'Renumber',
+    submit: (text) => {
+      const number = Number(text.trim());
+      if (!Number.isInteger(number) || number < 1 || number > 9999) throw new Error('Enter a whole number from 1 to 9999.');
+      return api('PUT', channelPath(channel, 'number'), { number });
+    },
+  });
+  if (renumbered) act(async () => {}, { id: channel.id, action: 'number' }, 'Renumbered.');
+}
+
+async function remake() {
+  const remade = await ask({
+    title: 'Remake the starter lineup?',
+    message: 'Every channel is replaced by a new starter lineup from your library. Channels you made or changed are lost.',
+    ok: 'Remake',
+    danger: true,
+    submit: () => api('POST', '/api/remake'),
+  });
+  if (remade) act(async () => {}, { id: null, action: 'remake' }, 'Remade the starter lineup.');
+}
+
+/* Asking: a small dialog for a name, a number or a confirm */
+
+/**
+ * Shows a dialog; resolves true once [submit] succeeds, false if cancelled. An error from
+ * [submit] shows inside the dialog, which stays open to try again.
+ */
+function ask({ title, message, label, value, numeric, ok, danger, submit }) {
+  if (typeof dialog.showModal !== 'function') return askPlainly({ title, message, label, value, submit });
+  return new Promise((resolve) => {
+    const input = label ? h('input', {
+      id: 'ask-input', type: 'text', value: value == null ? '' : value, autocomplete: 'off',
+      inputmode: numeric ? 'numeric' : null,
+    }) : null;
+    const error = h('p', { class: 'error', role: 'alert', hidden: true });
+    const okButton = h('button', { type: 'submit', class: danger ? 'danger' : 'primary' }, ok);
+    const close = (done) => {
+      dialog.close();
+      resolve(done);
+    };
+    const form = h('form', {
+      onsubmit: async (event) => {
+        event.preventDefault();
+        error.hidden = true;
+        okButton.disabled = true;
+        try {
+          await submit(input ? input.value : undefined);
+          close(true);
+        } catch (e) {
+          if (e === SIGNED_OUT) {
+            close(false);
+            return;
+          }
+          error.textContent = e.message;
+          error.hidden = false;
+        } finally {
+          okButton.disabled = false;
+        }
+      },
+    },
+    h('h2', { id: 'ask-title' }, title),
+    message ? h('p', {}, message) : null,
+    input ? [h('label', { class: 'field', for: 'ask-input' }, label), input] : null,
+    error,
+    h('div', { class: 'actions' }, okButton, h('button', { type: 'button', onclick: () => close(false) }, 'Cancel')));
+    dialog.replaceChildren(form);
+    dialog.setAttribute('aria-labelledby', 'ask-title');
+    dialog.oncancel = () => resolve(false);
+    dialog.showModal();
+    if (input) input.select();
+    else okButton.focus();
+  });
+}
+
+/** For a browser without <dialog>: the browser's own prompt and confirm. */
+async function askPlainly({ title, message, label, value, submit }) {
+  let answer;
+  if (label) {
+    answer = window.prompt(title + '\n' + label, value == null ? '' : String(value));
+    if (answer == null) return false;
+  } else if (!window.confirm(title + '\n\n' + (message || ''))) {
+    return false;
+  }
+  try {
+    await submit(answer);
+    return true;
+  } catch (e) {
+    if (e !== SIGNED_OUT) window.alert(e.message);
+    return false;
+  }
+}
+
+/* The channel editor */
+
+const ORDERS = [['shuffle', 'Shuffle'], ['in_order', 'In order'], ['rotate_shows', 'Rotate shows']];
+
+function newDraft() {
+  return {
+    name: '',
+    rule: {
+      types: ['movie'], sections: [], genres: [], shows: [], collections: [], studios: [], labels: [], decades: [], minAgeYears: null,
+      contentRatings: [], minMinutes: null, maxMinutes: null, unwatched: false, specials: false, order: 'shuffle',
+    },
+    alignmentMinutes: 30,
+    filler: 'trailers',
+  };
+}
+
+async function openEditor(id) {
+  document.title = (id == null ? 'New channel' : 'Edit channel') + ' · Plex Guide';
+  try {
+    const [loadedChoices, loadedLineup] = await Promise.all([choices || api('GET', '/api/choices'), api('GET', '/api/lineup')]);
+    choices = loadedChoices;
+    lineup = loadedLineup;
+  } catch (e) {
+    problem(e, () => openEditor(id));
+    return;
+  }
+  const channel = id == null ? null : lineup.find((c) => c.id === id);
+  if (id != null && !channel) {
+    navigate('#/', 'That channel is gone.');
+    return;
+  }
+  drawEditor(channel);
+}
+
+function drawEditor(channel) {
+  // A copy to edit: nothing changes on the Shield until Save.
+  const base = newDraft();
+  const saved = channel ? JSON.parse(JSON.stringify(channel.draft)) : base;
+  const draft = Object.assign(base, saved, { rule: Object.assign(newDraft().rule, saved.rule) });
+  const rule = draft.rule;
+  const groups = {};
+
+  const error = h('p', { class: 'error', role: 'alert', hidden: true });
+  const previewOut = h('div', { class: 'preview-out', 'aria-live': 'polite' });
+  const fail = (e) => {
+    if (e === SIGNED_OUT) return;
+    error.textContent = e.message;
+    error.hidden = false;
+    error.scrollIntoView({ block: 'center' });
+  };
+  const changed = () => {
+    if (previewOut.childNodes.length) previewOut.replaceChildren(h('p', { class: 'hint' }, 'Changed since the preview: preview again to see the new schedule.'));
+  };
+
+  /** Adds or removes [value] in the rule's [field], keeping twin chips (a genre in both lists) in step. */
+  const toggle = (field, value, on) => {
+    const list = rule[field];
+    const at = list.indexOf(value);
+    if (on && at < 0) list.push(value);
+    if (!on && at >= 0) list.splice(at, 1);
+    for (const el of view.querySelectorAll('input[data-field="' + field + '"]')) {
+      if (el.value === String(value)) el.checked = on;
+    }
+    changed();
+  };
+
+  const chip = (field, value, label, type) => {
+    const input = h('input', {
+      type: type || 'checkbox',
+      name: type === 'radio' ? field : null,
+      checked: type === 'radio' ? draft[field] === value || rule[field] === value : rule[field].includes(value),
+      'data-field': field,
+      onchange: (event) => {
+        if (type !== 'radio') toggle(field, value, event.target.checked);
+        else if (field in draft && !(field in rule)) draft[field] = value;
+        else rule[field] = value;
+        if (type === 'radio') changed();
+        if (field === 'types' || field === 'order') showGenres();
+      },
+    });
+    input.value = String(value);
+    return h('label', { class: 'chip' }, input, h('span', {}, label));
+  };
+
+  /**
+   * A group of chips. Values already in the rule but gone from the library stay, so they
+   * can be removed, unless [exact] (the genre groups, which share one field).
+   */
+  const chips = (legend, field, options, hint, exact) => {
+    const known = new Set(options.map((o) => o[0]));
+    const extra = exact ? [] : rule[field].filter((v) => !known.has(v)).map((v) => [v, String(v)]);
+    return h('fieldset', {}, h('legend', {}, legend), hint ? h('p', { class: 'hint' }, hint) : null,
+      h('div', { class: 'chips' }, [...options, ...extra].map(([value, label]) => chip(field, value, label))));
+  };
+
+  const radios = (legend, field, options, hint) => h('fieldset', {}, h('legend', {}, legend),
+    hint ? h('p', { class: 'hint' }, hint) : null,
+    h('div', { class: 'chips' }, options.map(([value, label]) => chip(field, value, label, 'radio'))));
+
+  const number = (id, label, field, short) => h('div', {},
+    h('label', { class: 'field', for: id }, label),
+    h('input', {
+      id, type: 'number', inputmode: 'numeric', min: 0, value: rule[field] == null ? '' : rule[field], class: short ? 'short' : null,
+      oninput: (event) => {
+        const parsed = parseInt(event.target.value, 10);
+        rule[field] = Number.isNaN(parsed) ? null : parsed;
+        changed();
+      },
+    }));
+
+  const switchRow = (label, field) => h('div', {}, h('label', { class: 'switch' },
+    h('input', {
+      type: 'checkbox', role: 'switch', class: 'toggle', checked: rule[field],
+      onchange: (event) => {
+        rule[field] = event.target.checked;
+        changed();
+      },
+    }), label));
+
+  /** Movie genres only while movies can play, TV genres only while episodes can. */
+  function showGenres() {
+    const episodesOnly = rule.order !== 'shuffle';
+    const any = rule.types.length === 0;
+    groups.movieGenres.hidden = episodesOnly || !(any || rule.types.includes('movie'));
+    groups.tvGenres.hidden = !(episodesOnly || any || rule.types.includes('episode'));
+  }
+
+  const name = h('input', {
+    id: 'name', type: 'text', value: draft.name, autocomplete: 'off', maxlength: 60,
+    oninput: (event) => { draft.name = event.target.value; },
+  });
+
+  // One genres field, two groups: a genre gone from the library joins the TV group so it can be removed.
+  const allGenres = new Set([...choices.movieGenres, ...choices.tvGenres]);
+  const lostGenres = rule.genres.filter((g) => !allGenres.has(g));
+  groups.movieGenres = chips('Movie genres', 'genres', choices.movieGenres.map((g) => [g, g]), null, true);
+  groups.tvGenres = chips('TV genres', 'genres', [...choices.tvGenres, ...lostGenres].map((g) => [g, g]), null, true);
+  showGenres();
+
+  const save = h('button', {
+    class: 'primary',
+    onclick: async () => {
+      error.hidden = true;
+      if (!draft.name.trim()) return fail(new Error('Give the channel a name.'));
+      draft.name = draft.name.trim();
+      save.disabled = true;
+      try {
+        if (channel) {
+          await api('PUT', channelPath(channel), draft);
+          navigate('#/', 'Saved ' + draft.name + '. It takes effect after the program on now.');
+        } else {
+          await api('POST', '/api/channels', draft);
+          navigate('#/', 'Added ' + draft.name + '.');
+        }
+      } catch (e) {
+        fail(e);
+      } finally {
+        save.disabled = false;
+      }
+    },
+  }, 'Save');
+
+  const preview = h('button', {
+    onclick: async () => {
+      error.hidden = true;
+      preview.disabled = true;
+      previewOut.replaceChildren(h('p', { class: 'hint' }, 'Working out the next 24 hours…'));
+      try {
+        drawPreview(previewOut, await api('POST', '/api/preview', draft));
+      } catch (e) {
+        previewOut.replaceChildren();
+        fail(e);
+      } finally {
+        preview.disabled = false;
+      }
+    },
+  }, 'Preview the next 24 hours');
+
+  const extras = channel ? [
+    h('button', {
+      onclick: async () => {
+        try {
+          const copy = await api('POST', channelPath(channel, 'duplicate'));
+          navigate('#/channel/' + encodeURIComponent(copy.id), 'Duplicated ' + channel.draft.name + ' as it was saved. This is the copy.');
+        } catch (e) {
+          fail(e);
+        }
+      },
+    }, 'Duplicate'),
+    h('button', {
+      class: 'danger',
+      onclick: async () => {
+        const deleted = await ask({
+          title: 'Delete ' + channel.draft.name + '?',
+          message: 'Channel ' + channel.number + ' and its schedule go. This can\'t be undone.',
+          ok: 'Delete',
+          danger: true,
+          submit: () => api('DELETE', channelPath(channel)),
+        });
+        if (deleted) navigate('#/', 'Deleted ' + channel.draft.name + '.');
+      },
+    }, 'Delete'),
+  ] : [];
+
+  const sections = choices.sections.map((s) => [s.key, s.title]);
+  const collections = choices.collections.length || rule.collections.length
+    ? collectionPicker(rule, changed) : null;
+  // A station from before studios and labels offers none: their rows stay hidden (F3).
+  const studioChoices = choices.studios || [];
+  const labelChoices = choices.labels || [];
+  const studios = studioChoices.length || rule.studios.length ? studioPicker(rule, changed, studioChoices) : null;
+  let labels = null;
+  if (labelChoices.length > MAX_RESULTS) labels = labelPicker(rule, changed, labelChoices);
+  else if (labelChoices.length || rule.labels.length) {
+    labels = chips('Labels', 'labels', labelChoices.map((l) => [l, l]), 'None picked means any label.');
+  }
+
+  show([
+    h('p', {}, h('a', { href: '#/', class: 'button' }, '‹ Channels')),
+    h('h2', {}, channel ? 'Edit channel ' + channel.number : 'New channel'),
+    h('label', { class: 'field', for: 'name' }, 'Name'), name,
+    chips('Plays', 'types', [['movie', 'Movies'], ['episode', 'Episodes']]),
+    sections.length ? chips('Libraries', 'sections', sections, 'None picked means every library.') : null,
+    groups.movieGenres,
+    groups.tvGenres,
+    showPicker(rule, changed),
+    collections,
+    studios,
+    labels,
+    chips('Decades', 'decades', choices.decades.map((d) => [d, d + 's'])),
+    number('min-age', 'Released at least this many years ago', 'minAgeYears', true),
+    chips('Content ratings', 'contentRatings', choices.contentRatings.map((r) => [r, r])),
+    h('div', { class: 'pair' },
+      number('min-minutes', 'Shortest, in minutes', 'minMinutes'),
+      number('max-minutes', 'Longest, in minutes', 'maxMinutes')),
+    h('fieldset', {}, h('legend', {}, 'Also'), switchRow('Unwatched only', 'unwatched'), switchRow('Include specials (season 0)', 'specials')),
+    radios('Order', 'order', ORDERS, 'Shuffle plays everything once before repeating. In order and Rotate shows play episodes only.'),
+    h('p', { class: 'hint' }, 'Films start on the next 5 minutes, after a trailer or two. Episodes run straight on.'),
+    h('div', { class: 'actions' }, preview),
+    previewOut,
+    error,
+    h('div', { class: 'actions' }, save, ...extras),
+    channel ? h('p', { class: 'hint' }, 'Takes effect after the program on now.') : null,
+  ]);
+}
+
+/**
+ * A long list as a search: the picked ones as chips, then a search box whose matches can
+ * be picked (at most MAX_RESULTS). A short list shows in full. Shows, collections, studios
+ * and many labels use it, so a library with hundreds of any never makes the page scroll past them.
+ * [options] are [value, label] pairs; [gone] names a picked value no longer in the list.
+ */
+function searchPicker(rule, changed, { legend, field, id, options, noun, hint, gone }) {
+  const labels = new Map(options);
+  const picked = h('div', { class: 'chips' });
+  const results = h('div', { class: 'chips results' });
+  const search = h('input', {
+    id, type: 'search', autocomplete: 'off', placeholder: 'Search ' + options.length.toLocaleString() + ' ' + noun + 's',
+    oninput: () => drawResults(),
+  });
+
+  const box = (value, label, where) => {
+    const input = h('input', {
+      type: 'checkbox', checked: rule[field].includes(value), 'data-value': value,
+      onchange: (event) => {
+        const at = rule[field].indexOf(value);
+        if (event.target.checked && at < 0) rule[field].push(value);
+        if (!event.target.checked && at >= 0) rule[field].splice(at, 1);
+        changed();
+        drawPicked();
+        for (const el of results.querySelectorAll('input')) if (el.dataset.value === value) el.checked = event.target.checked;
+        if (where === 'picked') search.focus();
+      },
+    });
+    return h('label', { class: 'chip' }, input, h('span', {}, label));
+  };
+
+  function drawPicked() {
+    picked.replaceChildren(...rule[field].map((value) => box(value, labels.get(value) || gone(value), 'picked')));
+    picked.hidden = rule[field].length === 0;
+  }
+
+  function drawResults() {
+    const text = search.value.trim().toLowerCase();
+    const all = options.length <= MAX_RESULTS;
+    const matches = text || all ? options.filter(([, label]) => label.toLowerCase().includes(text)).slice(0, MAX_RESULTS) : [];
+    results.replaceChildren(...matches.map(([value, label]) => box(value, label, 'results')));
+    if (text && matches.length === 0) results.replaceChildren(h('p', { class: 'hint' }, 'No ' + noun + ' matches.'));
+  }
+
+  drawPicked();
+  drawResults();
+  return h('fieldset', {}, h('legend', {}, legend),
+    h('p', { class: 'hint' }, hint),
+    picked,
+    h('label', { class: 'field', for: id }, 'Find a ' + noun), search,
+    results);
+}
+
+/** Shows: a search over the library's shows, with the picked ones listed first. */
+function showPicker(rule, changed) {
+  return searchPicker(rule, changed, {
+    legend: 'Shows', field: 'shows', id: 'show-search', noun: 'show', hint: 'None picked means any show.',
+    options: choices.shows.map((s) => [s.key, s.title]), gone: () => 'A show no longer in Plex',
+  });
+}
+
+/** Collections: often hundreds of them, so a search like Shows (G18). */
+function collectionPicker(rule, changed) {
+  return searchPicker(rule, changed, {
+    legend: 'Collections', field: 'collections', id: 'collection-search', noun: 'collection',
+    hint: 'None picked means any collection.', options: choices.collections.map((c) => [c, c]), gone: (name) => name,
+  });
+}
+
+/** Studios: often hundreds of them, the most titles first, so a search like Collections (Phase 9). */
+function studioPicker(rule, changed, names) {
+  return searchPicker(rule, changed, {
+    legend: 'Studios', field: 'studios', id: 'studio-search', noun: 'studio',
+    hint: 'None picked means any studio.', options: names.map((s) => [s, s]), gone: (name) => name,
+  });
+}
+
+/** Labels: chips while there are few; past MAX_RESULTS, a search like Collections (Phase 9). */
+function labelPicker(rule, changed, names) {
+  return searchPicker(rule, changed, {
+    legend: 'Labels', field: 'labels', id: 'label-search', noun: 'label',
+    hint: 'None picked means any label.', options: names.map((l) => [l, l]), gone: (name) => name,
+  });
+}
+
+const MAX_RESULTS = 30;
+
+function drawPreview(out, slots) {
+  if (!slots.length) {
+    out.replaceChildren(h('p', {}, 'Nothing in your library fits these rules, so the channel would have nothing to play.'));
+    return;
+  }
+  const time = (ms) => new Date(ms).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' });
+  const day = (ms) => new Date(ms).toLocaleDateString([], { weekday: 'long', month: 'long', day: 'numeric' });
+  const parts = [];
+  let list = null;
+  let shownDay = null;
+  for (const slot of slots) {
+    const thisDay = day(slot.start);
+    if (thisDay !== shownDay) {
+      shownDay = thisDay;
+      list = h('ol', { class: 'preview' });
+      parts.push(h('h3', {}, thisDay), list);
+    }
+    list.append(h('li', { class: slot.filler ? 'filler' : null },
+      h('time', { datetime: new Date(slot.start).toISOString() }, time(slot.start)),
+      h('span', {}, slot.title, slot.episode ? h('span', { class: 'episode' }, ' · ' + slot.episode) : null,
+        slot.filler ? h('span', { class: 'tag' }, 'Filler') : null)));
+  }
+  const programs = slots.filter((s) => !s.filler).length;
+  out.replaceChildren(h('p', { class: 'hint' }, programs + (programs === 1 ? ' program' : ' programs') + ' in the next 24 hours.'), ...parts);
+}
+
+window.addEventListener('hashchange', route);
+route();
+</script>
+</body>
+</html>

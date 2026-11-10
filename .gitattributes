@@ -1,0 +1,13 @@
+* text=auto
+gradlew text eol=lf
+*.bat text eol=crlf
+*.png binary
+*.jpg binary
+*.webp binary
+*.jar binary
+
+# Generated: GitHub folds these in pull-request diffs and leaves them out of the language
+# stats. The screenshots come from recordRoborazziDebug, the schemas from Room.
+app/src/test/screenshots/** linguist-generated=true
+app/schemas/** linguist-generated=true
+guide-core/schemas/** linguist-generated=true

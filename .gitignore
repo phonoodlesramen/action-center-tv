@@ -1,0 +1,40 @@
+# Gradle / Android
+.gradle/
+.kotlin/
+build/
+/local.properties
+/captures/
+.externalNativeBuild/
+.cxx/
+*.apk
+*.aab
+*.ap_
+*.dex
+
+# IDE
+.idea/
+*.iml
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Secrets: never commit signing keys or env files
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*
+
+# Local ADB helper state
+scripts/.shield-ip
+scripts/.previous-home.*
+
+# Reports the device scripts write about your TV (device-report, player-intent-probe)
+reports/
+
+# Agent worktrees (Claude Code)
+.claude/worktrees/
+
+# A maintainer's private notes and Claude rules, kept out of the repository
+CLAUDE.local.md
+.claude/private/

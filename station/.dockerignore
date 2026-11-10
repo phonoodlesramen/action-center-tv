@@ -1,0 +1,4 @@
+# The image takes the installed distribution only (see Dockerfile).
+*
+!build/install/station/lib/
+!build/install/station/native/

@@ -1,0 +1,5 @@
+{"MediaContainer":{"suggestedTerms":["Harbor Heat","Heathers Example"],"identifier":"tv.plex.provider.discover","size":1,"SearchResults":[
+ {"id":"external","title":"More Ways To Watch","size":3,"SearchResult":[
+  {"score":0.76,"Metadata":{"ratingKey":"5d77aa01","guid":"plex://movie/5d77aa01","type":"movie","title":"Harbor Lights","year":1995,"thumb":"https://example.invalid/t.jpg","Genre":[{"tag":"Action"},{"tag":"Crime"}]}},
+  {"score":0.61,"Metadata":{"ratingKey":"6841bb02","guid":"plex://show/6841bb02","type":"show","title":"Harbor Watch","year":2019}},
+  {"score":0.40,"Metadata":{"ratingKey":"aa11","type":"person","title":"Not a title"}}]}]}}

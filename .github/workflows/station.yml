@@ -1,0 +1,92 @@
+name: Guide station
+
+# The guide station (station/): tests it, and builds its linux/amd64 image and pushes it to
+# GHCR, tagged with the commit's short SHA.
+# - Pull requests: the tests only, no image.
+# - Pushes to main: the image, also as `latest`.
+# - A `v*` tag: the image, also with the version (v1.2.0 is 1.2.0). Path filters don't apply
+#   to tags, so every release has an image.
+# - A run started by hand (Actions › Guide station › Run workflow): the SHA tag only, so a
+#   branch can be tried on the NAS before it merges.
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+    paths:
+      - station/**
+      - guide-core/**
+      - gradle/**
+      - build.gradle.kts
+      - settings.gradle.kts
+      - gradle.properties
+      - .github/workflows/station.yml
+  pull_request:
+    paths:
+      - station/**
+      - guide-core/**
+      - gradle/**
+      - build.gradle.kts
+      - settings.gradle.kts
+      - gradle.properties
+      - .github/workflows/station.yml
+  workflow_dispatch:
+
+concurrency:
+  group: station-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  station:
+    name: Station tests and image
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+      packages: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - uses: actions/setup-java@77dd5b2ce225ea11469928ac317850245a74ae78 # v6.2.0
+        with:
+          distribution: temurin
+          java-version: 17
+
+      # Also validates the Gradle wrapper checksum.
+      - uses: gradle/actions/setup-gradle@8da46b539cd8fe6ab27ca75128919a18d757604c # v6.4.1
+
+      - name: Test and install the station
+        run: ./gradlew :station:test :station:installDist
+
+      - name: Upload test reports
+        if: failure()
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: station-reports
+          path: |
+            station/build/reports
+            station/build/test-results
+
+      - name: Build and push the image
+        if: github.event_name != 'pull_request'
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY_OWNER,,}/guide-station"
+          echo "$GITHUB_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+          tags=(--tag "$image:${GITHUB_SHA::7}")
+          labels=()
+          # Only main moves `latest`.
+          if [ "$GITHUB_REF" = "refs/heads/main" ]; then tags+=(--tag "$image:latest"); fi
+          if [ "$GITHUB_REF_TYPE" = tag ]; then
+            tags+=(--tag "$image:${GITHUB_REF_NAME#v}")
+            labels+=(--label "org.opencontainers.image.version=${GITHUB_REF_NAME#v}")
+          fi
+          docker build --platform linux/amd64 \
+            --label "org.opencontainers.image.source=https://github.com/$GITHUB_REPOSITORY" \
+            --label "org.opencontainers.image.revision=$GITHUB_SHA" \
+            --label "org.opencontainers.image.licenses=GPL-3.0-or-later" \
+            "${labels[@]}" "${tags[@]}" station
+          docker push --all-tags "$image"

@@ -1,0 +1,8 @@
+{ "MediaContainer": { "size": 2, "Metadata": [
+  { "historyKey": "/status/sessions/history/950", "key": "/library/metadata/8801", "ratingKey": "8801", "librarySectionID": "2",
+    "parentKey": "/library/metadata/8800", "grandparentKey": "/library/metadata/8000", "grandparentRatingKey": "8000",
+    "title": "The Big Race", "grandparentTitle": "Puddle Jumpers", "type": "episode", "thumb": "/library/metadata/8801/thumb/1",
+    "viewedAt": 1793050000, "accountID": 31415926, "deviceID": 4 },
+  { "historyKey": "/status/sessions/history/949", "key": "/library/metadata/7701", "ratingKey": "7701", "librarySectionID": "1",
+    "title": "Cloud Kingdom", "type": "movie", "viewedAt": 1793040000, "accountID": 31415926, "deviceID": 4 }
+] } }
