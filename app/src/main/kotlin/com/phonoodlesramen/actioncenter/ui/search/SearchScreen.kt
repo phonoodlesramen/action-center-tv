@@ -347,7 +347,7 @@ private fun TopMatch(item: SearchItem, lateNight: Boolean, onClick: () -> Unit) 
 private fun ItemRow(label: String, items: List<SearchItem>, lateNight: Boolean, onClick: (SearchItem) -> Unit) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         Eyebrow(label)
-        // A LazyRow is a focus group already: focusRestorer() alone (CLAUDE.md).
+        // A LazyRow is a focus group already: focusRestorer() alone (AGENTS.md).
         LazyRow(Modifier.fillMaxWidth().focusRestorer(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             items(items, key = { it.ratingKey }) { item -> ResultCard(item, lateNight, width = CARD_WIDTH) { onClick(item) } }
         }

@@ -111,10 +111,10 @@ The screenshots are drawn at the SHIELD's 1080p TV configuration
 
 ## Using AI tools
 
-Much of this project was written with Claude Code. [`AGENTS.md`](AGENTS.md) is the guide
-for AI coding agents: a map of the code, the narrowest test commands, the files not to read
-whole, and the rules. Codex, Cursor, Copilot and Gemini CLI read it, and `CLAUDE.md` points
-Claude Code to it. You're welcome to use AI tools too, on two conditions:
+Much of Action Center was written with the help of AI coding tools. [`AGENTS.md`](AGENTS.md)
+is the guide for AI coding agents: a map of the code, the narrowest test commands, the files
+not to read whole, and the rules. Codex, Cursor, Copilot and Gemini CLI read it, and
+`CLAUDE.md` points Claude Code to it. You're welcome to use AI tools too, on two conditions:
 - you've read and tested everything you submit;
 - the pull request says which parts an AI wrote.
 
