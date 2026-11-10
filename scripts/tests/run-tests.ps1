@@ -480,7 +480,7 @@ $Tests = [ordered]@{
             $packages = @(if ($cells.Count -ge 3) { [regex]::Matches($cells[1], '`([^`]+)`') | ForEach-Object { $_.Groups[1].Value } })
             foreach ($token in [regex]::Matches($line, '`([^`\s]+)`') | ForEach-Object { $_.Groups[1].Value }) {
                 $path = $null
-                $path = if ($token -match '^(app|guide-core|station|scripts|docs|gradle|\.github)/') { $token }
+                $path = if ($token -match '^(app|guide-core|station|scripts|docs|gradle|site|\.github)/') { $token }
                 elseif ($token -match '^core/(.+)$') { "$core/$($Matches[1])" }
                 elseif ($token -in $packages) { "$app/$token" }
                 if ($path) {
