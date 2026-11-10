@@ -4,7 +4,7 @@ An ad-free, card-based home screen for Android TV, built for the NVIDIA SHIELD T
 of rows of ads and app icons, it shows a few cards that answer "what should we watch
 tonight?" from your own Plex library.
 
-![The home screen: Tonight's Pick, a lens card, Quick Watch, Up Next and the Plex Guide](docs/images/home.jpg)
+![Action Center in use: Tonight's Pick, the lens card moving on, the Plex Guide, the rows down the home, and a search for "star"](docs/images/tour.gif)
 
 It's a hobby project, sideloaded over ADB. It isn't on the Play Store, and it isn't
 affiliated with NVIDIA, Google, Plex or anyone else whose service it talks to (see
@@ -40,6 +40,10 @@ affiliated with NVIDIA, Google, Plex or anyone else whose service it talks to (s
 
 ## Screenshots
 
+![The home late at night: Tonight's Pick, a lens card, Quick Watch, Up Next and the Plex Guide](docs/images/home.jpg)
+
+**Late at night.** The same home in its late-night mode.
+
 | | |
 |---|---|
 | ![The home with the Plex Guide card focused, and Throwback on the lens card](docs/images/home-guide-card.jpg) | ![The Live row of guide channels, and the NFL row](docs/images/home-rows.jpg) |
@@ -49,8 +53,8 @@ affiliated with NVIDIA, Google, Plex or anyone else whose service it talks to (s
 | ![Search results from the library](docs/images/search.jpg) | ![Search results: on now, on your apps, and Google](docs/images/search-on-your-apps.jpg) |
 | **Search.** Your library first, through Plex's own search. | **Then** what's on now, what's on your streaming apps, and Google. |
 
-These are real screens from a Google TV with a Plex library, at 1080p. The titles, artwork
-and logos belong to their owners.
+These are real screens from a Google TV with a Plex library, at 1080p, and the GIF at the
+top is the same TV, scaled down. The titles, artwork and logos belong to their owners.
 
 ## What you need
 
