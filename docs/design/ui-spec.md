@@ -794,7 +794,9 @@ Settings › Plex › Play in).
 - **Screen on** only while video plays (G10); the cards and a paused picture let the
   screensaver come on.
 - **Back** closes what's open over the picture, else returns to where it was opened, and
-  saves nothing. **Home** (or anything else that stops the player: Plezy, the screensaver)
+  saves nothing. That holds when Android has made the home again behind the player (a
+  configuration change the player rides out, such as an HDMI mode switch): the full guide
+  and a program's details keep their place, the guide on the program played. **Home** (or anything else that stops the player: Plezy, the screensaver)
   pauses it where it is and saves that spot for the home's Back-to card (Start over and
   pause, below). No playback is reported to Plex: no timeline, no session (G6). Since
   Phase 11, a program watched to its credits is marked watched, and Watch in writes its

@@ -1,5 +1,6 @@
 package com.phonoodlesramen.actioncenter
 
+import com.phonoodlesramen.actioncenter.guide.GuideSource
 import com.phonoodlesramen.actioncenter.nfl.EspnClient
 import com.phonoodlesramen.actioncenter.plex.PlexAccount
 import com.phonoodlesramen.actioncenter.plex.PlexAccounts
@@ -11,9 +12,13 @@ import okhttp3.OkHttpClient
 /**
  * The app under Robolectric (robolectric.properties): plex.tv is a fake that shows code TEST
  * forever, and ESPN (Phase 13) is a closed port on this machine, so the NFL never reaches it.
+ * The Plex Guide has no channels, unless a test's own app gives it a lineup ([guide]).
  */
-class TestActionCenterApp : ActionCenterApp() {
-    override fun createContainer() = AppContainer(this, plexOverride = UnclaimedPlex, espnOverride = NoEspn)
+open class TestActionCenterApp : ActionCenterApp() {
+    /** The Plex Guide's lineup in place of the cache's; null leaves the real one, which is empty here. */
+    protected open val guide: GuideSource? = null
+
+    override fun createContainer() = AppContainer(this, plexOverride = UnclaimedPlex, espnOverride = NoEspn, guideOverride = guide)
 
     object UnclaimedPlex : PlexAccounts {
         const val CODE = "TEST"
