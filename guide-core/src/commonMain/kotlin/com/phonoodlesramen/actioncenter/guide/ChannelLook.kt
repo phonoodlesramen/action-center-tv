@@ -48,7 +48,7 @@ object ChannelGlyphs {
         "newspaper" to listOf("news"),
         "mic" to listOf("talk", "talkshow", "talkshows", "standup"),
         "restaurant" to listOf("food", "cooking", "cookery", "baking"),
-        "auto_fix_high" to listOf("anime"),
+        "animation" to listOf("anime"),
     )
 
     /** Every glyph, in the order the phone editor offers them. */

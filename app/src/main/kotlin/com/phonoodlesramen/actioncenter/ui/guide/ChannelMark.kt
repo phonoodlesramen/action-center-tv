@@ -163,7 +163,7 @@ internal object ChannelTones {
         "newspaper" to Color(0xFF3B4A5C),
         "mic" to Color(0xFF7A6014),
         "restaurant" to Color(0xFF7A3A20),
-        "auto_fix_high" to Color(0xFF4A2E6E),
+        "animation" to Color(0xFF4A2E6E),
     )
 
     /** For monograms: the glyphs' tones, without repeats. */
