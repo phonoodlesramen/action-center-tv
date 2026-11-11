@@ -3,7 +3,9 @@ package com.phonoodlesramen.actioncenter
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
+import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.SemanticsMatcher
 import androidx.compose.ui.test.assert
 import androidx.compose.ui.test.hasClickAction
 import androidx.compose.ui.test.hasContentDescription
@@ -81,12 +83,12 @@ class HomeGuideBackTest {
         assertFocused("Movies, ")
         val program = compose.onNode(isFocused()).fetchSemanticsNode().config[SemanticsProperties.ContentDescription].single()
         press(Key.DirectionCenter)
-        compose.onNodeWithText("Starts at", substring = true).assertExists()
+        compose.onNode(startsAt).assertExists()
 
         compose.activityRule.scenario.recreate()
         compose.waitForIdle()
 
-        compose.onNodeWithText("Starts at", substring = true).assertExists()
+        compose.onNode(startsAt).assertExists()
         compose.activity.onBackPressedDispatcher.onBackPressed()
         compose.waitForIdle()
         assertFocused(program)
@@ -108,6 +110,14 @@ class HomeGuideBackTest {
 
     private companion object {
         const val GUIDE_CARD = "PLEX GUIDE · 6 CHANNELS"
+
+        /**
+         * The details' start time for a later program, at any hour the test runs: "Starts at 9:30",
+         * or "Starts tomorrow at 1:00 AM" once it's past midnight. Not the guide's "Starts in 2h 19m".
+         */
+        val startsAt = SemanticsMatcher("the details' start time") { node ->
+            node.config.getOrNull(SemanticsProperties.Text).orEmpty().any { it.text.startsWith("Starts ") && !it.text.startsWith("Starts in ") }
+        }
     }
 }
 
