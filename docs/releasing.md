@@ -75,7 +75,8 @@ one means everyone uninstalls first.
    A tag with a hyphen, such as `v1.3.0-rc.1`, makes a pre-release. `releases/latest` skips
    it; `./scripts/install.ps1 -FromRelease -Tag v1.3.0-rc.1` installs it.
 4. **CI runs the checks again,** then publishes the release with:
-   - `app-release.apk`, `app-release.apk.sha256` and `LICENSE.txt`;
+   - `app-release.apk`, `app-release.apk.sha256`, `update.json` ([below](#updatejson)) and
+     `LICENSE.txt`;
    - notes with the APK's SHA-256 and the signing certificate's, then the pull requests
      merged since the last release.
 
@@ -86,6 +87,38 @@ one means everyone uninstalls first.
 - for a passing reason, such as a network error, re-run the failed jobs from the run's page;
 - otherwise, fix it on `main` and tag the next patch version. Don't move a tag that's been
   pushed.
+
+## update.json
+
+Each release carries `update.json`, which the app's own update check reads from
+`https://github.com/<owner>/<repo>/releases/latest/download/update.json`. Pre-releases
+aren't `latest`, so it never offers one. For example:
+
+```json
+{
+  "format": 1,
+  "versionCode": 452160,
+  "versionName": "1.1.0",
+  "tag": "v1.1.0",
+  "apk": "app-release.apk",
+  "size": 53572870,
+  "sha256": "…",
+  "signerSha256": "3c7fc77c…",
+  "minSdk": 30,
+  "notesUrl": "https://github.com/<owner>/<repo>/releases/tag/v1.1.0"
+}
+```
+
+- **`versionCode`** says which build is newer. A version name between tags, such as
+  1.2.0-3-gabc1234, doesn't sort.
+- **`size`, `sha256` and `signerSha256`** are what a download has to match: the APK's size,
+  its SHA-256 (the `.sha256` file's) and its signing certificate's SHA-256.
+- **`format`** goes up only for a change an older app can't read. New fields don't change it.
+- CI reads every value from the signed APK with `aapt2` and `apksigner`, and fails the release
+  if it can't.
+
+A release made before `update.json` existed (v1.0.0) has none, so an update to the first
+version with the update check is installed by hand.
 
 ## Checking a download
 

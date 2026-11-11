@@ -178,18 +178,49 @@ jobs:
           path: dist
 
       # scripts/install.ps1 -FromRelease reads these names: app-release.apk, and its SHA-256
-      # in sha256sum's format.
+      # in sha256sum's format. update.json is for the app's own update check, which reads it
+      # from releases/latest/download/: its version code says what's newer (a name like
+      # 1.2.0-3-gabc1234 doesn't sort), and a download has to match its size, SHA-256 and
+      # signer (docs/releasing.md).
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd dist
           sha256sum app-release.apk > app-release.apk.sha256
-          apksigner="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)/apksigner"
-          certs="$("$apksigner" verify --print-certs app-release.apk)"
+          tools="$(ls -d "$ANDROID_HOME"/build-tools/* | sort -V | tail -n 1)"
+          certs="$("$tools/apksigner" verify --print-certs app-release.apk)"
           signer="$(grep -m 1 'certificate SHA-256 digest' <<< "$certs" | sed 's/.*: //')"
           cp ../LICENSE LICENSE.txt
           version="${GITHUB_REF_NAME#v}"
+
+          badging="$("$tools/aapt2" dump badging app-release.apk)"
+          code="$(grep -o -m 1 "versionCode='[0-9]*'" <<< "$badging" | tr -dc 0-9)"
+          name="$(grep -o -m 1 "versionName='[^']*'" <<< "$badging" | sed "s/^versionName='//; s/'$//")"
+          min_sdk="$(grep -o -m 1 "^minSdkVersion:'[0-9]*'" <<< "$badging" | tr -dc 0-9)"
+          sha="$(cut -d ' ' -f 1 app-release.apk.sha256)"
+          # Every value is checked, so the JSON below can't be malformed.
+          if ! [[ "$code" =~ ^[0-9]+$ && "$min_sdk" =~ ^[0-9]+$ && "$name" == "$version" &&
+                  "$version" =~ ^[0-9A-Za-z.+-]+$ && "$sha" =~ ^[0-9a-f]{64}$ && "$signer" =~ ^[0-9a-f]{64}$ &&
+                  "$GITHUB_REPOSITORY" =~ ^[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+$ ]]; then
+            echo "::error title=No update.json::The APK isn't release $version, or a value is missing (versionCode '$code', versionName '$name', minSdkVersion '$min_sdk', signer '$signer')."
+            exit 1
+          fi
+          cat > update.json <<EOF
+          {
+            "format": 1,
+            "versionCode": $code,
+            "versionName": "$name",
+            "tag": "$GITHUB_REF_NAME",
+            "apk": "app-release.apk",
+            "size": $(stat -c %s app-release.apk),
+            "sha256": "$sha",
+            "signerSha256": "$signer",
+            "minSdk": $min_sdk,
+            "notesUrl": "https://github.com/$GITHUB_REPOSITORY/releases/tag/$GITHUB_REF_NAME"
+          }
+          EOF
+          jq -e . update.json
           owner="${GITHUB_REPOSITORY_OWNER,,}"
           docs="https://github.com/$GITHUB_REPOSITORY/blob/$GITHUB_REF_NAME/docs"
           cat > notes.md <<EOF
@@ -204,5 +235,5 @@ jobs:
           flags=()
           # v1.2.0-rc.1 and the like are pre-releases, which releases/latest skips.
           if [[ "$version" == *-* ]]; then flags+=(--prerelease); fi
-          gh release create "$GITHUB_REF_NAME" app-release.apk app-release.apk.sha256 LICENSE.txt \
+          gh release create "$GITHUB_REF_NAME" app-release.apk app-release.apk.sha256 update.json LICENSE.txt \
             --verify-tag --title "Action Center $version" --notes-file notes.md --generate-notes "${flags[@]}"
