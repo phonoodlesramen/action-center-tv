@@ -53,6 +53,8 @@ import com.phonoodlesramen.actioncenter.system.PackageState
 import com.phonoodlesramen.actioncenter.system.WatchNextResult
 import com.phonoodlesramen.actioncenter.tvprovider.TvProgram
 import com.phonoodlesramen.actioncenter.tvprovider.TvProviderSnapshot
+import com.phonoodlesramen.actioncenter.update.UpdateLine
+import com.phonoodlesramen.actioncenter.update.UpdateStatus
 import java.time.Instant
 import java.time.ZoneId
 import java.time.ZonedDateTime
@@ -73,6 +75,8 @@ fun DiagnosticsScreen(
     actions: DiagnosticsActions,
     modifier: Modifier = Modifier,
     focusResetKey: Int = 0,
+    /** Safe mode's Updates; null leaves them out (Settings › Diagnostics, previews). */
+    updates: UpdateStatus? = null,
 ) {
     MaterialTheme(colorScheme = darkColorScheme(primary = Palette.Accent)) {
         Surface(
@@ -97,6 +101,7 @@ fun DiagnosticsScreen(
                 fullWidth("header") { Header(now) }
                 if (state.mode == StartupMode.SAFE) {
                     fullWidth("safe-mode") { SafeModeBanner(state.lastCrash, now.zone, actions::leaveSafeMode) }
+                    if (updates != null && updates.enabled) fullWidth("updates") { SafeModeUpdates(updates, now, actions) }
                 }
                 if (state.stockLauncherIsBack) fullWidth("stock-launcher") { StockLauncherBanner() }
                 if (state.problems.isNotEmpty()) fullWidth("problems") { ProblemsBanner(state.problems) }
@@ -194,6 +199,27 @@ private fun SafeModeBanner(crash: CrashRecord?, zone: ZoneId, onLeave: () -> Uni
                 focusedContentColor = Palette.OnSafeMode,
             ),
         ) { Text("Leave safe mode") }
+    }
+}
+
+/**
+ * Safe mode's Updates: a newer release may fix whatever crashed, and this is the one screen a
+ * crashing home still opens. The same line and pills as Settings › About.
+ */
+@Composable
+private fun SafeModeUpdates(status: UpdateStatus, now: ZonedDateTime, actions: DiagnosticsActions) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+        Column(Modifier.weight(1f)) {
+            Text("Updates", style = MaterialTheme.typography.titleMedium)
+            val line = UpdateLine.of(status, now.toInstant().toEpochMilli(), now.zone)
+            Text(line.text, style = MaterialTheme.typography.bodyMedium, color = if (line.caution) Palette.SafeMode else Palette.Text)
+        }
+        Button(onClick = actions::checkForUpdates) { Text("Check for updates") }
+        val available = status.available
+        if (available != null) {
+            Button(onClick = actions::installUpdate) { Text("Install ${available.versionName}") }
+            Button(onClick = actions::openInstallUnknownApps) { Text("Install unknown apps") }
+        }
     }
 }
 

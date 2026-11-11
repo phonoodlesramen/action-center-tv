@@ -43,10 +43,18 @@ import androidx.tv.material3.Icon
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
+import com.phonoodlesramen.actioncenter.ui.home.Eyebrow
 import com.phonoodlesramen.actioncenter.ui.home.PillButton
 import com.phonoodlesramen.actioncenter.ui.home.pillButtonColors
+import com.phonoodlesramen.actioncenter.ui.theme.AppIcons
 import com.phonoodlesramen.actioncenter.ui.theme.BrandIcons
 import com.phonoodlesramen.actioncenter.ui.theme.Palette
+import com.phonoodlesramen.actioncenter.update.UpdateInfo
+import com.phonoodlesramen.actioncenter.update.UpdateLine
+import com.phonoodlesramen.actioncenter.update.UpdateMode
+import com.phonoodlesramen.actioncenter.update.UpdateStatus
+import com.phonoodlesramen.actioncenter.update.UpdatesController
+import java.time.ZoneId
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -104,20 +112,35 @@ private sealed interface AboutPage {
 
     /** The maintainer's GitHub profile, as a QR code: TVs mostly have no browser to open it in. */
     data object Author : AboutPage
+
+    /** An update's release notes on GitHub, as a QR code. */
+    data class WhatsNew(val info: UpdateInfo) : AboutPage
 }
 
+/** What Settings › About's Updates needs: the status, and what its pills do. */
+internal class AboutUpdates(
+    val status: UpdateStatus,
+    val nowMillis: Long,
+    /** Install unknown apps is on for Action Center (Settings › Setup reads it). */
+    val canInstall: Boolean,
+    val controller: UpdatesController,
+    /** TV Settings' Install unknown apps. */
+    val onAllow: () -> Unit,
+)
+
 /**
- * Settings › About: the version, GPL-3.0's notice (that it's free software under the GPL,
- * with no warranty, and where the source is), and **Open-source licences**: the app and every
- * library it carries, each opening its licence's full text. The copyright line's name is a
- * button with GitHub's mark: OK shows the maintainer's GitHub profile as a QR code. Back goes
- * back a page at a time, and lands on the button that left.
+ * Settings › About: the version and its **Updates** ([Updates]), GPL-3.0's notice (that it's
+ * free software under the GPL, with no warranty, and where the source is), and **Open-source
+ * licences**: the app and every library it carries, each opening its licence's full text. The
+ * copyright line's name is a button with GitHub's mark: OK shows the maintainer's GitHub profile
+ * as a QR code. Back goes back a page at a time, and lands on the button that left.
  */
 @Composable
-internal fun ColumnScope.AboutSettings(version: String, openMeteoCredit: String) {
+internal fun ColumnScope.AboutSettings(version: String, openMeteoCredit: String, updates: AboutUpdates? = null) {
     var page by remember { mutableStateOf<AboutPage>(AboutPage.Main) }
     val author = remember { FocusRequester() }
     val licences = remember { FocusRequester() }
+    val whatsNew = remember { FocusRequester() }
     // The button a page was opened from: Back lands on it.
     var returnTo by remember { mutableStateOf<FocusRequester?>(null) }
     // Back from the list or a text goes back a page; on the main page Settings' own Back closes it.
@@ -132,6 +155,16 @@ internal fun ColumnScope.AboutSettings(version: String, openMeteoCredit: String)
             }
             Text(if (version.isEmpty()) "Action Center" else "Action Center $version", style = MaterialTheme.typography.titleSmall)
             Note("An ad-free home screen for Android TV. A hobby project, sideloaded over ADB.")
+            if (updates != null) {
+                Updates(
+                    updates = updates,
+                    whatsNew = whatsNew,
+                    onWhatsNew = {
+                        returnTo = whatsNew
+                        page = AboutPage.WhatsNew(it)
+                    },
+                )
+            }
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 Note("Copyright © 2026")
                 PillButton(
@@ -166,7 +199,85 @@ internal fun ColumnScope.AboutSettings(version: String, openMeteoCredit: String)
         AboutPage.Licences -> Licences(onOpen = { page = AboutPage.Text(it) })
         is AboutPage.Text -> LicenceText(OpenSource.PARTS[current.part])
         AboutPage.Author -> Author()
+        is AboutPage.WhatsNew -> WhatsNew(current.info)
     }
+}
+
+/**
+ * Settings › About's Updates: what the last check found and what's happening now, Check for
+ * updates, Install (or Allow installs, until Install unknown apps is on), What's new, and how
+ * often it checks by itself. A build that doesn't update says why, and nothing else. The pills
+ * stay while the work runs, so focus never lands on one that went: a press then does nothing.
+ */
+@Composable
+private fun ColumnScope.Updates(updates: AboutUpdates, whatsNew: FocusRequester, onWhatsNew: (UpdateInfo) -> Unit) {
+    val status = updates.status
+    val controller = updates.controller
+    Eyebrow("Updates", Modifier.padding(top = 4.dp))
+    val line = UpdateLine.of(status, updates.nowMillis, ZoneId.systemDefault())
+    Text(line.text, style = MaterialTheme.typography.bodyMedium, color = if (line.caution) Palette.Caution else Palette.Text)
+    if (!status.enabled) return
+    val available = status.available
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        PillButton(
+            text = "Check for updates",
+            icon = AppIcons.Sync,
+            onClick = controller::checkNow,
+            colors = pillButtonColors(container = Palette.Surface2),
+        )
+        if (available != null) {
+            if (updates.canInstall) {
+                PillButton(text = "Install ${available.versionName}", onClick = controller::install)
+            } else {
+                PillButton(text = "Allow installs", onClick = updates.onAllow)
+            }
+            if (available.notesUrl.isNotEmpty()) {
+                PillButton(
+                    text = "What's new",
+                    onClick = { onWhatsNew(available) },
+                    modifier = Modifier.focusRequester(whatsNew),
+                    colors = pillButtonColors(container = Palette.Surface2),
+                )
+            }
+        }
+    }
+    if (available != null && !updates.canInstall) {
+        Note("Android needs Install unknown apps turned on for Action Center before it installs an update. Allow installs opens it.")
+    }
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        Text("Check by itself", style = MaterialTheme.typography.titleSmall, modifier = Modifier.padding(end = 8.dp))
+        UpdateMode.entries.forEach { mode ->
+            PillButton(
+                text = mode.label,
+                icon = if (mode == status.mode) AppIcons.Check else null,
+                small = true,
+                onClick = { controller.setMode(mode) },
+                colors = pillButtonColors(container = Palette.Surface2),
+            )
+        }
+    }
+    Note(
+        when (status.mode) {
+            UpdateMode.ASK -> "Once a day it looks for a new release and shows it here. Nothing downloads until you press Install."
+            UpdateMode.OFF -> "It never looks by itself. Check for updates still does."
+        } + " Updates come only from github.com/${status.repo}'s releases, and only if they're signed with the same key as " +
+            "this copy. On Android 11, Android asks once more before it installs.",
+    )
+}
+
+/** About's words for each [UpdateMode]. */
+private val UpdateMode.label: String
+    get() = when (this) {
+        UpdateMode.ASK -> "Ask me"
+        UpdateMode.OFF -> "Off"
+    }
+
+/** An update's release notes on GitHub, as a QR code to scan: TVs mostly have no browser. */
+@Composable
+private fun WhatsNew(info: UpdateInfo) {
+    Text("What's new in ${info.versionName}", style = MaterialTheme.typography.titleSmall)
+    QrImage(info.notesUrl, Modifier.size(QR_SIZE.dp), description = "QR code for ${info.versionName}'s release notes")
+    Note("Scan it with your phone for the release's notes on GitHub. Back comes back to About.")
 }
 
 /** The maintainer's GitHub profile: a QR code to scan with a phone, and the address to type. */

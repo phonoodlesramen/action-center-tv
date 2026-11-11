@@ -20,6 +20,9 @@ import com.phonoodlesramen.actioncenter.setup.SetupStatus
 import com.phonoodlesramen.actioncenter.ui.TV_1080P
 import com.phonoodlesramen.actioncenter.ui.home.SampleHomeState
 import com.phonoodlesramen.actioncenter.ui.theme.ActionCenterTheme
+import com.phonoodlesramen.actioncenter.update.UpdateStatus
+import com.phonoodlesramen.actioncenter.update.UpdatesController
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
@@ -52,6 +55,15 @@ class SetupSettingsTest {
         override fun setSetupChipShown(shown: Boolean) {
             calls += "chip $shown"
         }
+
+        override fun openInstallUnknownApps() {
+            calls += "installs"
+        }
+    }
+
+    /** A build that updates itself, for Updates from the app. */
+    private val updating = object : UpdatesController {
+        override val status = MutableStateFlow(UpdateStatus())
     }
 
     private val newTv = SetupStatus(home = HomeRoute.OFF, tvListings = false, pictures = false, usageAccess = false)
@@ -76,6 +88,32 @@ class SetupSettingsTest {
         click("Turn on")
         assertEquals(listOf("homewatch", "allow TV_LISTINGS", "allow PICTURES", "usage"), calls)
         compose.onNodeWithText("Open Plex settings").performScrollTo().assertIsDisplayed()
+    }
+
+    @Test
+    fun `a build that updates itself asks for Install unknown apps, and Allow opens it`() {
+        val state = SampleHomeState.state(sample = false, plex = SampleHomeState.plexLinked)
+        compose.setContent {
+            ActionCenterTheme {
+                SettingsScreen(
+                    state,
+                    actions,
+                    onBack = {},
+                    initialSection = SettingsSection.SETUP,
+                    setup = SetupStatus(installUpdates = false),
+                    updates = updating,
+                )
+            }
+        }
+        compose.onNodeWithText("Updates from the app").performScrollTo().assertIsDisplayed()
+        click("Allow")
+        assertEquals(listOf("installs"), calls)
+    }
+
+    @Test
+    fun `a build that doesn't update has no Updates from the app`() {
+        show(newTv.copy(installUpdates = false))
+        assertEquals(0, count("Updates from the app"))
     }
 
     @Test

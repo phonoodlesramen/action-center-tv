@@ -37,6 +37,7 @@ class SetupMonitor(
                 pictures = runCatching { checks.granted(SetupPermission.PICTURES) }.getOrDefault(false),
                 usageAccess = runCatching { checks.usageAccess() }.getOrDefault(false),
                 accessibilityLink = runCatching { checks.accessibilityLink() }.getOrDefault(false),
+                installUpdates = runCatching { checks.canInstallUpdates() }.getOrDefault(false),
             )
         }
     }

@@ -215,13 +215,15 @@ class HomeActivity : ComponentActivity() {
                 if (safeMode) {
                     // The home screen has nowhere to go back to.
                     BackHandler {}
-                    DiagnosticsScreen(diagnostics, now, diagnosticsActions, focusResetKey = homeFocus.serial)
+                    val updates by container.updates.status.collectAsState()
+                    DiagnosticsScreen(diagnostics, now, diagnosticsActions, focusResetKey = homeFocus.serial, updates = updates)
                 } else {
                     Screens()
                 }
                 Toast(toast, onDone = { toast = null })
             }
         }
+        lifecycleScope.launch { container.updates.started()?.let(::say) }
         lifecycleScope.launch {
             repeatOnLifecycle(Lifecycle.State.STARTED) {
                 while (true) {
@@ -433,6 +435,7 @@ class HomeActivity : ComponentActivity() {
                         station = container.guideStation,
                         nfl = container.nfl,
                         setup = setup,
+                        updates = container.updates,
                     )
                     Screen.DIAGNOSTICS -> {
                         BackHandler {
@@ -984,6 +987,8 @@ class HomeActivity : ComponentActivity() {
         override fun setSetupChipShown(shown: Boolean) {
             lifecycleScope.launch { container.setup.setChipHidden(!shown) }
         }
+
+        override fun openInstallUnknownApps() = this@HomeActivity.openInstallUnknownApps()
     }
 
     private val diagnosticsActions = object : DiagnosticsActions {
@@ -1021,6 +1026,23 @@ class HomeActivity : ComponentActivity() {
         }
 
         override fun forceCrash(): Unit = throw IllegalStateException("Test crash from the device panel")
+
+        override fun checkForUpdates() = container.updates.checkNow()
+
+        override fun installUpdate() = container.updates.install()
+
+        override fun openInstallUnknownApps() = this@HomeActivity.openInstallUnknownApps()
+    }
+
+    /**
+     * TV Settings' Install unknown apps, at Action Center's own switch where the TV links there;
+     * else the list of apps; else TV Settings. Setup reads it again on resume.
+     */
+    private fun openInstallUnknownApps() {
+        val ours = Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.fromParts("package", packageName, null))
+        val opened = runCatching { startActivity(ours.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)) }.isSuccess ||
+            start(Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES), "Install unknown apps")
+        if (!opened) start(Intent(Settings.ACTION_SETTINGS), "Settings")
     }
 
     private fun LaunchableApp.launchIntent() = Intent(Intent.ACTION_MAIN)

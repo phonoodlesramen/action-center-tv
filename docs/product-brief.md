@@ -81,6 +81,13 @@ Plex (K0-K5):
 - then titles on your streaming apps, from Plex's catalog and its "where to watch"
   (subscription and free, installed and allowed apps, no YouTube), in a second PR.
 
+**In-app updates** (A1-A9), from the project's GitHub releases:
+- release builds check once a day (or only when asked) and show a new version in Settings ›
+  About; only a press downloads it, and it's installed only if it's the release's file and
+  signed with the installed app's key;
+- Android 11 asks once more before it installs; Android 12 and later doesn't;
+- Install unknown apps is a new, optional Setup step, and safe mode can install a newer release.
+
 **Back to YouTube TV**, for a house whose TV provider is YouTube TV, without scrolling:
 - while YouTube TV is the last thing you watched (left under 4 hours ago), the Guide card is
   "Back to YouTube TV": OK brings it back as its app icon does, and holding OK offers your
@@ -389,6 +396,7 @@ cards are. Settings › Time & modes changes each mode's hours; the days are fix
 | **Plex Guide** | In the launcher until Phase 8. From Phase 8 (N1-N7, reopening G0), a **guide station** in Docker on the NAS owns the channels, rules, schedule (48 hours ahead) and the house's saved spot. Every paired TV mirrors it over mutual TLS and keeps working from its copy when the NAS is down; an unpaired TV makes its own guide. The engine (`:guide-core`) is the same in both. A starter lineup from the library cache (episodes and media details included), scheduled a rolling 24 hours ahead in `guide.db`. Channels play in the launcher's ExoPlayer straight from the server over HTTPS `plex.direct`, with no timeline calls, so Plex records no session or history. From Phase 11, a program watched to its credits (¾ of it in one sitting) is marked watched with `PUT /:/scrobble` (no history row), and a branch into Plezy or Plex writes its resume point with `/:/progress` first (amends G6). Audio and subtitle choices read Plex's streams (`/library/metadata/{id}`) and are never written back. The phone editor is a small HTTP server inside the launcher, on the home network only while its screen is open, signed in by QR code or PIN | G0-G20, N1-N7 |
 | **The NFL** (Phase 13) | ESPN's public site API (undocumented, no key; Disney's terms allow personal use and frown on automated access, so it's polled gently): the scoreboard, standings, teams, schedules, game summaries and logos. The guide station fetches for the house, every 30 s only while a game is on and a TV is looking, and pushes changes over mutual TLS; an unpaired TV fetches itself. No betting odds. No source says which regional CBS/FOX game an area gets | F1-F11 |
 | **Watching the NFL** (Phase 13) | Hands off to the carrier's app, its package named on every intent: YouTube TV's channel (`tv.youtube.com/watch/<id>`, the Live row's links), Sunday Ticket (YouTube TV's home; no link opens one game), Prime Video's home, Netflix's game by title id, Paramount+, Disney+ | F6, F7 |
+| **GitHub releases** (in-app updates) | Once a day unless Updates is Off, release builds only: `github.com/<repo>/releases/latest/download/update.json`, no API and no token. The APK only after a press, from its own release; its size, SHA-256 and signer are checked before Android's installer gets it. The repository is set when the build is made (a fork's checks the fork) | A1-A9 |
 | **Claude API** (optional) | Nightly WorkManager job, one request with OkHttp and structured output (`output_config.format`). It sends each pick's title, details and the reason's evidence, never a name, server, account or watch dates. The key is pasted on a phone (the phone editor's sign-in) and stored with Android Keystore | DEC D17, M7-M11 |
 
 ## 9. Settings (feature inventory) [PROP, derived from the requirements]
@@ -412,6 +420,8 @@ cards are. Settings › Time & modes changes each mode's hours; the days are fix
 - **AI blurbs:** on/off, the API key from a phone, the last run, Write now (M7-M10).
 - **Diagnostics:** stock-launcher status, safe mode, the last sync times, the Playback
   check (Phase 2.6; a DTS title and the DTS count from 2.7).
+- **About:** the version, Updates (Check for updates, Install, What's new, Ask me or Off),
+  the licences.
 
 ## 10. Non-goals
 
@@ -443,6 +453,7 @@ cards are. Settings › Time & modes changes each mode's hours; the days are fix
 | 13 | The NFL (the game-day card, the NFL row and screen, Watch, Settings › NFL) and favorite guide channels, both kept by the guide station |
 | 14 | The lens card rotates on its own, goes back, shuffles its lenses, and rests titles you pass over |
 | 15 | Universal search: your library through Plex's search, words that narrow it, what's on now, Google; then your streaming apps from Plex's catalog |
+| Updates | In-app updates from the GitHub releases: the daily check, Check for updates, Install, Install unknown apps in Setup, safe mode's Updates |
 
 Polish came before Profiles and Kids, so the earliest notes number them the other way
 round.

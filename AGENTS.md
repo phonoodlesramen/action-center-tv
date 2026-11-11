@@ -42,6 +42,7 @@ means `guide-core/src/commonMain/kotlin/com/phonoodlesramen/actioncenter/`.
 | Apps, banners, usage | `apps`, `apps/usage`, `ui/apps` | `LaunchableAppsRepository.kt`, `UsageScore.kt`, `AllAppsScreen.kt` |
 | Channels and other apps' rows | `tvprovider` | `ChannelList.kt`, `TvProvider.kt` |
 | Back to YouTube TV | `lastapp` | `LastApp.kt`, `YouTubeTv.kt` |
+| Updates from GitHub releases | `update`, `ui/settings` | `Updater.kt`, `GitHubReleases.kt`, `AboutSettings.kt` |
 | Wallpapers | `ui/wallpaper`, `wallpaper` | `WallpaperLayer.kt`, `Wallpaper.kt` |
 | Weather | `weather` | `OpenMeteoClient.kt` |
 | Theme, tokens, icons | `ui/theme` | `Tokens.kt`, `Icons.kt`, `BrandIcons.kt` |

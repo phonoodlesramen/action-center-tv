@@ -20,6 +20,7 @@ class SetupMonitorTest {
         val granted = mutableSetOf<SetupPermission>()
         var usage = false
         var link = true
+        var installs = false
         var broken = false
 
         override fun homeIsOurs() = if (broken) error("no package manager") else home
@@ -27,6 +28,7 @@ class SetupMonitorTest {
         override fun granted(permission: SetupPermission) = permission in granted
         override fun usageAccess() = usage
         override fun accessibilityLink() = link
+        override fun canInstallUpdates() = installs
     }
 
     private val checks = FakeChecks()
@@ -42,17 +44,34 @@ class SetupMonitorTest {
     @Test
     fun `a new TV reads as nothing done, and the reads follow TV Settings`() = runTest {
         val monitor = SetupMonitor(checks, store, backgroundScope, UnconfinedTestDispatcher(testScheduler))
-        assertEquals(SetupStatus(home = HomeRoute.OFF, tvListings = false, pictures = false, usageAccess = false), read(monitor))
+        assertEquals(
+            SetupStatus(home = HomeRoute.OFF, tvListings = false, pictures = false, usageAccess = false, installUpdates = false),
+            read(monitor),
+        )
 
         checks.homeWatch = true
         checks.granted += SetupPermission.TV_LISTINGS
         checks.usage = true
+        checks.installs = true
         val after = read(monitor)
         assertEquals(HomeRoute.HOMEWATCH, after.home)
         assertTrue(after.tvListings)
         assertFalse(after.pictures)
         assertTrue(after.usageAccess)
+        assertTrue(after.installUpdates)
         assertEquals(1, after.left)
+    }
+
+    @Test
+    fun `Install unknown apps is optional, so it's never one of the steps left`() = runTest {
+        val monitor = SetupMonitor(checks, store, backgroundScope, UnconfinedTestDispatcher(testScheduler))
+        checks.home = true
+        checks.granted += SetupPermission.entries
+        checks.usage = true
+        val status = read(monitor)
+        assertFalse(status.installUpdates)
+        assertEquals(0, status.left)
+        assertEquals(null, status.chip(kid = false))
     }
 
     @Test

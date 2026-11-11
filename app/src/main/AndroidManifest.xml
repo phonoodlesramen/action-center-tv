@@ -34,6 +34,13 @@
     <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />
     <uses-permission android:name="android.permission.READ_MEDIA_VIDEO" />
 
+    <!-- Updates from Settings › About: installs Action Center's own updates, and nothing else,
+         once you allow Install unknown apps for it (Settings › Setup opens that). -->
+    <uses-permission android:name="android.permission.REQUEST_INSTALL_PACKAGES" />
+    <!-- Android 12 and later: an update you asked for installs without Android asking again.
+         Android 11 doesn't know it, and always asks. -->
+    <uses-permission android:name="android.permission.UPDATE_PACKAGES_WITHOUT_USER_ACTION" />
+
     <!-- Package visibility (API 30): every TV-launchable app; the stock launcher, so we
          can tell whether it has been re-enabled; and the handoff targets. -->
     <queries>
@@ -61,10 +68,13 @@
         <provider android:authorities="android.media.tv" />
     </queries>
 
-    <!-- Lint targets Android 12+; on API 30, allowBackup is still the backup switch. -->
+    <!-- Lint targets Android 12+; on API 30, allowBackup is still the backup switch.
+         usesCleartextTraffic is false except in a build made to test updates from a plain-HTTP
+         server on an emulator (app/build.gradle.kts). -->
     <application
         android:name=".ActionCenterApp"
         android:allowBackup="false"
+        android:usesCleartextTraffic="${usesCleartextTraffic}"
         tools:ignore="DataExtractionRules"
         android:banner="@drawable/banner"
         android:icon="@mipmap/ic_launcher"
@@ -130,6 +140,13 @@
                 android:name="android.accessibilityservice"
                 android:resource="@xml/home_watch_service" />
         </service>
+
+        <!-- What Android's installer says about an update Action Center handed it: it asks to
+             show its own dialog, or the install failed or was cancelled. Only the installer's
+             own PendingIntent reaches it. -->
+        <receiver
+            android:name=".update.UpdateStatusReceiver"
+            android:exported="false" />
     </application>
 
 </manifest>

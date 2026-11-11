@@ -3,6 +3,7 @@ package com.phonoodlesramen.actioncenter
 import android.app.Application
 import android.app.SearchManager
 import android.content.Context
+import android.os.storage.StorageManager
 import android.os.Build
 import android.util.Log
 import androidx.datastore.core.handlers.ReplaceFileCorruptionHandler
@@ -108,6 +109,13 @@ import com.phonoodlesramen.actioncenter.station.GuideSwitch
 import com.phonoodlesramen.actioncenter.station.StationGuideEditor
 import com.phonoodlesramen.actioncenter.station.StationGuideSource
 import com.phonoodlesramen.actioncenter.station.StationSpots
+import com.phonoodlesramen.actioncenter.update.AndroidApkInspector
+import com.phonoodlesramen.actioncenter.update.DataStoreUpdates
+import com.phonoodlesramen.actioncenter.update.GitHubReleases
+import com.phonoodlesramen.actioncenter.update.PackageInstallerUpdates
+import com.phonoodlesramen.actioncenter.update.UpdateConfig
+import com.phonoodlesramen.actioncenter.update.Updater
+import com.phonoodlesramen.actioncenter.update.WorkUpdateSchedule
 import com.phonoodlesramen.actioncenter.suggest.EngineFeedback
 import com.phonoodlesramen.actioncenter.suggest.FeedbackStore
 import com.phonoodlesramen.actioncenter.suggest.Profiles
@@ -685,6 +693,36 @@ class AppContainer(
     /** The night's request to Claude Haiku 5.5 (M11), for [com.phonoodlesramen.actioncenter.ai.BlurbWorker]. */
     val blurbWriter by lazy {
         BlurbWriter(settings.settings, aiKeyVault, ClaudeBlurbs(http), aiBlurbRuns, suggestionDatabase.dao(), plexDatabase.dao())
+    }
+
+    /**
+     * Updates from this build's GitHub releases (Settings › About, safe mode): a check once a day
+     * unless it's Off, and a download and Android's installer only after a press. Debug builds
+     * never check. The download waits in the cache; what it remembers is in its own DataStore file.
+     */
+    val updates: Updater by lazy {
+        val config = UpdateConfig.fromBuild()
+        Updater(
+            config = config,
+            feed = GitHubReleases(http, config),
+            inspector = AndroidApkInspector(app),
+            installer = PackageInstallerUpdates(app),
+            store = DataStoreUpdates(
+                PreferenceDataStoreFactory.create(
+                    corruptionHandler = ReplaceFileCorruptionHandler { emptyPreferences() },
+                    produceFile = { app.preferencesDataStoreFile("updates") },
+                ),
+            ),
+            dir = File(app.cacheDir, "updates"),
+            canInstall = { app.packageManager.canRequestPackageInstalls() },
+            freeBytes = {
+                // What Android would free up for the download, cache included; the plain free space if it can't say.
+                val storage = app.getSystemService(StorageManager::class.java)
+                runCatching { storage.getAllocatableBytes(storage.getUuidForPath(app.cacheDir)) }.getOrElse { app.cacheDir.usableSpace }
+            },
+            schedule = WorkUpdateSchedule({ WorkManager.getInstance(app) }),
+            scope = appScope,
+        )
     }
 
     private val homeSystem = object : HomeSystem {
