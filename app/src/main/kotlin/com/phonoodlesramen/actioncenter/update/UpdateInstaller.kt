@@ -20,9 +20,10 @@ interface UpdateInstaller {
     /**
      * Starts installing [apk]. Null once Android has it: Android's own dialog may come next
      * (always on Android 11), then the app is replaced. Otherwise why it couldn't start.
-     * Never throws but to cancel.
+     * [byPress]: the person asked, so Android's dialog may open; Install automatically's own
+     * install never opens one. Never throws but to cancel.
      */
-    suspend fun install(apk: File): String?
+    suspend fun install(apk: File, byPress: Boolean = true): String?
 }
 
 /**
@@ -35,7 +36,7 @@ class PackageInstallerUpdates(
     private val context: Context,
     private val io: CoroutineDispatcher = Dispatchers.IO,
 ) : UpdateInstaller {
-    override suspend fun install(apk: File): String? = withContext(io) {
+    override suspend fun install(apk: File, byPress: Boolean): String? = withContext(io) {
         val installer = context.packageManager.packageInstaller
         val params = PackageInstaller.SessionParams(PackageInstaller.SessionParams.MODE_FULL_INSTALL).apply {
             setAppPackageName(context.packageName)
@@ -54,7 +55,7 @@ class PackageInstallerUpdates(
                         session.fsync(output)
                     }
                 }
-                session.commit(UpdateStatusReceiver.pendingIntent(context, id).intentSender)
+                session.commit(UpdateStatusReceiver.pendingIntent(context, id, byPress).intentSender)
             }
             null
         } catch (e: IOException) {
@@ -81,8 +82,9 @@ class PackageInstallerUpdates(
 
 /**
  * What Android's installer says about an update [PackageInstallerUpdates] handed it:
- * - it wants to show its own dialog (always on Android 11): Action Center is in front, since
- *   the person just pressed Install, so the dialog opens over it;
+ * - it wants to show its own dialog (always on Android 11): after a press, Action Center is in
+ *   front, so the dialog opens over it; an install Install automatically started never opens
+ *   one, and the update waits for a press instead;
  * - it was cancelled (the dialog's Cancel), or it failed: About says so.
  *
  * Success rarely arrives: Android replaces the app first, and the new one notices it's newer
@@ -102,7 +104,9 @@ class UpdateStatusReceiver : BroadcastReceiver() {
         when (status) {
             PackageInstaller.STATUS_PENDING_USER_ACTION -> {
                 val confirm = IntentCompat.getParcelableExtra(intent, Intent.EXTRA_INTENT, Intent::class.java)
-                if (confirm == null) {
+                if (!intent.getBooleanExtra(EXTRA_BY_PRESS, true)) {
+                    updates.installerSaid(InstallerAnswer.NeedsPress)
+                } else if (confirm == null) {
                     updates.installerSaid(InstallerAnswer.Failed("Android's installer didn't say what it needs"))
                 } else {
                     context.startActivity(confirm.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK))
@@ -118,10 +122,11 @@ class UpdateStatusReceiver : BroadcastReceiver() {
     companion object {
         private const val TAG = "ActionCenterUpdates"
         const val ACTION = "com.phonoodlesramen.actioncenter.update.INSTALL_STATUS"
+        private const val EXTRA_BY_PRESS = "com.phonoodlesramen.actioncenter.update.BY_PRESS"
 
         /** Mutable on Android 12 and later: the installer fills in its answer. */
-        fun pendingIntent(context: Context, sessionId: Int): PendingIntent {
-            val intent = Intent(context, UpdateStatusReceiver::class.java).setAction(ACTION)
+        fun pendingIntent(context: Context, sessionId: Int, byPress: Boolean): PendingIntent {
+            val intent = Intent(context, UpdateStatusReceiver::class.java).setAction(ACTION).putExtra(EXTRA_BY_PRESS, byPress)
             val mutable = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.S) PendingIntent.FLAG_MUTABLE else 0
             return PendingIntent.getBroadcast(context, sessionId, intent, PendingIntent.FLAG_UPDATE_CURRENT or mutable)
         }
@@ -132,6 +137,9 @@ class UpdateStatusReceiver : BroadcastReceiver() {
 sealed interface InstallerAnswer {
     /** Android's own dialog is up. */
     data object Asking : InstallerAnswer
+
+    /** Android wants a press, for an install nobody pressed for: the update waits for one. */
+    data object NeedsPress : InstallerAnswer
 
     data object Cancelled : InstallerAnswer
 

@@ -316,6 +316,12 @@ and opens Settings › Setup.
   is turned off on this TV.
 - **The stock launcher's chip wins** over both.
 
+**An update waits** (in-app updates, A6): for grown-ups, "Update available · 1.1.0", or
+"Update ready · 1.1.0" once it's downloaded and checked (Sync's icon, Surface2, the accent when
+focused), replaces the context chip. OK opens Settings › About, or installs a ready one (Android
+11 asks once more). It goes while Android installs it. The stock launcher's chip wins over it,
+and it wins over Finish setup.
+
 ### Tonight's Pick hero [REQ, U1, U12, U14, U15]
 - **Art:** full-bleed backdrop, centre-cropped. Scrim: horizontal
   `#080B0F` at 92% → 70% at 40% → 10% at 80%, plus a bottom scrim at 60% → 0% over
@@ -1333,9 +1339,16 @@ still say "Not yet".
         available, or **Allow installs** until Install unknown apps is on, with a note;
         **What's new**, a QR code to the release's notes, Back landing on the pill. The
         pills stay while the work runs, so focus never falls: a press then does nothing;
-      - **Check by itself:** Ask me (the default) and Off, small pills with a tick, per TV,
-        and a note on what each does, where updates come from (the repository's releases,
-        signed with this copy's key), and that Android 11 asks once more;
+      - **Check by itself:** Install automatically, Ask me (the default) and Off, small pills
+        with a tick, per TV, and a note on what the chosen one does on this TV and where
+        updates come from (the repository's releases, signed with this copy's key):
+        - Install automatically downloads a new release ahead. Android 12 and later install it
+          when the TV is asleep, the screensaver is on, or Action Center has sat untouched for
+          30 minutes, never while anything plays or the guide player is open, and at most once
+          by itself per version; the line says "1.1.0 is ready, and installs once the TV is
+          idle". Android 11 always asks, so it waits for a press there, with the top bar's
+          Update ready;
+        - Ask me and Off say that Android 11 asks once more;
       - a debug build says "Debug builds don't update themselves." and nothing else;
     - GPL-3.0's notice: "Copyright © 2026 phonoodlesramen and contributors", free software
       under the GPL v3 or later, with no warranty. "phonoodlesramen" is a small pill with

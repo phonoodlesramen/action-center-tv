@@ -56,6 +56,8 @@ import com.phonoodlesramen.actioncenter.ui.theme.LocalAccent
 import com.phonoodlesramen.actioncenter.ui.theme.Palette
 import com.phonoodlesramen.actioncenter.ui.wallpaper.LocalCardSurface
 import com.phonoodlesramen.actioncenter.ui.wallpaper.cardSurface
+import com.phonoodlesramen.actioncenter.update.LocalUpdates
+import com.phonoodlesramen.actioncenter.update.UpdateChip
 import com.phonoodlesramen.actioncenter.weather.Sky
 import com.phonoodlesramen.actioncenter.weather.WeatherDisplay
 import com.phonoodlesramen.actioncenter.ui.theme.onWallpaper
@@ -106,8 +108,10 @@ fun TopBar(
             modifier = Modifier.weight(1f),
         )
         val setupChip = LocalSetup.current.chip(kid = state.profile.kid)
+        val updateChip = UpdateChip.of(LocalUpdates.current, kid = state.profile.kid)
         when {
             state.stockLauncherBack -> StockLauncherChip(onClick = actions::openDiagnostics)
+            updateChip != null -> UpdateChipButton(updateChip, onClick = actions::openUpdate)
             setupChip != null -> SetupChipButton(setupChip, onClick = actions::openSetup)
             else -> Chip(dot = LocalAccent.current, label = state.mode.label)
         }
@@ -217,6 +221,36 @@ private fun SetupChipButton(chip: SetupChip, onClick: () -> Unit) {
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
             Icon(if (warning) AppIcons.Warning else AppIcons.Gear, contentDescription = null, modifier = Modifier.size(14.dp))
+            Text(chip.label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
+    }
+}
+
+/**
+ * In-app updates (A6): "Update available · 1.1.0" or "Update ready · 1.1.0", in the context
+ * chip's place, below the stock launcher's chip and above Finish setup. OK opens Settings ›
+ * About, or installs a downloaded one.
+ */
+@Composable
+private fun UpdateChipButton(chip: UpdateChip, onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        modifier = Modifier.height(28.dp),
+        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Palette.Surface2,
+            contentColor = Palette.Text,
+            focusedContainerColor = LocalAccent.current,
+            focusedContentColor = Palette.AccentInk,
+        ),
+        scale = cardLift,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp).align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(AppIcons.Sync, contentDescription = null, modifier = Modifier.size(14.dp))
             Text(chip.label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
         }
     }

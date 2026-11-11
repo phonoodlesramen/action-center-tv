@@ -232,9 +232,12 @@ class GuidePlayerActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         tuner.start()
+        // Install automatically never installs while the guide plays.
+        runCatching { container.foreground.guidePlayerOpen = true }
     }
 
     override fun onStop() {
+        runCatching { container.foreground.guidePlayerOpen = false }
         tuner.stop()
         if (!leavingByBack) saveSpot()
         keepScreenOn(false)

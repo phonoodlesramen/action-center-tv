@@ -83,9 +83,12 @@ Plex (K0-K5):
 
 **In-app updates** (A1-A9), from the project's GitHub releases:
 - release builds check once a day (or only when asked) and show a new version in Settings ›
-  About; only a press downloads it, and it's installed only if it's the release's file and
-  signed with the installed app's key;
-- Android 11 asks once more before it installs; Android 12 and later doesn't;
+  About and the top bar; it's installed only if it's the release's file and signed with the
+  installed app's key;
+- **Install automatically** downloads it ahead, and Android 12 and later install it when the TV
+  is asleep or Action Center has sat untouched for 30 minutes, never while anything plays;
+  Android 11 asks once more before it installs, so there it waits for a press;
+- **Ask me** (the default) downloads and installs only on a press; **Off** checks only when asked;
 - Install unknown apps is a new, optional Setup step, and safe mode can install a newer release.
 
 **Back to YouTube TV**, for a house whose TV provider is YouTube TV, without scrolling:
@@ -420,7 +423,8 @@ cards are. Settings › Time & modes changes each mode's hours; the days are fix
 - **AI blurbs:** on/off, the API key from a phone, the last run, Write now (M7-M10).
 - **Diagnostics:** stock-launcher status, safe mode, the last sync times, the Playback
   check (Phase 2.6; a DTS title and the DTS count from 2.7).
-- **About:** the version, Updates (Check for updates, Install, What's new, Ask me or Off),
+- **About:** the version, Updates (Check for updates, Install, What's new; Install
+  automatically, Ask me or Off),
   the licences.
 
 ## 10. Non-goals

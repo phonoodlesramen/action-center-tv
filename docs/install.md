@@ -196,8 +196,11 @@ Action Center then shows a banner. Check it, and fix it if it has:
 
 **From the TV:** Settings › About › Updates. A release build checks GitHub for a new release
 once a day (or only when you press Check for updates, with Updates set to Off), and shows it
-there. Install downloads it, checks it's the release's file and signed with the same key, and
-hands it to Android. On Android 11 Android asks once more; on 12 and later it just installs.
+there and in the top bar. Install downloads it, checks it's the release's file and signed with
+the same key, and hands it to Android. On Android 11 Android asks once more; on 12 and later it
+just installs. With **Install automatically**, it downloads a new release by itself; Android 12
+and later install it when the TV is asleep or Action Center has sat untouched for 30 minutes
+(never while anything plays), and on Android 11 the top bar says Update ready for one press.
 The first time, allow Install unknown apps for Action Center: Settings › Setup › Updates from
 the app opens it. Debug builds don't update themselves.
 

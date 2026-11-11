@@ -116,6 +116,9 @@ interface HomeActions {
     /** Settings › Setup, from the "Finish setup" or "Home button is off" chip. */
     fun openSetup() {}
 
+    /** The "Update available" or "Update ready" chip: Settings › About, or the install itself once it's downloaded. */
+    fun openUpdate() {}
+
     /** Settings › Plex: account, server, sign out. */
     fun openPlexSettings() {}
 

@@ -110,6 +110,7 @@ import com.phonoodlesramen.actioncenter.ui.settings.SettingsSection
 import com.phonoodlesramen.actioncenter.ui.theme.ActionCenterTheme
 import com.phonoodlesramen.actioncenter.ui.theme.Palette
 import com.phonoodlesramen.actioncenter.ui.wallpaper.LocalWallpaperSources
+import com.phonoodlesramen.actioncenter.update.LocalUpdates
 import com.phonoodlesramen.actioncenter.weather.Place
 import com.phonoodlesramen.actioncenter.weather.TemperatureUnit
 import java.time.LocalTime
@@ -260,6 +261,7 @@ class HomeActivity : ComponentActivity() {
         val wallpaper by viewModel.wallpaper.collectAsState()
         val plexAccess by container.plexAccess.collectAsState(initial = null)
         val setup by container.setup.status.collectAsState()
+        val updates by container.updates.status.collectAsState()
         val artUrls = remember(plexAccess) { PlexArtUrls(plexAccess) }
         // Where Watch goes (F6, F7): the Live row's networks, and the apps on this TV by their leanback launch intents.
         val watch = remember(rows.channels, state.allApps) { WatchOptions(rows.channels, state.allApps.mapTo(HashSet()) { it.packageName }) }
@@ -272,6 +274,7 @@ class HomeActivity : ComponentActivity() {
                 LocalChannelsAndApps provides container.channelsAndApps,
                 LocalNflLogos provides container.nflLogos,
                 LocalSetup provides setup,
+                LocalUpdates provides updates,
             ) {
                 when (screen) {
                     Screen.HOME -> {
@@ -514,6 +517,11 @@ class HomeActivity : ComponentActivity() {
         super.onDestroy()
     }
 
+    override fun onPause() {
+        container.foreground.homeInFront = false
+        super.onPause()
+    }
+
     override fun onStop() {
         // No sign-in code is polled while the home screen isn't showing.
         linking?.cancel()
@@ -575,7 +583,10 @@ class HomeActivity : ComponentActivity() {
     // Phase 0 step 8: shows which remote buttons reach apps (is the menu button usable
     // for quick actions? U11). Observes only; never consumes the key.
     private fun recordKey(event: KeyEvent) {
-        if (event.action == KeyEvent.ACTION_DOWN) lastInputMillis = System.currentTimeMillis()
+        if (event.action == KeyEvent.ACTION_DOWN) {
+            lastInputMillis = System.currentTimeMillis()
+            container.foreground.lastTouchMillis = lastInputMillis
+        }
         if (event.action != KeyEvent.ACTION_DOWN || event.repeatCount != 0) return
         val name = KeyEvent.keyCodeToString(event.keyCode).removePrefix("KEYCODE_")
         lastKey = name
@@ -585,6 +596,9 @@ class HomeActivity : ComponentActivity() {
 
     override fun onResume() {
         super.onResume()
+        // Install automatically counts 30 untouched minutes from here, or from the last key.
+        container.foreground.homeInFront = true
+        container.foreground.lastTouchMillis = System.currentTimeMillis()
         // The app list and the stock launcher can change while we're away (Play
         // update, OTA).
         if (!safeMode) {
@@ -786,6 +800,13 @@ class HomeActivity : ComponentActivity() {
         }
 
         override fun openSetup() = openSetupScreen()
+
+        override fun openUpdate() = container.updates.chipPressed(
+            openAbout = {
+                settingsSection = SettingsSection.ABOUT
+                screen = Screen.SETTINGS
+            },
+        )
 
         override fun openPlexSettings() {
             settingsSection = SettingsSection.PLEX
