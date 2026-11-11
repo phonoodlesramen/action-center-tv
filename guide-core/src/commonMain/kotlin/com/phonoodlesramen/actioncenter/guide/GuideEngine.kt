@@ -368,7 +368,7 @@ class GuideEngine(
                     null
                 } else {
                     val rated = ratingsOf(channel, own, now, year, sync)
-                    val look = looks.of(channel.name, channel.rule)
+                    val look = looks.of(channel.name, channel.rule, channel.icon)
                     GuideChannel(
                         channel.id, channel.number, channel.name, logo = look.logo, slots = own.map { it.toGuideSlot(playable) },
                         contentRatings = rated.ratings, unrated = rated.unrated, glyph = look.glyph,

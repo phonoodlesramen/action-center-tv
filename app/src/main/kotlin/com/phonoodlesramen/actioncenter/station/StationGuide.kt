@@ -92,7 +92,7 @@ class StationGuideSource(
             val own = slots[channel.id]
             if (own.isNullOrEmpty()) return@mapNotNull null
             val extras = copy.channels[channel.id] ?: ChannelExtras()
-            val look = looks.of(channel.name, channel.rule)
+            val look = looks.of(channel.name, channel.rule, channel.icon)
             GuideChannel(
                 id = channel.id,
                 number = channel.number,
