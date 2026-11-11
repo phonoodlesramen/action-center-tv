@@ -60,6 +60,8 @@ data class ChannelDraft(
     val alignmentMinutes: Int = 30,
     /** [ChannelEntity.FILLER_TRAILERS] or [ChannelEntity.FILLER_UP_NEXT]. */
     val filler: String = ChannelEntity.FILLER_TRAILERS,
+    /** A glyph's name from [RuleChoices.icons], or null for Automatic (I4). Station API 1.4.0. */
+    val icon: String? = null,
 )
 
 /** A channel as the editor lists it. */
@@ -96,6 +98,8 @@ data class RuleChoices(
      */
     val studios: List<String> = emptyList(),
     val labels: List<String> = emptyList(),
+    /** The glyphs a channel's icon can be (I4). Empty from a station before API 1.4.0, so the phone editor hides its Icon row. */
+    val icons: List<String> = emptyList(),
 )
 
 /** A Plex key and what to call it. */

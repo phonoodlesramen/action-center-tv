@@ -49,7 +49,8 @@ class StationLineupReader(guide: GuideDatabase, plex: PlexDatabase) {
                 number = channel.number,
                 name = channel.name,
                 // A one-show channel's show poster, which every TV draws over its icon.
-                logo = looks.of(channel.name, channel.rule).logo,
+                logo = looks.of(channel.name, channel.rule, channel.icon).logo,
+                icon = channel.icon,
                 enabled = channel.enabled,
                 alignmentMinutes = channel.alignmentMinutes,
                 filler = channel.filler,

@@ -18,8 +18,10 @@ object StationApi {
      * 1.2.0 (Phase 13): each profile's favorite channels, and the NFL (`/v1/nfl…`). A 1.1 station
      * answers 404 to both, and a TV then keeps favorites on itself and says the station needs an update.
      * 1.3.0: `NflSettings.show`, the house's Show the NFL; while it's off the station doesn't poll ESPN.
+     * 1.4.0: a channel's icon picked on the phone: `StationChannel.icon`, `ChannelDraft.icon` and
+     * `RuleChoices.icons`. A 1.3 station offers no icons, so the phone hides its Icon row.
      */
-    const val VERSION = "1.3.0"
+    const val VERSION = "1.4.0"
     const val MAJOR = 1
     const val VERSION_HEADER = "X-Station-Version"
     const val PREFIX = "/v1"
@@ -109,6 +111,8 @@ data class StationChannel(
     val number: Int,
     val name: String,
     val logo: String? = null,
+    /** The glyph picked on the phone, null for Automatic (1.4.0). Each TV draws it, or its automatic one. */
+    val icon: String? = null,
     val enabled: Boolean,
     val alignmentMinutes: Int,
     /** [com.phonoodlesramen.actioncenter.guide.ChannelEntity.FILLER_TRAILERS] or `FILLER_UP_NEXT`, as guide.db stores it. */

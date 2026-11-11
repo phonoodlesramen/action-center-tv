@@ -46,6 +46,8 @@ data class ChannelEntity(
     @ColumnInfo(defaultValue = "1") val enabled: Boolean = true,
     /** What fills the gap before a program: [FILLER_TRAILERS] or [FILLER_UP_NEXT] (G3, G18). */
     @ColumnInfo(defaultValue = FILLER_TRAILERS) val filler: String = FILLER_TRAILERS,
+    /** The glyph picked on the phone ([ChannelGlyphs.ALL]); null for Automatic (I4). */
+    val icon: String? = null,
 ) {
     companion object {
         /** A trailer when the gap allows, else the Up next card (G3). */
@@ -233,12 +235,12 @@ interface GuideDao {
  * The Plex Guide's own file (Phase 2.6, G0), apart from the Plex cache: a sign-out or a
  * cache rebuild never wipes the channels. Its schema is exported to `guide-core/schemas`, so
  * a later version migrates instead of starting over: version 2 (2.7) adds each channel's
- * on/off and filler.
+ * on/off and filler, version 3 its icon (I4).
  */
 @Database(
     entities = [ChannelEntity::class, SlotEntity::class],
-    version = 2,
-    autoMigrations = [AutoMigration(from = 1, to = 2)],
+    version = 3,
+    autoMigrations = [AutoMigration(from = 1, to = 2), AutoMigration(from = 2, to = 3)],
 )
 @ConstructedBy(GuideDatabaseConstructor::class)
 abstract class GuideDatabase : RoomDatabase() {
