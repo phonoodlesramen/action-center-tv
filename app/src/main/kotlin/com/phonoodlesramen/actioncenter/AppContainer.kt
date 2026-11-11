@@ -459,7 +459,7 @@ class AppContainer(
 
     /** The Plex Guide's lineup, for the Live row, the Guide card, the full guide and the player. */
     val guide: GuideSource by lazy {
-        guideSwitch.source(local = plexGuide, station = StationGuideSource(guideDatabase, guideStation.guideCopy, ChannelLooks(plexDatabase), log = { Log.i(GuideStation.LOG_TAG, it) }))
+        guideOverride ?: guideSwitch.source(local = plexGuide, station = StationGuideSource(guideDatabase, guideStation.guideCopy, ChannelLooks(plexDatabase), log = { Log.i(GuideStation.LOG_TAG, it) }))
     }
 
     private val localGuideEditor by lazy { RoomGuideEditor(guideDatabase, plexDatabase, plexGuide, log = { Log.i(GuideEngine.LOG_TAG, it) }) }
