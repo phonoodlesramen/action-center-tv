@@ -110,8 +110,11 @@ import com.phonoodlesramen.actioncenter.station.StationGuideEditor
 import com.phonoodlesramen.actioncenter.station.StationGuideSource
 import com.phonoodlesramen.actioncenter.station.StationSpots
 import com.phonoodlesramen.actioncenter.update.AndroidApkInspector
+import com.phonoodlesramen.actioncenter.update.AndroidIdleSignals
 import com.phonoodlesramen.actioncenter.update.DataStoreUpdates
+import com.phonoodlesramen.actioncenter.update.ForegroundState
 import com.phonoodlesramen.actioncenter.update.GitHubReleases
+import com.phonoodlesramen.actioncenter.update.IdleSignals
 import com.phonoodlesramen.actioncenter.update.PackageInstallerUpdates
 import com.phonoodlesramen.actioncenter.update.UpdateConfig
 import com.phonoodlesramen.actioncenter.update.Updater
@@ -700,8 +703,13 @@ class AppContainer(
      * unless it's Off, and a download and Android's installer only after a press. Debug builds
      * never check. The download waits in the cache; what it remembers is in its own DataStore file.
      */
+    /** Whether Action Center's own screens are in front and touched, for Install automatically. */
+    val foreground = ForegroundState()
+
     val updates: Updater by lazy {
         val config = UpdateConfig.fromBuild()
+        // Its screensaver listener is made only once Install automatically asks.
+        val signals by lazy { AndroidIdleSignals(app, foreground) }
         Updater(
             config = config,
             feed = GitHubReleases(http, config),
@@ -720,6 +728,7 @@ class AppContainer(
                 val storage = app.getSystemService(StorageManager::class.java)
                 runCatching { storage.getAllocatableBytes(storage.getUuidForPath(app.cacheDir)) }.getOrElse { app.cacheDir.usableSpace }
             },
+            idle = IdleSignals { signals.snapshot() },
             schedule = WorkUpdateSchedule({ WorkManager.getInstance(app) }),
             scope = appScope,
         )

@@ -11,9 +11,15 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.update
 import kotlinx.serialization.Serializable
 
-/** Updates in Settings › About, on this TV. */
+/** Updates in Settings › About, on this TV, in the order About shows them. */
 enum class UpdateMode {
-    /** Checks once a day and says so in About; downloads and installs only on a press. The default. */
+    /**
+     * Checks once a day and downloads a new release ahead. Android 12 and later install it at a
+     * quiet moment ([IdleRule]); Android 11 waits for a press, since Android always asks there.
+     */
+    AUTOMATIC,
+
+    /** Checks once a day and says so in About and the top bar; downloads and installs only on a press. The default. */
     ASK,
 
     /** Never checks by itself; Check for updates still works. */
@@ -34,6 +40,8 @@ data class UpdateRecord(
     val downloaded: Long? = null,
     /** The version code this app last started as: a higher one now means it was updated. */
     val seenVersionCode: Long? = null,
+    /** The version code Install automatically last tried by itself: it never tries one twice. */
+    val autoTried: Long? = null,
 )
 
 /** Where [UpdateRecord] and [UpdateMode] live. */

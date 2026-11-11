@@ -21,6 +21,12 @@ interface UpdatesController {
     /** Download the available update if it isn't yet, check it, and hand it to Android's installer. */
     fun install() {}
 
+    /**
+     * The top bar's chip: install it if it's downloaded and Install unknown apps is on (Android
+     * asks first on Android 11), else Settings › About.
+     */
+    fun chipPressed(openAbout: () -> Unit) = openAbout()
+
     fun setMode(mode: UpdateMode) {}
 
     /**
@@ -61,6 +67,8 @@ data class UpdateStatus(
     /** `owner/name`: where updates come from. */
     val repo: String = "",
     val mode: UpdateMode = UpdateMode.ASK,
+    /** Android 12 and later: an update installs with no dialog, so Install automatically can install by itself. */
+    val silentInstalls: Boolean = false,
     /** When the last check got an answer (wall clock). */
     val checkedMillis: Long? = null,
     /** The latest release, when it's newer than this copy. */
@@ -71,6 +79,37 @@ data class UpdateStatus(
     val problem: String? = null,
     val problemMillis: Long? = null,
 )
+
+/**
+ * The top bar's chip while an update waits for the person (A6): it takes the context chip's
+ * place, below the stock launcher's and above Finish setup. Grown-ups only.
+ */
+sealed interface UpdateChip {
+    val label: String
+
+    /** A newer release, not downloaded yet: OK opens Settings › About. */
+    data class Available(val version: String) : UpdateChip {
+        override val label: String get() = "Update available · $version"
+    }
+
+    /** Downloaded and checked: OK installs it (on Android 11, Android asks once more). */
+    data class Ready(val version: String) : UpdateChip {
+        override val label: String get() = "Update ready · $version"
+    }
+
+    companion object {
+        /** The chip for [status], if any: none for a kid, while it's being installed, or with nothing new. */
+        fun of(status: UpdateStatus, kid: Boolean): UpdateChip? {
+            val available = status.available ?: return null
+            return when {
+                kid || !status.enabled -> null
+                status.work == UpdateWork.Installing -> null
+                status.ready -> Ready(available.versionName)
+                else -> Available(available.versionName)
+            }
+        }
+    }
+}
 
 /** About's status line, and whether it's in the caution colour. */
 data class UpdateLine(val text: String, val caution: Boolean = false) {
@@ -93,6 +132,8 @@ data class UpdateLine(val text: String, val caution: Boolean = false) {
                     val at = status.problemMillis?.let { " (${clock(it, zone)})" }.orEmpty()
                     UpdateLine("${status.problem}$at", caution = true)
                 }
+                status.available != null && status.ready && status.mode == UpdateMode.AUTOMATIC && status.silentInstalls ->
+                    UpdateLine("$name is ready, and installs once the TV is idle")
                 status.available != null && status.ready -> UpdateLine("$name is ready to install")
                 status.available != null -> UpdateLine("$name is available · ${status.available.megabytes} MB")
                 status.checkedMillis != null -> UpdateLine("Up to date · checked ${ago(status.checkedMillis, nowMillis, zone)}")

@@ -47,7 +47,7 @@ There's no analytics, telemetry, crash reporting or advertising. The app talks o
 | ESPN (`site.api.espn.com`, `a.espncdn.com`) | NFL data, only once Settings › NFL › Show the NFL is on, and only if the TV isn't paired with a station (else the station asks) | Nothing about you: public scoreboard requests |
 | The guide station | Only once paired | The guide, your edits, the saved spot, favorites. Over mutual TLS, on your network |
 | Anthropic (Claude API) | Only with AI blurbs on, at most once a night | About 30 picks: title, year, genres, rating, length and the pick's reason. No Plex keys, server or account names, or watch dates |
-| GitHub (`github.com` and its download server) | Once a day unless Settings › About › Updates is Off, and when you press Check for updates. Release builds only | A request for the latest release's `update.json`, a small file; the APK only when you press Install. GitHub sees the TV's IP address, as with any download. GitHub counts each release file's downloads and shows the count publicly: it's the only number the project sees |
+| GitHub (`github.com` and its download server) | Once a day unless Settings › About › Updates is Off, and when you press Check for updates. Release builds only | A request for the latest release's `update.json`, a small file; the APK when you press Install, or as soon as there's one with Install automatically on. GitHub sees the TV's IP address, as with any download. GitHub counts each release file's downloads and shows the count publicly: it's the only number the project sees |
 | Other apps on the TV | When you open them | An Android intent: a package name, sometimes a title link |
 
 ## Things that listen on your network

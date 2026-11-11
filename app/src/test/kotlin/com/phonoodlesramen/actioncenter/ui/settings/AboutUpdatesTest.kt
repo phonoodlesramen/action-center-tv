@@ -120,6 +120,24 @@ class AboutUpdatesTest {
     }
 
     @Test
+    fun `Install automatically says what it does on this TV`() {
+        val updates = show(upToDate.copy(mode = UpdateMode.AUTOMATIC, silentInstalls = true, available = info, ready = true))
+        compose.onNodeWithText("1.1.0 is ready, and installs once the TV is idle").assertIsDisplayed()
+        compose.onNodeWithText("installs it when the TV is asleep", substring = true).assertIsDisplayed()
+        capture("settings_about_update_automatic")
+
+        // Android 11 asks before it installs, so Install automatically waits for a press there.
+        updates.status.value = upToDate.copy(mode = UpdateMode.AUTOMATIC, available = info, ready = true)
+        compose.waitForIdle()
+        compose.onNodeWithText("1.1.0 is ready to install").assertIsDisplayed()
+        compose.onNodeWithText("the top bar says Update ready", substring = true).assertIsDisplayed()
+
+        click("Ask me")
+        click("Install automatically")
+        assertEquals(listOf("mode ASK", "mode AUTOMATIC"), calls)
+    }
+
+    @Test
     fun `an update offers Install, and What's new shows its notes as a QR code, Back landing on it`() {
         show(upToDate.copy(available = info))
         compose.onNodeWithText("1.1.0 is available · 51 MB").assertIsDisplayed()

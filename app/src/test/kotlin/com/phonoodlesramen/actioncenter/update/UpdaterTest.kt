@@ -56,19 +56,28 @@ class UpdaterTest {
 
     private class FakeInstaller : UpdateInstaller {
         val handed = mutableListOf<File>()
+        val byPress = mutableListOf<Boolean>()
         var fails: String? = null
-        override suspend fun install(apk: File): String? = fails ?: null.also { handed += apk }
+        override suspend fun install(apk: File, byPress: Boolean): String? = fails ?: null.also {
+            handed += apk
+            this.byPress += byPress
+        }
     }
 
     private class FakeSchedule : UpdateSchedule {
         var daily = 0
         var cancelled = 0
+        var downloads = 0
         override fun daily() {
             daily++
         }
 
         override fun cancel() {
             cancelled++
+        }
+
+        override fun downloadSoon() {
+            downloads++
         }
     }
 
@@ -81,8 +90,9 @@ class UpdaterTest {
     private var canInstall = true
     private var free = Long.MAX_VALUE
     private var now = 1_000L
+    private var idle = IdleSnapshot()
 
-    private fun TestScope.updater(config: UpdateConfig = UpdateConfig("someone/action-center-tv")) = Updater(
+    private fun TestScope.updater(config: UpdateConfig = UpdateConfig("someone/action-center-tv"), sdk: Int = 30) = Updater(
         config = config,
         feed = feed,
         inspector = inspector,
@@ -93,8 +103,9 @@ class UpdaterTest {
         schedule = schedule,
         scope = backgroundScope,
         clock = { now },
-        sdk = 30,
+        sdk = sdk,
         freeBytes = { free },
+        idle = { idle },
         io = UnconfinedTestDispatcher(testScheduler),
     )
 
@@ -309,6 +320,105 @@ class UpdaterTest {
         assertNull(status.available)
         assertEquals(0, schedule.daily + schedule.cancelled)
         assertEquals(0, feed.downloads)
+    }
+
+    @Test
+    fun `Install automatically has a newer release downloaded, Ask me doesn't`() = runTest {
+        val updater = updater()
+        feed.latest = ReleaseFile.Found(newer)
+        updater.check()
+        assertEquals(0, schedule.downloads)
+
+        store.setMode(UpdateMode.AUTOMATIC)
+        updater.check()
+        assertEquals(1, schedule.downloads)
+    }
+
+    @Test
+    fun `on Android 11, Install automatically downloads and checks it, then waits for a press`() = runTest {
+        store.setMode(UpdateMode.AUTOMATIC)
+        val updater = updater(sdk = 30)
+        feed.latest = ReleaseFile.Found(newer)
+        updater.check()
+        idle = IdleSnapshot(screenOff = true)
+        updater.downloadAhead()
+        assertTrue(status(updater).ready)
+        assertTrue(installer.handed.isEmpty())
+        assertEquals(UpdateChip.Ready("1.1.0"), UpdateChip.of(status(updater), kid = false))
+
+        // The chip installs it: Android's dialog comes next.
+        updater.chipPressed(openAbout = { error("not About") })
+        runCurrent()
+        assertEquals(listOf(true), installer.byPress)
+    }
+
+    @Test
+    fun `on Android 12, a downloaded update installs by itself once the TV is idle, and only then`() = runTest {
+        store.setMode(UpdateMode.AUTOMATIC)
+        val updater = updater(sdk = 31)
+        feed.latest = ReleaseFile.Found(newer)
+        updater.check()
+        idle = IdleSnapshot(homeInFront = true, lastTouchMillis = now)
+        updater.downloadAhead()
+        assertTrue(status(updater).ready)
+        assertTrue(installer.handed.isEmpty())
+        assertEquals("1.1.0 is ready, and installs once the TV is idle", UpdateLine.of(status(updater), now, java.time.ZoneOffset.UTC).text)
+
+        // The minute's look: untouched for 30 minutes now, and nothing playing.
+        updater.started()
+        now += IdleRule.UNTOUCHED_MILLIS
+        advanceTimeBy(60_001)
+        runCurrent()
+        assertEquals(listOf(false), installer.byPress)
+    }
+
+    @Test
+    fun `never while anything plays, and never twice for one version`() = runTest {
+        store.setMode(UpdateMode.AUTOMATIC)
+        val updater = updater(sdk = 31)
+        feed.latest = ReleaseFile.Found(newer)
+        updater.check()
+        idle = IdleSnapshot(screenOff = true, playing = true)
+        updater.downloadAhead()
+        assertTrue(installer.handed.isEmpty())
+
+        idle = IdleSnapshot(screenOff = true)
+        updater.started()
+        advanceTimeBy(60_001)
+        runCurrent()
+        assertEquals(1, installer.handed.size)
+
+        // Android wanted a press after all: it waits for one, and never tries by itself again.
+        updater.installerSaid(InstallerAnswer.NeedsPress)
+        runCurrent()
+        assertEquals(UpdateWork.Idle, status(updater).work)
+        advanceTimeBy(10 * 60_000L)
+        runCurrent()
+        assertEquals(1, installer.handed.size)
+        assertEquals(UpdateChip.Ready("1.1.0"), UpdateChip.of(status(updater), kid = false))
+    }
+
+    @Test
+    fun `the chip opens About until it's downloaded, and a kid never sees it`() = runTest {
+        val updater = updater()
+        feed.latest = ReleaseFile.Found(newer)
+        updater.check()
+        assertEquals(UpdateChip.Available("1.1.0"), UpdateChip.of(status(updater), kid = false))
+        assertNull(UpdateChip.of(status(updater), kid = true))
+        var about = 0
+        updater.chipPressed(openAbout = { about++ })
+        assertEquals(1, about)
+        assertEquals(0, feed.downloads)
+    }
+
+    @Test
+    fun `turning Install automatically on with an update waiting downloads it`() = runTest {
+        val updater = updater()
+        feed.latest = ReleaseFile.Found(newer)
+        updater.check()
+        updater.setMode(UpdateMode.AUTOMATIC)
+        runCurrent()
+        assertEquals(1, schedule.downloads)
     }
 
     private companion object {

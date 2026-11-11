@@ -256,18 +256,29 @@ private fun ColumnScope.Updates(updates: AboutUpdates, whatsNew: FocusRequester,
             )
         }
     }
+    val asks = if (status.silentInstalls) "" else " Android asks once more before it installs."
     Note(
         when (status.mode) {
-            UpdateMode.ASK -> "Once a day it looks for a new release and shows it here. Nothing downloads until you press Install."
-            UpdateMode.OFF -> "It never looks by itself. Check for updates still does."
+            UpdateMode.AUTOMATIC -> if (status.silentInstalls) {
+                "Once a day it looks for a new release and downloads it, then installs it when the TV is asleep, the " +
+                    "screensaver is on, or Action Center has sat untouched for 30 minutes. Never while anything plays."
+            } else {
+                "Once a day it looks for a new release and downloads it. Then the top bar says Update ready: one press, " +
+                    "and Android asks once more before it installs."
+            }
+            UpdateMode.ASK ->
+                "Once a day it looks for a new release, and shows it here and in the top bar. Nothing downloads until you " +
+                    "press Install.$asks"
+            UpdateMode.OFF -> "It never looks by itself. Check for updates still does.$asks"
         } + " Updates come only from github.com/${status.repo}'s releases, and only if they're signed with the same key as " +
-            "this copy. On Android 11, Android asks once more before it installs.",
+            "this copy.",
     )
 }
 
 /** About's words for each [UpdateMode]. */
 private val UpdateMode.label: String
     get() = when (this) {
+        UpdateMode.AUTOMATIC -> "Install automatically"
         UpdateMode.ASK -> "Ask me"
         UpdateMode.OFF -> "Off"
     }
