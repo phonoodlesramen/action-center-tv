@@ -1,10 +1,13 @@
 package com.phonoodlesramen.actioncenter.ui.diagnostics
 
+import androidx.compose.ui.semantics.SemanticsActions
+import androidx.compose.ui.test.assertIsDisplayed
 import androidx.compose.ui.test.hasScrollToKeyAction
 import androidx.compose.ui.test.junit4.v2.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performScrollToKey
+import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.requestFocus
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.phonoodlesramen.actioncenter.home.HomeState
@@ -12,6 +15,9 @@ import com.phonoodlesramen.actioncenter.safety.CrashRecord
 import com.phonoodlesramen.actioncenter.safety.StartupMode
 import com.phonoodlesramen.actioncenter.system.PackageState
 import com.phonoodlesramen.actioncenter.ui.TV_1080P
+import com.phonoodlesramen.actioncenter.update.UpdateInfo
+import com.phonoodlesramen.actioncenter.update.UpdateStatus
+import org.junit.Assert.assertEquals
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -54,6 +60,40 @@ class DiagnosticsScreenScreenshotTest {
             ),
         )
         capture("diagnostics_safe_mode")
+    }
+
+    @Test
+    fun safeModeWithAnUpdate() {
+        val calls = mutableListOf<String>()
+        val actions = object : DiagnosticsActions {
+            override fun checkForUpdates() {
+                calls += "check"
+            }
+
+            override fun installUpdate() {
+                calls += "install"
+            }
+        }
+        val available = UpdateInfo(1, 200, "1.1.0", "v1.1.0", "app-release.apk", 53_572_870, "c".repeat(64), "a".repeat(64))
+        compose.setContent {
+            DiagnosticsScreen(
+                SampleDiagnosticsState.state.copy(
+                    mode = StartupMode.SAFE,
+                    lastCrash = CrashRecord(
+                        timeMillis = SampleDiagnosticsState.now.minusMinutes(3).toInstant().toEpochMilli(),
+                        summary = "IllegalStateException: Test crash from the device panel",
+                    ),
+                ),
+                SampleDiagnosticsState.now,
+                actions,
+                updates = UpdateStatus(repo = "someone/action-center-tv", available = available),
+            )
+        }
+        compose.onNodeWithText("1.1.0 is available · 51 MB").assertIsDisplayed()
+        capture("diagnostics_safe_mode_update")
+        compose.onNodeWithText("Check for updates").performSemanticsAction(SemanticsActions.OnClick)
+        compose.onNodeWithText("Install 1.1.0").performSemanticsAction(SemanticsActions.OnClick)
+        assertEquals(listOf("check", "install"), calls)
     }
 
     @Test

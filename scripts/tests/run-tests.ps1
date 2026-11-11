@@ -353,7 +353,7 @@ $Tests = [ordered]@{
         Assert-True (Get-StubState).ourAppInstalled 'app should be installed'
     }
 
-    'grant-permissions grants all three, and -Revoke undoes exactly that' = {
+    'grant-permissions grants all four, and -Revoke undoes exactly that' = {
         New-Device | Out-Null
         Invoke-Script 'grant-permissions.ps1' @{ Ip = $Ip; Confirm = $false } | Out-Null
         Assert-Equal @(
@@ -361,6 +361,7 @@ $Tests = [ordered]@{
             "appops set $OurPackage GET_USAGE_STATS allow"
             "pm grant $OurPackage android.permission.READ_TV_LISTINGS"
             "pm grant $OurPackage android.permission.READ_EXTERNAL_STORAGE"
+            "appops set $OurPackage REQUEST_INSTALL_PACKAGES allow"
         ) (Get-ShellLog) 'grant commands'
 
         Clear-AdbLog
@@ -370,6 +371,7 @@ $Tests = [ordered]@{
             "appops set $OurPackage GET_USAGE_STATS default"
             "pm revoke $OurPackage android.permission.READ_TV_LISTINGS"
             "pm revoke $OurPackage android.permission.READ_EXTERNAL_STORAGE"
+            "appops set $OurPackage REQUEST_INSTALL_PACKAGES default"
         ) (Get-ShellLog) 'revoke commands'
         Assert-Equal @() @((Get-StubState).grants) 'no grants left'
     }

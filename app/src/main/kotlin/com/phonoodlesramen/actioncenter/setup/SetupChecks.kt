@@ -22,6 +22,9 @@ interface SetupChecks {
 
     /** This TV opens Accessibility from an app ([SettingsLinks.usable]). */
     fun accessibilityLink(): Boolean
+
+    /** Android's Install unknown apps is on for Action Center, so it can install its own updates. */
+    fun canInstallUpdates(): Boolean
 }
 
 /** The checks on a real TV. */
@@ -47,6 +50,8 @@ class AndroidSetupChecks(private val context: Context) : SetupChecks {
         val resolved = packageManager.resolveActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS), 0)?.activityInfo
         return SettingsLinks.usable(resolved?.packageName, resolved?.name)
     }
+
+    override fun canInstallUpdates(): Boolean = packageManager.canRequestPackageInstalls()
 }
 
 /** Android's `enabled_accessibility_services`: a colon-separated list of components. */

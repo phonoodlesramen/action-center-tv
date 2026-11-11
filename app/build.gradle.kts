@@ -58,6 +58,18 @@ val releaseVersionCode: Provider<Int> = git("log", "-1", "--format=%ct")
     .map { ((it.toLong() - 1_767_225_600L) / 60).toInt().coerceAtLeast(1) }
     .orElse(1)
 
+// Where a release build looks for its own updates: a repository's GitHub releases
+// (docs/releasing.md, update.json). CI's build has GITHUB_REPOSITORY, so a fork's build checks
+// the fork; ACTION_CENTER_UPDATE_REPO overrides it. A release build without either, and every
+// debug build, never checks. ACTION_CENTER_UPDATE_BASE_URL replaces https://github.com, for a
+// test on an emulator only: an http:// one lets that build use plain HTTP. CI never sets it.
+val updateRepo: String = (
+    providers.environmentVariable("ACTION_CENTER_UPDATE_REPO").orNull?.takeIf { it.isNotBlank() }
+        ?: providers.environmentVariable("GITHUB_REPOSITORY").orNull.orEmpty()
+    ).takeIf { Regex("[A-Za-z0-9_.-]+/[A-Za-z0-9_.-]+").matches(it) }.orEmpty()
+val updateBaseUrl: String = providers.environmentVariable("ACTION_CENTER_UPDATE_BASE_URL").orNull
+    ?.takeIf { Regex("https?://[A-Za-z0-9.:-]+").matches(it) } ?: "https://github.com"
+
 android {
     namespace = "com.phonoodlesramen.actioncenter"
     // Compose 1.12 (BOM 2026.09.00) requires compileSdk 37. The app only ever runs on
@@ -73,6 +85,10 @@ android {
         // doesn't change their tests' inputs.
         versionCode = 1
         versionName = "dev"
+        // Debug builds never update themselves; the release type sets these (above).
+        buildConfigField("String", "UPDATE_REPO", "\"\"")
+        buildConfigField("String", "UPDATE_BASE_URL", "\"https://github.com\"")
+        manifestPlaceholders["usesCleartextTraffic"] = "false"
     }
 
     signingConfigs {
@@ -97,6 +113,9 @@ android {
             isMinifyEnabled = false
             if (releaseKeystore != null) signingConfig = signingConfigs.getByName("release")
             ndk { abiFilters += listOf("arm64-v8a", "armeabi-v7a") }
+            buildConfigField("String", "UPDATE_REPO", "\"$updateRepo\"")
+            buildConfigField("String", "UPDATE_BASE_URL", "\"$updateBaseUrl\"")
+            manifestPlaceholders["usesCleartextTraffic"] = updateBaseUrl.startsWith("http://").toString()
         }
     }
 
@@ -107,6 +126,7 @@ android {
 
     buildFeatures {
         compose = true
+        buildConfig = true
     }
 
     testOptions {

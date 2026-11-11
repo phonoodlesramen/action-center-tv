@@ -111,7 +111,9 @@ On Windows, use `.\gradlew.bat`. Release builds are unsigned unless you set the
 - **`station/`:** the optional guide station, a JVM service in a distroless container.
 - **`scripts/`:** PowerShell 7 helpers for ADB, tested against a fake `adb`.
 
-Every card renders from a local cache first; the network is never on the UI path. The
+Every card renders from a local cache first; the network is never on the UI path. Release
+builds check GitHub for a new release once a day, and install one only when you press Install
+in Settings › About, which can also turn the daily check off. The
 architecture sketch is in [`docs/roadmap.md`](docs/roadmap.md).
 
 ## Docs

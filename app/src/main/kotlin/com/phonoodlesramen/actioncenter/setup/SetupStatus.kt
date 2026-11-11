@@ -54,6 +54,11 @@ data class SetupStatus(
     val accessibilityLink: Boolean = true,
     /** Settings › Setup › Show in the top bar is off, on this TV. */
     val chipHidden: Boolean = false,
+    /**
+     * Install unknown apps is on for Action Center, so About can install its updates. Optional,
+     * so not one of [left].
+     */
+    val installUpdates: Boolean = true,
 ) {
     val homeDone: Boolean get() = home == HomeRoute.HOME || home == HomeRoute.HOMEWATCH
 

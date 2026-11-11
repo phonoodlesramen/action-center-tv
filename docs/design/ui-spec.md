@@ -1270,6 +1270,9 @@ still say "Not yet".
     `READ_MEDIA_IMAGES` and `_VIDEO` on Android 13+): "Allow" shows Android's own question.
     Once Android won't ask again, it opens App info, and a toast says why.
   - **Apps row by habit:** "Turn on" opens TV Settings' Usage access.
+  - **Updates from the app** (release builds only): "Allow" opens TV Settings' Install
+    unknown apps, at Action Center's own switch where the TV links there. Optional, so it
+    isn't counted in "Finish setup".
   - **Plex:** "Open Plex settings" moves to Settings › Plex.
   - **Show in the top bar:** a toggle row, on by default, per TV.
 
@@ -1322,6 +1325,18 @@ still say "Not yet".
 - **About** (`ui/settings/AboutSettings.kt`):
   - **What it shows:**
     - the version;
+    - **Updates** (in-app updates, `update/`), under the version:
+      - a line: "Up to date · checked 2 h ago", "1.1.0 is available · 51 MB", "Downloading
+        1.1.0… 34%", "Checking the download…", "Installing 1.1.0…", "1.1.0 is ready to
+        install", or what went wrong and when, in the caution colour;
+      - pills: **Check for updates** (with Sync's icon); **Install 1.1.0** while one is
+        available, or **Allow installs** until Install unknown apps is on, with a note;
+        **What's new**, a QR code to the release's notes, Back landing on the pill. The
+        pills stay while the work runs, so focus never falls: a press then does nothing;
+      - **Check by itself:** Ask me (the default) and Off, small pills with a tick, per TV,
+        and a note on what each does, where updates come from (the repository's releases,
+        signed with this copy's key), and that Android 11 asks once more;
+      - a debug build says "Debug builds don't update themselves." and nothing else;
     - GPL-3.0's notice: "Copyright © 2026 phonoodlesramen and contributors", free software
       under the GPL v3 or later, with no warranty. "phonoodlesramen" is a small pill with
       GitHub's mark. OK on it shows the maintainer's GitHub profile as a QR code, since TVs
@@ -1582,6 +1597,7 @@ bigger tiles; rows 44 / 214 / 196 dp, corners 18 / 12 dp.
 - Never focusable, so nothing that needs an action goes in a toast [U12].
 - **Caution** (Phase 13, `Toast.kt`): a refused change says why on a `surface3` pill with a
   warning icon, in the caution colour ("Can't reach the guide station.").
+- **"Updated to 1.1.0"** once, the first time a newer version starts (in-app updates).
 
 ## 5. States
 
@@ -1612,7 +1628,7 @@ bigger tiles; rows 44 / 214 / 196 dp, corners 18 / 12 dp.
 | Kids, past bedtime | Shelved (K6). Would be: bedtime card "Past bedtime", **Ask a grown-up** |
 | Kids, no kid-safe channels | The Live row is left out; the full guide says "None of them are for your age yet" |
 | Kids, not linked to Plex | No Up Next (never yours); picks from the shared library within their ceiling |
-| Safe mode | The Phase 0 screen (amber banner, All apps, Settings, Leave safe mode). Never the art-forward home |
+| Safe mode | The Phase 0 screen (amber banner, All apps, Settings, Leave safe mode), and on a release build an Updates row under the banner: the line, Check for updates, and Install and Install unknown apps while one is available, since a newer release may fix the crash. Never the art-forward home |
 | Stock launcher back | Red chip in the top bar (§4) |
 | Guide station, pairing [N3] | The code on the TV and in the station's log must match; the first TV is approved on the NAS, later ones on a paired TV (§4, Guide station) |
 | Guide station, paired [N4-N6] | The guide is the station's copy: every TV shows the same programs, an edit on one reaches all within seconds, and a spot paused in another room shows its room on the Back-to card |

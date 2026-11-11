@@ -51,14 +51,17 @@ internal fun ColumnScope.SetupSettings(
     setup: SetupStatus,
     actions: SettingsActions,
     onOpenPlex: () -> Unit,
+    /** This build updates itself from Settings › About, so it shows Updates from the app. */
+    updates: Boolean = false,
 ) {
-    val done = mapOf(
-        SetupStep.HOME to setup.homeDone,
-        SetupStep.TV_LISTINGS to setup.tvListings,
-        SetupStep.PICTURES to setup.pictures,
-        SetupStep.USAGE to setup.usageAccess,
-        SetupStep.PLEX to state.plex.link.linked,
-    )
+    val done = buildMap {
+        put(SetupStep.HOME, setup.homeDone)
+        put(SetupStep.TV_LISTINGS, setup.tvListings)
+        put(SetupStep.PICTURES, setup.pictures)
+        put(SetupStep.USAGE, setup.usageAccess)
+        if (updates) put(SetupStep.UPDATES, setup.installUpdates)
+        put(SetupStep.PLEX, state.plex.link.linked)
+    }
     val buttons = remember { SetupStep.entries.associateWith { FocusRequester() } }
     val toggle = remember { FocusRequester() }
     // The step whose button has focus now, or had it when Android or TV Settings took over.
@@ -140,6 +143,18 @@ internal fun ColumnScope.SetupSettings(
         buttonModifier = Modifier.button(SetupStep.USAGE),
     )
     if (!setup.usageAccess) Note("It opens Usage access: choose Action Center, then allow it.")
+    if (updates) {
+        Step(
+            title = "Updates from the app",
+            done = setup.installUpdates,
+            detail = "Lets Settings › About install Action Center's own updates. Android calls it Install unknown apps; " +
+                "Action Center uses it for nothing else.",
+            button = if (setup.installUpdates) null else "Allow",
+            onClick = actions::openInstallUnknownApps,
+            buttonModifier = Modifier.button(SetupStep.UPDATES),
+        )
+        if (!setup.installUpdates) Note("It opens Install unknown apps: turn it on for Action Center.")
+    }
     Step(
         title = "Plex",
         done = state.plex.link.linked,
@@ -159,7 +174,7 @@ internal fun ColumnScope.SetupSettings(
 }
 
 /** Settings › Setup's steps, in their order on screen. */
-internal enum class SetupStep { HOME, TV_LISTINGS, PICTURES, USAGE, PLEX }
+internal enum class SetupStep { HOME, TV_LISTINGS, PICTURES, USAGE, UPDATES, PLEX }
 
 internal object SetupFocus {
     /**

@@ -160,8 +160,9 @@ says what HomeWatch does with it. To turn it off: `-Disable`, or the same switch
 | `adb shell appops set com.phonoodlesramen.actioncenter GET_USAGE_STATS allow` | The Apps row, ordered by what you open |
 | `adb shell pm grant com.phonoodlesramen.actioncenter android.permission.READ_TV_LISTINGS` | Continue in your apps (Android's Watch Next) |
 | `adb shell pm grant com.phonoodlesramen.actioncenter android.permission.READ_EXTERNAL_STORAGE` | Your own wallpapers and app banners |
+| `adb shell appops set com.phonoodlesramen.actioncenter REQUEST_INSTALL_PACKAGES allow` | Install unknown apps: updates from Settings › About |
 
-Each is optional; the app works without them, with less. `-Revoke` undoes all three.
+Each is optional; the app works without them, with less. `-Revoke` undoes all four.
 Settings › Setup on the TV does the same with the remote. On Android 13 and later,
 "Your pictures" is `READ_MEDIA_IMAGES` and `READ_MEDIA_VIDEO` instead.
 
@@ -193,9 +194,16 @@ Action Center then shows a banner. Check it, and fix it if it has:
 
 ## Update Action Center
 
-Install the new APK over the old one: `./scripts/install.ps1 -FromRelease` (or `-Apk <new apk>`), or
-`adb install -r`. It must be signed with the same key. Your settings, sign-ins and guide
-stay.
+**From the TV:** Settings › About › Updates. A release build checks GitHub for a new release
+once a day (or only when you press Check for updates, with Updates set to Off), and shows it
+there. Install downloads it, checks it's the release's file and signed with the same key, and
+hands it to Android. On Android 11 Android asks once more; on 12 and later it just installs.
+The first time, allow Install unknown apps for Action Center: Settings › Setup › Updates from
+the app opens it. Debug builds don't update themselves.
+
+**From a computer:** install the new APK over the old one: `./scripts/install.ps1 -FromRelease`
+(or `-Apk <new apk>`), or `adb install -r`. It must be signed with the same key. Your settings,
+sign-ins and guide stay either way.
 
 ## Undo everything
 

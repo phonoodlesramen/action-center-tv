@@ -92,6 +92,7 @@ import com.phonoodlesramen.actioncenter.ui.theme.LayoutScale
 import com.phonoodlesramen.actioncenter.ui.theme.LocalAccent
 import com.phonoodlesramen.actioncenter.ui.theme.Palette
 import com.phonoodlesramen.actioncenter.ui.theme.safeArea
+import com.phonoodlesramen.actioncenter.update.UpdatesController
 import com.phonoodlesramen.actioncenter.wallpaper.WallpaperController
 import com.phonoodlesramen.actioncenter.weather.Place
 import com.phonoodlesramen.actioncenter.weather.TemperatureUnit
@@ -179,6 +180,9 @@ interface SettingsActions {
     /** Settings › Setup › Show in the top bar, on this TV. */
     fun setSetupChipShown(shown: Boolean) {}
 
+    /** Settings › Setup › Updates from the app, and About's Allow: TV Settings' Install unknown apps. */
+    fun openInstallUnknownApps() {}
+
     companion object None : SettingsActions
 }
 
@@ -229,7 +233,10 @@ fun SettingsScreen(
     nfl: NflController? = null,
     /** Settings › Setup's states; a TV that's all set up by default. */
     setup: SetupStatus = SetupStatus(),
+    /** Settings › About's Updates; a build that doesn't update by default. */
+    updates: UpdatesController = UpdatesController.None,
 ) {
+    val updateStatus by updates.status.collectAsState()
     // A kid's profile has no NFL (F9), so no Settings › NFL either.
     val sections = SettingsSection.entries.filter { it != SettingsSection.NFL || (nfl != null && !state.profile.kid) }
     var section by remember { mutableStateOf(initialSection.takeIf { it in sections } ?: SettingsSection.LOOK) }
@@ -275,6 +282,7 @@ fun SettingsScreen(
                     setup,
                     actions,
                     onOpenPlex = { runCatching { rows.getValue(SettingsSection.PLEX).requestFocus() } },
+                    updates = updateStatus.enabled,
                 )
                 SettingsSection.LOOK -> Look(state, actions)
                 SettingsSection.WALLPAPER -> WallpaperSettings(wallpaper)
@@ -299,7 +307,22 @@ fun SettingsScreen(
                 SettingsSection.WEATHER -> WeatherSettings(state, actions)
                 SettingsSection.AI -> AiBlurbsSettings(state, actions, aiBlurbs)
                 SettingsSection.DIAGNOSTICS -> Diagnostics(state, actions)
-                SettingsSection.ABOUT -> AboutSettings(version, OPEN_METEO_CREDIT)
+                SettingsSection.ABOUT -> AboutSettings(
+                    version = version,
+                    openMeteoCredit = OPEN_METEO_CREDIT,
+                    // Previews and screenshots without an updater leave Updates out.
+                    updates = if (updates === UpdatesController.None) {
+                        null
+                    } else {
+                        AboutUpdates(
+                            status = updateStatus,
+                            nowMillis = state.nowMillis,
+                            canInstall = setup.installUpdates,
+                            controller = updates,
+                            onAllow = actions::openInstallUnknownApps,
+                        )
+                    },
+                )
             }
         }
     }

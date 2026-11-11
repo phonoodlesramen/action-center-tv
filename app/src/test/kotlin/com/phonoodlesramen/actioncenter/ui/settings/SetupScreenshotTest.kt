@@ -13,6 +13,9 @@ import com.phonoodlesramen.actioncenter.ui.home.HomeActions
 import com.phonoodlesramen.actioncenter.ui.home.HomeScreen
 import com.phonoodlesramen.actioncenter.ui.home.SampleHomeState
 import com.phonoodlesramen.actioncenter.ui.theme.ActionCenterTheme
+import com.phonoodlesramen.actioncenter.update.UpdateStatus
+import com.phonoodlesramen.actioncenter.update.UpdatesController
+import kotlinx.coroutines.flow.MutableStateFlow
 import org.junit.Rule
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -30,12 +33,15 @@ class SetupScreenshotTest {
 
     private val newTv = SetupStatus(home = HomeRoute.OFF, tvListings = false, pictures = false, usageAccess = false)
 
-    private fun settings(setup: SetupStatus, state: HomeUiState = SampleHomeState.state(sample = false, plex = SampleHomeState.plexCode)) =
-        compose.setContent {
-            ActionCenterTheme(accent = state.accent, layoutScale = state.layoutScale) {
-                SettingsScreen(state, SettingsActions.None, onBack = {}, initialSection = SettingsSection.SETUP, setup = setup)
-            }
+    private fun settings(
+        setup: SetupStatus,
+        state: HomeUiState = SampleHomeState.state(sample = false, plex = SampleHomeState.plexCode),
+        updates: UpdatesController = UpdatesController.None,
+    ) = compose.setContent {
+        ActionCenterTheme(accent = state.accent, layoutScale = state.layoutScale) {
+            SettingsScreen(state, SettingsActions.None, onBack = {}, initialSection = SettingsSection.SETUP, setup = setup, updates = updates)
         }
+    }
 
     private fun home(setup: SetupStatus, state: HomeUiState = SampleHomeState.state()) = compose.setContent {
         ActionCenterTheme(accent = state.accent, layoutScale = state.layoutScale) {
@@ -61,6 +67,15 @@ class SetupScreenshotTest {
     fun allDone() {
         settings(SetupStatus(), SampleHomeState.state(sample = false, plex = SampleHomeState.plexLinked))
         capture("settings_setup_done")
+    }
+
+    @Test
+    fun updatesFromTheApp() {
+        val updating = object : UpdatesController {
+            override val status = MutableStateFlow(UpdateStatus())
+        }
+        settings(SetupStatus(installUpdates = false), SampleHomeState.state(sample = false, plex = SampleHomeState.plexLinked), updating)
+        capture("settings_setup_updates")
     }
 
     @Test

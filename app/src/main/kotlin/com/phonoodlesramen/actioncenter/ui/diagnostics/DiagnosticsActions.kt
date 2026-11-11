@@ -20,5 +20,10 @@ interface DiagnosticsActions {
     /** The hidden debug action: crash on purpose to check that safe mode appears. */
     fun forceCrash() {}
 
+    /** Safe mode's Updates: a newer release may fix the crash. */
+    fun checkForUpdates() {}
+    fun installUpdate() {}
+    fun openInstallUnknownApps() {}
+
     companion object None : DiagnosticsActions
 }
