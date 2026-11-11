@@ -32,6 +32,8 @@ import androidx.media3.ui.SubtitleView
 import coil3.SingletonImageLoader
 import com.phonoodlesramen.actioncenter.ActionCenterApp
 import com.phonoodlesramen.actioncenter.AppContainer
+import com.phonoodlesramen.actioncenter.apps.CustomBanners
+import com.phonoodlesramen.actioncenter.apps.LocalCustomBanners
 import com.phonoodlesramen.actioncenter.favorites.FavoriteChange
 import com.phonoodlesramen.actioncenter.favorites.FavoriteText
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
@@ -196,7 +198,7 @@ class GuidePlayerActivity : ComponentActivity() {
             val access by parts.access.collectAsState(initial = null)
             val artUrls = remember(access) { PlexArtUrls(access) }
             ActionCenterTheme(accent = Palette.Accents.getOrElse(look.accentIndex) { Palette.DefaultAccent }, layoutScale = look.layoutScale) {
-                CompositionLocalProvider(LocalArtUrls provides artUrls) {
+                CompositionLocalProvider(LocalArtUrls provides artUrls, LocalCustomBanners provides parts.banners) {
                     GuidePlayerScreen(state, now = { now }, actions = actions) {
                         // Sized to the file's shape, so a wide film is letterboxed rather than stretched;
                         // its subtitles sit on the picture, as the file places them.
@@ -556,6 +558,8 @@ class GuidePlayerParts(
     val favorites: Flow<List<String>> = flowOf(emptyList()),
     /** The options' Add to favorites or Remove (C2). */
     val setFavorite: suspend (channelId: String, favorite: Boolean) -> FavoriteChange = { _, _ -> FavoriteChange.Saved },
+    /** The Icons folder, for the channels' own icons (I3). */
+    val banners: CustomBanners = CustomBanners.None,
 ) {
     fun interface Provider {
         fun guidePlayerParts(): GuidePlayerParts
@@ -582,6 +586,7 @@ class GuidePlayerParts(
             plexWrites = container.guidePlexWrites,
             favorites = container.channelFavorites.current,
             setFavorite = container.channelFavorites::set,
+            banners = container.customBanners,
         )
     }
 }

@@ -53,8 +53,10 @@ class GuideSourceTest {
         for (channel in lineup.channels) {
             assertNotNull("${channel.name} has something on now", channel.slotAt(harness.now))
             assertTrue(channel.slots.last().endMillis >= harness.now + 24 * HOUR)
-            assertNull(channel.logo)
         }
+        // A marathon's logo is its show's poster (I1); the others draw their glyphs.
+        assertEquals(listOf(null, null, "/library/metadata/ridge/thumb"), lineup.channels.map { it.logo })
+        assertEquals(listOf("movie", "tv_gen"), lineup.channels.take(2).map { it.glyph })
     }
 
     @Test

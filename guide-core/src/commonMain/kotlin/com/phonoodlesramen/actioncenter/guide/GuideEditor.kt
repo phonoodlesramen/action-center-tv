@@ -73,6 +73,9 @@ data class EditableChannel(
     val scheduledUntil: Long?,
     /** What's on now, for the list ("Big Atlas"); null in a gap or before scheduling. */
     val onNow: String?,
+    /** Its icon, as the guide draws it ([ChannelLook]). */
+    val glyph: String? = null,
+    val logo: String? = null,
 )
 
 /** What a rule's fields can be set to, from the library cache. */

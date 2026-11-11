@@ -25,7 +25,8 @@ Pulled in by Gradle, each under its own licence. All are compatible with GPL-3.0
 ## Material Symbols
 
 The app's icons (`AppIcons` in `app/src/main/kotlin/com/phonoodlesramen/actioncenter/ui/theme/Icons.kt`
-and `PlayerIcons` in `.../ui/player/PlayerIcons.kt`) are Google's **Material Symbols Rounded**,
+`PlayerIcons` in `.../ui/player/PlayerIcons.kt`, and the guide channels' glyphs in
+`.../ui/theme/ChannelGlyphIcons.kt`) are Google's **Material Symbols Rounded**,
 weight 400, grade 0, at the 24 px optical size.
 
 - **Source:** https://github.com/google/material-design-icons, the SVGs under

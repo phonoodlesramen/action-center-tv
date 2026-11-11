@@ -1,6 +1,7 @@
 package com.phonoodlesramen.actioncenter.ui.settings
 
 import com.phonoodlesramen.actioncenter.guide.ChannelDraft
+import com.phonoodlesramen.actioncenter.guide.ChannelGlyphs
 import com.phonoodlesramen.actioncenter.guide.ChannelRule
 import com.phonoodlesramen.actioncenter.guide.EditRejected
 import com.phonoodlesramen.actioncenter.guide.EditableChannel
@@ -105,6 +106,8 @@ internal class FakeGuideEditor(channels: List<EditableChannel> = sample()) : Gui
                 draft = ChannelDraft(name, ChannelRule(contentRatings = RATINGS[name].orEmpty())),
                 scheduledUntil = if (onNow == null) null else now + 24 * 60 * MINUTE + 49 * MINUTE + (i % 3) * 30 * MINUTE,
                 onNow = onNow,
+                // As RoomGuideEditor picks them, from the name: the marathons have no poster here, so monograms.
+                glyph = ChannelGlyphs.pick(name, null),
             )
         }
 

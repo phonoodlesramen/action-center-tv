@@ -30,6 +30,7 @@ import com.phonoodlesramen.actioncenter.lastapp.TvChannelStore
 import com.phonoodlesramen.actioncenter.lastapp.UsageRecentApps
 import com.phonoodlesramen.actioncenter.favorites.ChannelFavorites
 import com.phonoodlesramen.actioncenter.favorites.DataStoreFavorites
+import com.phonoodlesramen.actioncenter.guide.ChannelLooks
 import com.phonoodlesramen.actioncenter.guide.GuideDatabase
 import com.phonoodlesramen.actioncenter.guide.GuideEditor
 import com.phonoodlesramen.actioncenter.guide.GuideEngine
@@ -458,7 +459,7 @@ class AppContainer(
 
     /** The Plex Guide's lineup, for the Live row, the Guide card, the full guide and the player. */
     val guide: GuideSource by lazy {
-        guideOverride ?: guideSwitch.source(local = plexGuide, station = StationGuideSource(guideDatabase, guideStation.guideCopy, log = { Log.i(GuideStation.LOG_TAG, it) }))
+        guideSwitch.source(local = plexGuide, station = StationGuideSource(guideDatabase, guideStation.guideCopy, ChannelLooks(plexDatabase), log = { Log.i(GuideStation.LOG_TAG, it) }))
     }
 
     private val localGuideEditor by lazy { RoomGuideEditor(guideDatabase, plexDatabase, plexGuide, log = { Log.i(GuideEngine.LOG_TAG, it) }) }

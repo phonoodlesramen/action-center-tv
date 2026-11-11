@@ -46,11 +46,11 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.layoutId
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.min
 import androidx.tv.material3.Border
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.Icon
@@ -60,8 +60,6 @@ import androidx.tv.material3.Surface
 import androidx.tv.material3.Text
 import com.phonoodlesramen.actioncenter.guide.GuideChannel
 import com.phonoodlesramen.actioncenter.guide.GuideSlot
-import com.phonoodlesramen.actioncenter.ui.art.PlaceholderArt
-import com.phonoodlesramen.actioncenter.ui.art.TitleArt
 import com.phonoodlesramen.actioncenter.ui.home.onMenuKey
 import com.phonoodlesramen.actioncenter.ui.theme.AppIcons
 import com.phonoodlesramen.actioncenter.ui.theme.Layout as Tokens
@@ -183,7 +181,9 @@ internal object GuideLayout {
 }
 
 private val CellShape = RoundedCornerShape(Tokens.TileRadius)
-private val MarkShape = RoundedCornerShape(6.dp)
+/** A channel's icon in the grid (I6), and at most this share of its row's height. */
+private val MARK_SIZE = 32.dp
+private const val MARK_SHARE = 0.77f
 private val CellGap = 3.dp
 
 /** The gap between two rows; under the last favorite, a 2 dp accent line across the grid (C4). */
@@ -293,11 +293,14 @@ private fun ChannelRow(
     }
 }
 
-/** Number, logo or monogram, and name, a favorite's with a star before it. The focused program's row lights up here too. */
+/** Number, icon ([ChannelMark]) and name, a favorite's with a star before it. The focused program's row lights up here too. */
 @Composable
-private fun ChannelLabel(channel: GuideChannel, focused: Boolean, favorite: Boolean, lateNight: Boolean, modifier: Modifier = Modifier) {
+private fun ChannelLabel(channel: GuideChannel, focused: Boolean, favorite: Boolean, lateNight: Boolean, modifier: Modifier = Modifier) = BoxWithConstraints(modifier) {
+    // 32 dp at 100% (I6). A larger layout scale makes the rows shorter in dp, and the icon with them, so the name keeps its room.
+    val mark = min(MARK_SIZE, maxHeight * MARK_SHARE)
     Row(
-        modifier
+        Modifier
+            .fillMaxSize()
             .clip(CellShape)
             .background(if (focused) Palette.Surface2 else Color.Transparent)
             .padding(horizontal = 6.dp),
@@ -311,7 +314,7 @@ private fun ChannelLabel(channel: GuideChannel, focused: Boolean, favorite: Bool
             maxLines = 1,
             modifier = Modifier.width(22.dp),
         )
-        ChannelMark(channel, lateNight, Modifier.padding(start = 8.dp).size(26.dp))
+        ChannelMark(channel, mark, lateNight, Modifier.padding(start = 8.dp))
         if (favorite) Icon(AppIcons.Star, contentDescription = "Favorite", tint = LocalAccent.current, modifier = Modifier.padding(start = 8.dp).size(12.dp))
         BoxWithConstraints(Modifier.weight(1f).padding(start = if (favorite) 4.dp else 8.dp)) {
             Text(
@@ -323,28 +326,6 @@ private fun ChannelLabel(channel: GuideChannel, focused: Boolean, favorite: Bool
         }
     }
 }
-
-/** The channel's logo when it has one, else its initials on its own colour. */
-@Composable
-private fun ChannelMark(channel: GuideChannel, lateNight: Boolean, modifier: Modifier = Modifier) {
-    val logo = channel.logo
-    if (logo != null) {
-        TitleArt(id = channel.id, image = logo, lateNight = lateNight, modifier = modifier.clip(MarkShape))
-    } else {
-        Box(modifier.clip(MarkShape).background(PlaceholderArt.specFor(channel.id).from), contentAlignment = Alignment.Center) {
-            Text(
-                text = monogram(channel.name),
-                style = MaterialTheme.typography.labelMedium.copy(fontWeight = FontWeight.Bold),
-                color = Palette.Text,
-                maxLines = 1,
-            )
-        }
-    }
-}
-
-/** "Sci-Fi" → "SF", "Ridge Line Marathon" → "RL", "Movies" → "M". */
-internal fun monogram(name: String): String =
-    name.split(' ', '-').filter { it.isNotBlank() }.take(2).joinToString("") { it.take(1).uppercase() }.ifEmpty { "#" }
 
 /**
  * One program. Text only: the info panel has the art. Focus is the state's: a cell takes
