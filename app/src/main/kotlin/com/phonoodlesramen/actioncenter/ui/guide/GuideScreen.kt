@@ -11,6 +11,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -175,7 +177,8 @@ private fun Guide(
     modifier: Modifier = Modifier,
 ) {
     val lineup = remember(channels, nowMillis, zone) { GuideLineup(channels, nowMillis, zone) }
-    var focus by remember { mutableStateOf(lineup.open(openAtMillis ?: nowMillis, focusChannelId)) }
+    // Saved with the home: when Android makes it again behind the player, Back still lands on the program played.
+    var focus by rememberSaveable(stateSaver = GuideFocusSaver) { mutableStateOf(lineup.open(openAtMillis ?: nowMillis, focusChannelId)) }
     val shown = lineup.resolve(focus)
     val focused = lineup.focused(shown)
     val fallback = rememberFallbackFocus(enabled = focused == null)
@@ -210,6 +213,12 @@ private fun Guide(
         )
     }
 }
+
+/** The guide's focus in the activity's saved state: a stale one resolves against the lineup as it is then ([GuideLineup.resolve]). */
+private val GuideFocusSaver = listSaver<GuideFocus, Any?>(
+    save = { listOf(it.channelId, it.slotStart, it.windowStart, it.anchor, it.topRow) },
+    restore = { GuideFocus(it[0] as String?, it[1] as Long, it[2] as Long, it[3] as Long, it[4] as Int) },
+)
 
 /** No lineup yet: what it waits on, calmly, and Back still goes home. */
 @Composable

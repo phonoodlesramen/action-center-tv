@@ -152,8 +152,14 @@ import okhttp3.OkHttpClient
  *
  * @param plexOverride replaces plex.tv in tests, so none of them reaches the network.
  * @param espnOverride replaces ESPN in tests (Phase 13), for the same reason.
+ * @param guideOverride replaces the Plex Guide's lineup in tests, so the home's guide has channels without a server.
  */
-class AppContainer(app: Application, plexOverride: PlexAccounts? = null, espnOverride: EspnClient? = null) {
+class AppContainer(
+    app: Application,
+    plexOverride: PlexAccounts? = null,
+    espnOverride: EspnClient? = null,
+    private val guideOverride: GuideSource? = null,
+) {
     private val packageManager = app.packageManager
 
     val crashGuard = CrashGuard(
@@ -453,7 +459,7 @@ class AppContainer(app: Application, plexOverride: PlexAccounts? = null, espnOve
 
     /** The Plex Guide's lineup, for the Live row, the Guide card, the full guide and the player. */
     val guide: GuideSource by lazy {
-        guideSwitch.source(local = plexGuide, station = StationGuideSource(guideDatabase, guideStation.guideCopy, ChannelLooks(plexDatabase), log = { Log.i(GuideStation.LOG_TAG, it) }))
+        guideOverride ?: guideSwitch.source(local = plexGuide, station = StationGuideSource(guideDatabase, guideStation.guideCopy, ChannelLooks(plexDatabase), log = { Log.i(GuideStation.LOG_TAG, it) }))
     }
 
     private val localGuideEditor by lazy { RoomGuideEditor(guideDatabase, plexDatabase, plexGuide, log = { Log.i(GuideEngine.LOG_TAG, it) }) }

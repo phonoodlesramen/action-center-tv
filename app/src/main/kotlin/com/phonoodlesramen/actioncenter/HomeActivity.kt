@@ -208,6 +208,7 @@ class HomeActivity : ComponentActivity() {
         openedBy = intent.openedBy()
         if (intent.action == Intent.ACTION_ALL_APPS) screen = Screen.ALL_APPS
         if (intent.action == OpenSetupActivity.ACTION_OPEN_SETUP && !safeMode) openSetupScreen()
+        savedInstanceState?.let(::restorePlace)
         watchScreenOff()
         setContent {
             Box(Modifier.fillMaxSize().onPreviewKeyEvent { recordKey(it.nativeKeyEvent); false }) {
@@ -448,6 +449,46 @@ class HomeActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         startLinking()
+    }
+
+    /**
+     * Android can make the Home activity again while the app runs, and does so behind the
+     * guide's player: the player rides out a configuration change (an HDMI mode switch, a
+     * remote reconnecting), and the home behind it is made again as it comes back. So the
+     * full guide and a program's details are kept, with the card that opened the guide, and
+     * Back from the player lands on them (G5). The guide keeps its own focus. Other screens
+     * open at the home, as before.
+     */
+    override fun onSaveInstanceState(outState: Bundle) {
+        super.onSaveInstanceState(outState)
+        if (screen != Screen.GUIDE && screen != Screen.DETAILS) return
+        outState.putString(SAVED_SCREEN, screen.name)
+        outState.putString(SAVED_GUIDE_CHANNEL, guideChannel)
+        guideAt?.let { outState.putProgram(SAVED_GUIDE_AT, it) }
+        details?.let { outState.putProgram(SAVED_DETAILS, it) }
+    }
+
+    /** The full guide or a program's details, as [onSaveInstanceState] kept them; anything else leaves the screen as it is. */
+    private fun restorePlace(saved: Bundle) {
+        val kept = when (saved.getString(SAVED_SCREEN)) {
+            Screen.GUIDE.name -> Screen.GUIDE
+            Screen.DETAILS.name -> Screen.DETAILS
+            else -> return
+        }
+        guideChannel = saved.getString(SAVED_GUIDE_CHANNEL)
+        guideAt = saved.getProgram(SAVED_GUIDE_AT)
+        details = saved.getProgram(SAVED_DETAILS)
+        screen = if (kept == Screen.DETAILS && details == null) Screen.GUIDE else kept
+    }
+
+    private fun Bundle.putProgram(key: String, program: ProgramRef) {
+        putString("$key.channel", program.channelId)
+        putLong("$key.start", program.startMillis)
+    }
+
+    private fun Bundle.getProgram(key: String): ProgramRef? {
+        val channel = getString("$key.channel") ?: return null
+        return ProgramRef(channel, getLong("$key.start"))
     }
 
     /**
@@ -1077,6 +1118,12 @@ class HomeActivity : ComponentActivity() {
         const val LOG_TAG = "ActionCenterProbe"
         const val SEARCH_LOG_TAG = "ActionCenterSearch"
         const val MINUTE_MILLIS = 60_000L
+
+        /** Where the home was, kept across Android making it again ([onSaveInstanceState]). */
+        const val SAVED_SCREEN = "screen"
+        const val SAVED_GUIDE_CHANNEL = "guide_channel"
+        const val SAVED_GUIDE_AT = "guide_at"
+        const val SAVED_DETAILS = "details"
         const val SAMPLE_CANT_PLAY = "Sample content can't play: it's made up for design review"
         const val URI_GRANTS = Intent.FLAG_GRANT_READ_URI_PERMISSION or Intent.FLAG_GRANT_WRITE_URI_PERMISSION or
             Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION or Intent.FLAG_GRANT_PREFIX_URI_PERMISSION
