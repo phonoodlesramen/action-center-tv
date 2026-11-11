@@ -35,6 +35,9 @@ data class BannerFile(val name: String, val path: String) {
 
     /** In a subfolder such as `Flat icons`. */
     val inSubfolder: Boolean get() = '/' in name
+
+    /** In the `Channels` subfolder: a guide channel's icon (I3), not an app's banner. */
+    val channelIcon: Boolean get() = name.substringBefore('/', missingDelimiterValue = "").equals(SharedFolders.CHANNEL_ICONS, ignoreCase = true)
 }
 
 /** What Choose art saved for an app. */
@@ -108,8 +111,15 @@ data class CustomBannersState(
     val files: List<BannerFile> = emptyList(),
     /** Apps that aren't in here are [BannerChoice.Automatic]. */
     val choices: Map<String, BannerChoice> = emptyMap(),
+    /** The `Channels` subfolder's images: the guide channels' icons (I3), not in [files]. */
+    val channelIcons: List<BannerFile> = emptyList(),
 ) {
     private val index = BannerIndex(files)
+    private val channelIndex = BannerIndex(channelIcons)
+
+    /** The image named after a guide channel, matched as an app's banner is. */
+    fun channelIconFor(name: String): BannerFile? = channelIndex.match(name)
+
     private val byName = files.associateBy(BannerFile::name)
 
     fun choiceFor(app: LaunchableApp): BannerChoice = choices[app.key] ?: BannerChoice.Automatic
@@ -163,7 +173,7 @@ class StoredCustomBanners(
     override val state: StateFlow<CustomBannersState> = combine(
         files,
         store.data.catch { emit(emptyPreferences()) }.map(::choices),
-    ) { found, picks -> CustomBannersState(found, picks) }
+    ) { found, picks -> CustomBannersState(found.filterNot { it.channelIcon }, picks, found.filter { it.channelIcon }) }
         .stateIn(scope, SharingStarted.Eagerly, CustomBannersState())
 
     init {

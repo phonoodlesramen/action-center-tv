@@ -2,6 +2,7 @@ package com.phonoodlesramen.actioncenter.guide.station
 
 import com.phonoodlesramen.actioncenter.guide.ChannelRule
 import com.phonoodlesramen.actioncenter.guide.Fixtures.movie
+import com.phonoodlesramen.actioncenter.guide.Fixtures.series
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.guide.GuideEngine
 import com.phonoodlesramen.actioncenter.guide.GuideHarness
@@ -51,6 +52,18 @@ class StationLineupReaderTest {
         assertEquals(shown.unrated, reef.unrated)
         assertEquals(ChannelRule(), reef.rule)
         assertEquals(card.updatedAtMillis, lineup.extendedAtMillis)
+    }
+
+    @Test
+    fun `a one-show channel's logo is its show's poster, which every TV draws over its icon`() = runBlocking {
+        harness.synced(films + series("ridge", "Ridge Line", listOf("Western"), seasons = 2, perSeason = 10, minutes = 52))
+        val marathon = ChannelRule(types = listOf(ChannelRule.EPISODE), shows = listOf("ridge"), order = ChannelRule.Order.IN_ORDER)
+        harness.channels(channel("reef", ChannelRule()), channel("marathon-ridge", marathon, number = 2))
+        harness.engine.extend()
+
+        val lineup = reader.read(harness.now - GuideEngine.SHOW_PAST_MILLIS, harness.now, ZoneOffset.UTC).channels.associateBy { it.id }
+        assertEquals("/library/metadata/ridge/thumb", lineup.getValue("marathon-ridge").logo)
+        assertNull(lineup.getValue("reef").logo)
     }
 
     @Test

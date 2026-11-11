@@ -1,6 +1,7 @@
 package com.phonoodlesramen.actioncenter.guide.station
 
 import com.phonoodlesramen.actioncenter.guide.ChannelEntity
+import com.phonoodlesramen.actioncenter.guide.ChannelLooks
 import com.phonoodlesramen.actioncenter.guide.ChannelRule
 import com.phonoodlesramen.actioncenter.guide.GuideDatabase
 import com.phonoodlesramen.actioncenter.guide.GuideLibrary
@@ -27,6 +28,7 @@ import java.time.ZoneId
 class StationLineupReader(guide: GuideDatabase, plex: PlexDatabase) {
     private val dao = guide.dao()
     private val library = GuideLibrary(plex.guideLibrary())
+    private val looks = ChannelLooks(plex)
 
     /** The lineup in number order, and when its schedule was last extended (null before it ever was). */
     data class Lineup(val channels: List<StationChannel>, val extendedAtMillis: Long?)
@@ -46,7 +48,8 @@ class StationLineupReader(guide: GuideDatabase, plex: PlexDatabase) {
                 id = channel.id,
                 number = channel.number,
                 name = channel.name,
-                logo = null,
+                // A one-show channel's show poster, which every TV draws over its icon.
+                logo = looks.of(channel.name, channel.rule).logo,
                 enabled = channel.enabled,
                 alignmentMinutes = channel.alignmentMinutes,
                 filler = channel.filler,

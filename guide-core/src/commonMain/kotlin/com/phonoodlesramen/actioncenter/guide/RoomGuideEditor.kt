@@ -43,6 +43,7 @@ class RoomGuideEditor(
 ) : GuideEditor {
     private val dao = guide.dao()
     private val library = GuideLibrary(plex.guideLibrary())
+    private val looks = ChannelLooks(plex)
 
     /** Re-read as `guide.db` changes, and each minute, so what's on now moves on. */
     @OptIn(ExperimentalCoroutinesApi::class)
@@ -178,14 +179,18 @@ class RoomGuideEditor(
         val now = clock()
         val around = dao.slotsBetween(now, now + ON_NOW_REACH_MILLIS).groupBy { it.channelId }
         dao.channels().map { channel ->
+            val rule = channel.ruleOrNull()
+            val look = looks.of(channel.name, rule)
             EditableChannel(
                 id = channel.id,
                 number = channel.number,
                 enabled = channel.enabled,
                 // A rule that can't be read shows as the default; saving over it fixes it.
-                draft = ChannelDraft(channel.name, channel.ruleOrNull() ?: ChannelRule(), channel.alignmentMinutes, channel.filler),
+                draft = ChannelDraft(channel.name, rule ?: ChannelRule(), channel.alignmentMinutes, channel.filler),
                 scheduledUntil = channel.scheduledUntil,
                 onNow = onNow(around[channel.id].orEmpty(), now),
+                glyph = look.glyph,
+                logo = look.logo,
             )
         }
     } catch (e: Exception) {

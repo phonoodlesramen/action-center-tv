@@ -513,6 +513,7 @@ Was Throwback. One title at a time, seen through a lens.
   - matched by a normalised name (lower case, letters and digits only); an exact
     match wins, and one typo is forgiven for names of 6+ characters;
   - the main folder wins over `Flat icons`;
+  - the `Channels` subfolder is the guide channels' (Channel icons, below), never an app's;
   - otherwise the app's own banner (`PackageManager.getApplicationBanner`), otherwise
     its name on a tinted tile.
 - **Choose art** (quick action): a full-screen grid of Automatic, the app's own
@@ -649,6 +650,33 @@ channels come first, then YouTube TV's networks. With neither, the row isn't dra
   newest 5, in `youtube_tv`), and the rest of the row is unchanged.
 - The row follows the home's minute tick. Late night dims the art (§2).
 
+### Channel icons [I1-I8]
+`ui/guide/ChannelMark.kt`, with the glyphs in `ui/theme/ChannelGlyphIcons.kt` and the choice
+in `guide/ChannelLook.kt` (`:guide-core`). Every guide channel has one, the same everywhere it
+shows: the full guide (32 dp), the mini guide's rows (20 dp), the player's banner (40 dp) and
+Settings › Plex Guide's rows (24 dp).
+- **A tile** with corners at 23% of its size, in a muted tone for its glyph (Horror dark red,
+  Sci-Fi indigo, Family terracotta), a light-to-dark diagonal. The accent stays the screen's
+  one bright colour. Late night dims it with the art (§2).
+- **What's on it,** the first that exists:
+  - an image in the Icons folder's `Channels` subfolder named after the channel
+    (`Pictures/Icons/Channels/Sci-Fi.png`), matched as an app's banner is (L7), fitted
+    inside the tile with its transparency kept, decoded at the tile's size;
+  - the channel's logo, cropped: a one-show channel's (a marathon's) show poster, from the
+    Plex cache at the tile's size;
+  - its glyph, a Material Symbol at 66% of the tile, in the text colour;
+  - its monogram, extra bold: one letter for one word, two for more, filler words
+    ("The", "TV", "Marathon") left out and a leading number kept whole ("90's Family" is
+    90s), on a tone picked from its id.
+  An image fades in over the glyph or monogram, so the tile is never blank.
+- **The glyph,** about 30 for Plex's genres and the starter lineup (`ChannelGlyphs`), first
+  match wins: a one-show channel's show genres; the words in its name ("Holidays", "TV Mix");
+  the rule's genres; its labels and collections. A word may join the next ("Sci-Fi",
+  "Science Fiction"). A genre's film and TV channels share one; their names tell them apart.
+- **A guide station** sends nothing new for them: each TV works the glyph out from the
+  channel's name and rule, and the show poster travels as the channel's `logo`. The Icons
+  folder is each TV's own.
+
 ### Full guide [Q3, G5]
 `ui/guide/GuideScreen.kt`, `GuideGrid.kt`, `GuideGridFocus.kt`, `GuideInfo.kt`,
 `GuideTime.kt`, `GuideScreenCare.kt`. Full screen, at now: on the first channel from the
@@ -671,10 +699,11 @@ cache, so it opens at once, offline too.
   one's name, and a 2 dp accent line at 60% across the grid in the gap under the last; then
   the rest by number. The program sheet's fifth row is "Add Sci-Fi to favorites" or "Remove
   Sci-Fi from favorites".
-- **Grid:** six channels at a time (number, logo or monogram, name), a 90-minute window
+- **Grid:** six channels at a time (number, icon, name), a 90-minute window
   across. A time ruler over it: the day ("Today", "Tomorrow") and a mark each half
   hour. A 2 dp red now line (`bad`) with a dot on the ruler. Only the cells in view are
-  composed (a custom `Layout`, not lazy lists).
+  composed (a custom `Layout`, not lazy lists). The icon (Channel icons, above) is 32 dp, or
+  77% of the row's height when that's less (a larger layout scale).
 - **Cells:** as wide as their minutes in the window. On now `surface2`, later
   `surface`, past fainter. Filler is an outline ("Up next", "Trailer: …"); off-air
   programs say "Off air". "‹" or "›" marks a program the window cuts off. Focused:
@@ -725,8 +754,8 @@ around it. Guide channels only: library titles still hand off to Plezy or Plex (
 Settings › Plex › Play in).
 - **Tune in** joins the program on now at the live point (from the top within 2 s of
   its start). "Tuning in…" shows on black until frames move.
-- **Banner** on tune-in, every channel change, OK and Info, for 5 s: the channel number
-  (displaySmall, accent) and name; "ON NOW", the title, episode · rating, the times, a
+- **Banner** on tune-in, every channel change, OK and Info, for 5 s: the channel's icon
+  (40 dp, Channel icons, above), its number (displaySmall, accent) and name; "ON NOW", the title, episode · rating, the times, a
   progress bar and time left; the clock, "NEXT · 9:30 PM" and the next title. Behind
   live it says so (Start over and pause, below). An overlay hides it.
 - **Control row** (P2, `ui/player/PlayerControls.kt`): OK shows the banner with a row of
@@ -919,7 +948,8 @@ picture; the video plays on above it.
   close" on the right, over five 28 dp rows.
 - The rows: the pick in the middle with two channels above and two below, wrapping (the
   whole lineup when it's five or fewer).
-- Each row: a play sign on the channel playing, the number (bold), the name, what's on
+- Each row: a play sign on the channel playing, the number (bold), its icon (20 dp, Channel
+  icons, above), the name, what's on
   now with its time left as the Live row says it (off air in the caution colour), and
   what's next ("9:30 Title"). The pick fills with the accent, as a sheet's row does.
 - **Favorites first** (Phase 13, C4), as the full guide orders them, with the star and the
@@ -1322,7 +1352,8 @@ D-pad (§3).
   - While it works: "Making a new lineup from your library…". A remake the editor
     refuses (the library hasn't synced, nothing fills a day) says why under the buttons.
 - **Channels:** one row each, 4 dp apart (`surface`, `surface3` focused, 10 dp corners):
-  the number in a 44 dp column, the name, what's on now, and an on/off switch (44×24 dp,
+  the number in a 44 dp column, the icon (24 dp, Channel icons, above; at half strength when
+  off), the name, what's on now, and an on/off switch (44×24 dp,
   the accent when on).
   - **OK** turns it on or off. An off channel's name dims; it leaves the Live row, the
     Guide card and the full guide, and its schedule keeps extending, so it's back at once.

@@ -53,6 +53,7 @@ import com.phonoodlesramen.actioncenter.player.OffAirReason
 import com.phonoodlesramen.actioncenter.player.Overlay
 import com.phonoodlesramen.actioncenter.player.Picture
 import com.phonoodlesramen.actioncenter.ui.art.TitleArt
+import com.phonoodlesramen.actioncenter.ui.guide.ChannelMark
 import com.phonoodlesramen.actioncenter.ui.guide.NoChannelsYet
 import com.phonoodlesramen.actioncenter.ui.guide.ProgramDetails
 import com.phonoodlesramen.actioncenter.ui.home.Eyebrow
@@ -396,6 +397,7 @@ private fun Banner(state: GuidePlayerState, channel: GuideChannel, now: Long, zo
             verticalAlignment = Alignment.Bottom,
         ) {
             Column(Modifier.width(CHANNEL_WIDTH)) {
+                ChannelMark(channel, CHANNEL_ICON, lateNight = false, Modifier.padding(bottom = 6.dp))
                 Text(
                     text = channel.number.toString(),
                     style = MaterialTheme.typography.displaySmall.copy(fontWeight = FontWeight.Bold),
@@ -488,6 +490,9 @@ private val SCRIM_HEIGHT = 240.dp
 /** The control row adds a 36 dp row of buttons under the bar: the scrim's dark part reaches over the eyebrow above it. */
 private val SCRIM_HEIGHT_CONTROLS = 300.dp
 private val CHANNEL_WIDTH = 96.dp
+
+/** The channel's icon over its number (I5). */
+private val CHANNEL_ICON = 40.dp
 private val NEXT_WIDTH = 220.dp
 private val UP_NEXT_WIDTH = 600.dp
 private val OFF_AIR_WIDTH = 520.dp

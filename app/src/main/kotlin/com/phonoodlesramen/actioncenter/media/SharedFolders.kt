@@ -38,6 +38,11 @@ class SharedFolders(private val root: File, private val permitted: () -> Boolean
         return found.sortedBy { it.path.lowercase() }
     }
 
+    /** True for a file in [ICONS]' [CHANNEL_ICONS] subfolder. */
+    fun isChannelIcon(file: File): Boolean = file.parentFile?.let {
+        it.name.equals(CHANNEL_ICONS, ignoreCase = true) && it.parentFile == resolve(ICONS)
+    } == true
+
     /**
      * Folders that hold images or videos, under Pictures, Movies and Download, for the
      * folder chooser. Paths are relative to shared storage.
@@ -57,6 +62,9 @@ class SharedFolders(private val root: File, private val permitted: () -> Boolean
 
         /** The operator's 16:9 app banners, named after the apps (L7). */
         const val ICONS = "Pictures/Icons"
+
+        /** The guide channels' icons (I3), named after the channels: a subfolder of [ICONS], never an app's banner. */
+        const val CHANNEL_ICONS = "Channels"
 
         private val CHOOSER_ROOTS = listOf("Pictures", "Movies", "Download")
         private const val MAX_DEPTH = 3

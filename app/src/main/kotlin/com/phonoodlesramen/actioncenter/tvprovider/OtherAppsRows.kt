@@ -253,7 +253,7 @@ class OtherAppsRows(
             ),
             // Asking for the folder also creates it, so `adb push` has somewhere to go.
             channelFile = ChannelListFile { app.getExternalFilesDir(null) },
-            bannerFiles = { folders.files(SharedFolders.ICONS, MediaKind.IMAGE, recursive = true) },
+            bannerFiles = { folders.files(SharedFolders.ICONS, MediaKind.IMAGE, recursive = true).filterNot(folders::isChannelIcon) },
             labels = AndroidAppLabels(app.packageManager),
             refreshes = refreshes(AppInFront(app).inFront, app.contentResolver.tvProviderChanges()),
             scope = scope,

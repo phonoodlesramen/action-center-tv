@@ -88,6 +88,9 @@ during pairing.
 - **Plex keys:** `itemKey`, `showKey` and `art` are the shared Plex server's own keys. Each
   TV plays and draws art with its own Plex sign-in (G3), and no Plex token or host is ever
   in the guide.
+- **`logo`:** a Plex image path drawn over the channel's icon: a one-show channel's (a
+  marathon's) show poster, else null. TVs have always drawn it, so filling it needed no new
+  version. The icon's glyph isn't sent: each TV picks it from the channel's `name` and `rule`.
 - **Disabled channels** come with their slots, so turning one on is instant (2.7).
 - **Kids:** `contentRatings` and `unrated` are what each TV's `KidGuide` filters on.
 

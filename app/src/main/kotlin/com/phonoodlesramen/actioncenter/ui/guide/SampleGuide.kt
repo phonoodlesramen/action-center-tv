@@ -1,5 +1,6 @@
 package com.phonoodlesramen.actioncenter.ui.guide
 
+import com.phonoodlesramen.actioncenter.guide.ChannelGlyphs
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.guide.GuideChannel
 import com.phonoodlesramen.actioncenter.guide.GuideSlot
@@ -149,6 +150,7 @@ internal object SampleGuide {
             start = next
             i++
         }
-        return GuideChannel(id, number, name, logo = null, slots = slots, contentRatings = ratings)
+        // Glyphs from the names alone; Ridge Line Marathon has no poster here, so it shows its monogram.
+        return GuideChannel(id, number, name, logo = null, slots = slots, contentRatings = ratings, glyph = ChannelGlyphs.pick(name, null))
     }
 }
