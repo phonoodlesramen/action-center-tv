@@ -18,6 +18,9 @@ the same classes.
     favorites on itself and says the station needs an update.
   - 1.3.0: `show` in the NFL's settings, the house's Show the NFL (below). It's
     additive: a 1.2 TV or station ignores it.
+  - 1.4.0: a channel's icon picked on the phone: `icon` on a guide's channel and on
+    `ChannelDraft`, and `RuleChoices.icons`, the glyphs it can be. Additive: a 1.3 TV draws
+    its automatic icon, and a 1.3 station offers no icons, so the phone hides its Icon row.
 - **Who's calling:**
   - Everything but pairing needs a client certificate signed by the station's CA (mutual
     TLS).
@@ -69,7 +72,7 @@ during pairing.
   "timeZone": "America/Los_Angeles",
   "channels": [
     {
-      "id": "c-comedy", "number": 3, "name": "Comedy", "logo": null,
+      "id": "c-comedy", "number": 3, "name": "Comedy", "logo": null, "icon": null,
       "enabled": true, "alignmentMinutes": 30, "filler": "trailers",
       "rule": { "...": "ChannelRule, as guide.db stores it" },
       "contentRatings": ["TV-PG", "TV-14"], "unrated": false,
@@ -90,7 +93,10 @@ during pairing.
   in the guide.
 - **`logo`:** a Plex image path drawn over the channel's icon: a one-show channel's (a
   marathon's) show poster, else null. TVs have always drawn it, so filling it needed no new
-  version. The icon's glyph isn't sent: each TV picks it from the channel's `name` and `rule`.
+  version.
+- **`icon`** (1.4.0): the glyph picked on the phone (`rocket_launch`), else null. With it, a
+  TV draws that glyph and no `logo`. Without it, each TV picks one from the channel's `name`
+  and `rule`.
 - **Disabled channels** come with their slots, so turning one on is instant (2.7).
 - **Kids:** `contentRatings` and `unrated` are what each TV's `KidGuide` filters on.
 
@@ -108,6 +114,9 @@ reaches every TV through `changes`. Edits take effect after the program on now (
 | `DELETE /v1/channels/{id}` | → `{version}` |
 | `POST /v1/preview` | `ChannelDraft` → `{slots}` (24 hours) |
 | `POST /v1/lineup/remake` | → `{version}` |
+
+A draft's `icon` (1.4.0) is a glyph's name from `RuleChoices.icons`, or null for Automatic. A
+new icon alone keeps the schedule; a name the station doesn't know is saved as Automatic.
 
 No offline queue: a TV that can't reach the station greys editing out.
 

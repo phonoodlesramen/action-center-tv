@@ -139,6 +139,7 @@ internal class GuideLibrary(private val dao: GuideLibraryDao) {
             contentRatings = dao.contentRatings(),
             studios = mostTitlesFirst(dao.studioTotals(), joined = false),
             labels = mostTitlesFirst(dao.labelTotals(), joined = true),
+            icons = ChannelGlyphs.ALL,
         )
     }
 

@@ -191,6 +191,18 @@ class GuideStationTest {
     }
 
     @Test
+    fun `a channel's icon picked on the phone reaches this TV with the copy, and the others are automatic`() = runBlocking<Unit> {
+        pairAndCopy()
+        assertEquals("from its name", "sentiment_very_satisfied", ready().channels.first { it.id == "c-comedy" }.glyph)
+
+        fake.edit { guide -> guide.copy(channels = guide.channels.map { if (it.id == "c-cartoons") it.copy(icon = "rocket_launch") else it }) }
+        assertTrue(station.refresh())
+        val lineup = await(source.card, "the pick") { (it as? GuideCardState.Ready)?.channels?.any { c -> c.glyph == "rocket_launch" } == true } as GuideCardState.Ready
+        assertEquals("c-cartoons", lineup.channels.single { it.glyph == "rocket_launch" }.id)
+        assertEquals("rocket_launch", db.dao().channel("c-cartoons")?.icon)
+    }
+
+    @Test
     fun `a change on the station reaches the TV through changes while the home is in front`() {
         pairAndCopy()
         val following = scope.launch { station.keepUp() }
