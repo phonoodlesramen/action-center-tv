@@ -4,7 +4,6 @@ import com.phonoodlesramen.actioncenter.plex.cache.EpisodeRow
 import com.phonoodlesramen.actioncenter.plex.cache.ItemEntity
 import java.time.temporal.ChronoUnit
 import java.util.Locale
-import java.util.WeakHashMap
 
 /** The counts and windows behind the reason lines. Tunable. */
 object ReasonRules {
@@ -144,9 +143,10 @@ object Reasons {
 /**
  * The library worked out once per read, for reasons, Tonight's Pick and More like this:
  * each title's features, each collection in release order, what you've played, and each
- * show's episodes in order (specials left out). Kept while its [Library] is in use.
+ * show's episodes in order (specials left out). Its [Library] holds it ([Library.catalog]),
+ * so it goes when the run that read the library ends.
  */
-internal class Catalog private constructor(library: Library) {
+internal class Catalog(library: Library) {
     private val byKey = library.byKey
     private val features: Map<String, Set<Feature>> = library.titles.associate { it.ratingKey to Features.of(it) }
     private val lastPlay: Map<String, Long> = library.plays.groupBy { it.ratingKey }.mapValues { (_, plays) -> plays.maxOf { it.viewedAt } }
@@ -202,9 +202,12 @@ internal class Catalog private constructor(library: Library) {
         private val EPISODE_ORDER = compareBy<EpisodeRow>({ it.season ?: 1 }, { it.episode ?: Int.MAX_VALUE }, { it.ratingKey })
         private val RELEASE_ORDER = compareBy<ItemEntity>({ it.releaseDate ?: it.year?.toString() ?: "~" }, { it.title }, { it.ratingKey })
 
-        /** Weak keys: a library's catalog goes when the library does. */
-        private val cache = WeakHashMap<Library, Catalog>()
-
-        fun of(library: Library): Catalog = synchronized(cache) { cache.getOrPut(library) { Catalog(library) } }
+        /**
+         * [library]'s catalog, worked out on first use and held by the library alone. Not in
+         * a map with weak keys: an entry there keeps its value until the map is next used,
+         * which held a finished run's catalog, and that library's titles and episodes, until
+         * the next run had read its own on top (11 MB of a 20 MB heap at 3,600 titles).
+         */
+        fun of(library: Library): Catalog = library.catalog
     }
 }

@@ -24,6 +24,9 @@ class Library(
     private val episodesByShow = episodes.groupBy { it.showKey }
     private val playsByTitle = plays.groupBy { showOf[it.ratingKey] ?: it.ratingKey }
 
+    /** Its features, collections and episode order ([Catalog.of]): worked out once, kept with it, gone with it. */
+    internal val catalog: Catalog by lazy { Catalog(this) }
+
     /** A show's episodes; none for a movie. */
     fun episodesOf(showKey: String): List<EpisodeRow> = episodesByShow[showKey].orEmpty()
 
