@@ -102,16 +102,18 @@ object ChannelGlyphs {
 }
 
 /**
- * Works out a channel's [ChannelLook]: its glyph, and a one-show channel's show poster from
- * the Plex cache ([plex]). Without a cache it picks from the name and rule alone. Read with
+ * Works out a channel's [ChannelLook]: the glyph picked for it, else its automatic glyph and a
+ * one-show channel's show poster from the Plex cache ([plex]). Without a cache it picks from the name and rule alone. Read with
  * each lineup: a one-show channel costs one lookup by key.
  */
 class ChannelLooks(plex: PlexDatabase?) {
     private val dao = plex?.guideLibrary()
 
-    suspend fun of(name: String, ruleJson: String): ChannelLook = of(name, ruleOf(ruleJson))
+    suspend fun of(name: String, ruleJson: String, icon: String? = null): ChannelLook = of(name, ruleOf(ruleJson), icon)
 
-    suspend fun of(name: String, rule: ChannelRule?): ChannelLook {
+    /** A glyph picked on the phone ([icon], I4) wins over the automatic one and a show's poster. */
+    suspend fun of(name: String, rule: ChannelRule?, icon: String? = null): ChannelLook {
+        if (icon != null && icon in ChannelGlyphs.ALL) return ChannelLook(glyph = icon)
         val show = rule?.takeIf(ChannelGlyphs::isOneShow)?.let { dao?.item(it.shows.single()) }
         val genres = show?.genres.orEmpty().split('|').map { it.trim() }.filter { it.isNotEmpty() }
         return ChannelLook(ChannelGlyphs.pick(name, rule, genres), show?.thumb?.takeIf { it.isNotBlank() })

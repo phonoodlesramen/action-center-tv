@@ -679,9 +679,12 @@ Settings › Plex Guide's rows (24 dp).
   match wins: a one-show channel's show genres; the words in its name ("Holidays", "TV Mix");
   the rule's genres; its labels and collections. A word may join the next ("Sci-Fi",
   "Science Fiction"). A genre's film and TV channels share one; their names tell them apart.
-- **A guide station** sends nothing new for them: each TV works the glyph out from the
-  channel's name and rule, and the show poster travels as the channel's `logo`. The Icons
-  folder is each TV's own.
+- **Picked on the phone** (I4, the phone editor's page): any glyph from the set, which wins
+  over the automatic one and a show's poster; an Icons-folder image still wins over it.
+  Automatic goes back to the above.
+- **A guide station** keeps a pick with the channel (API 1.4.0), so every TV shows it. The
+  automatic glyph needs nothing sent: each TV works it out from the channel's name and rule,
+  and the show poster travels as the channel's `logo`. The Icons folder is each TV's own.
 
 ### Full guide [Q3, G5]
 `ui/guide/GuideScreen.kt`, `GuideGrid.kt`, `GuideGridFocus.kt`, `GuideInfo.kt`,
@@ -1539,10 +1542,13 @@ Guide. While it's open, the launcher serves the phone editor on the home network
 `app/src/main/assets/editor/index.html`: one file with its CSS and JS inline, phone
 first, light and dark (dark uses the app's own colours). Nothing loads from elsewhere.
 - **Sign in:** "Enter the PIN from your TV", shown when the page isn't signed in.
-- **Channels:** each with its number, name, what's on now (or "Off: not in the guide"),
+- **Channels:** each with its number, its icon (40 px: its glyph or monogram, as Channel
+  icons says, at half strength when off; never a poster, which the phone can't load), name,
+  what's on now (or "Off: not in the guide"),
   an on/off switch, Edit, Rename, Number and ↑ ↓; **New channel**; and **Remake the
   starter lineup**, after a confirm.
-- **A channel:** name; plays movies, episodes or both; libraries; movie and TV genres;
+- **A channel:** name; its **Icon** (I4): Automatic, then every glyph in the set, each a
+  44 px tile, the pick ringed in the accent; plays movies, episodes or both; libraries; movie and TV genres;
   shows, collections and studios (each a search: the picked ones, then matches as you
   type); labels (chips, or a search past 30); decades; years since release; content
   ratings; shortest and longest; unwatched only;
@@ -1550,10 +1556,10 @@ first, light and dark (dark uses the app's own colours). Nothing loads from else
   and episodes run straight on (G21); the start times and filler choices are gone.
 - **Studios and labels** (Phase 9): any of the picked ones, an episode by its show's; both
   offered the most titles first. Each row hides while the choices have none (a station
-  before API 1.1.0).
+  before API 1.1.0), and so does Icon (before API 1.4.0).
 - **Then** Preview the next 24 hours (by day, filler tagged), Save, Duplicate and Delete.
-  A saved rule takes effect after the program on now (G16), and the page says so. No
-  logo upload.
+  A saved rule takes effect after the program on now (G16), and the page says so. A new
+  icon alone shows at once. No logo upload: the icons are the set's.
 - Libraries show by what they hold ("Movies · 1,204 titles", "TV · 85 shows"): the cache
   keeps section keys, not names (a 2.7 follow-up).
 

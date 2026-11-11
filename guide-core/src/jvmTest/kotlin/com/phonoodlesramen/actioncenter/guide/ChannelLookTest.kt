@@ -90,6 +90,39 @@ class ChannelLookTest {
     }
 
     @Test
+    fun `a glyph picked on the phone wins over the automatic one and a show's poster, and Automatic brings them back`() = runBlocking {
+        val library = (1..15).map { movie("m${it.toString().padStart(2, '0')}", "Glowing Reef $it", 100, trailer = "t$it") } +
+            series("ridge", "Ridge Line", listOf("Western"), seasons = 4, perSeason = 10, minutes = 52, views = 8)
+        GuideHarness().use { h ->
+            h.synced(library)
+            h.engine.extend()
+            assertEquals("the phone is offered the set", ChannelGlyphs.ALL, h.editor.choices().icons)
+
+            val ridge = withTimeout(TIMEOUT) { h.editor.lineup.first { it.isNotEmpty() } }.single { it.id == "marathon-ridge" }
+            h.editor.update(ridge.id, ridge.draft.copy(icon = "rocket_launch"))
+            val picked = withTimeout(TIMEOUT) { h.editor.lineup.first { list -> list.any { it.draft.icon == "rocket_launch" } } }.single { it.id == ridge.id }
+            assertEquals(ChannelLook(glyph = "rocket_launch"), ChannelLook(picked.glyph, picked.logo))
+            val shown = withTimeout(TIMEOUT) {
+                h.engine.card.filterIsInstance<GuideCardState.Ready>().first { ready -> ready.channels.any { it.glyph == "rocket_launch" } }
+            }.channels.single { it.id == ridge.id }
+            assertNull("the pick hides the poster", shown.logo)
+            assertEquals("a new icon keeps the schedule", ridge.scheduledUntil, picked.scheduledUntil)
+
+            val copyId = h.editor.duplicate(ridge.id)
+            assertEquals("a copy keeps it", "rocket_launch", h.dao.channel(copyId)?.icon)
+
+            h.editor.update(ridge.id, picked.draft.copy(icon = null))
+            val automatic = withTimeout(TIMEOUT) { h.editor.lineup.first { list -> list.any { it.id == ridge.id && it.draft.icon == null } } }
+                .single { it.id == ridge.id }
+            assertEquals("landscape", automatic.glyph)
+            assertEquals("/library/metadata/ridge/thumb", automatic.logo)
+
+            h.editor.update(ridge.id, automatic.draft.copy(icon = "not_a_glyph"))
+            assertNull("an unknown glyph is Automatic", h.dao.channel(ridge.id)?.icon)
+        }
+    }
+
+    @Test
     fun `without a cache, a look comes from the name and rule alone`() = runBlocking {
         val marathon = episodes.copy(shows = listOf("4800"), order = ChannelRule.Order.IN_ORDER)
         assertEquals(ChannelLook(glyph = null), ChannelLooks(null).of("Ridge Line Marathon", marathon))

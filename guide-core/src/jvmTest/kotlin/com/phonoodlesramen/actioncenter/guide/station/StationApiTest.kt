@@ -1,10 +1,13 @@
 package com.phonoodlesramen.actioncenter.guide.station
 
+import com.phonoodlesramen.actioncenter.guide.ChannelDraft
 import com.phonoodlesramen.actioncenter.guide.ChannelRule
 import com.phonoodlesramen.actioncenter.guide.GuideSlot
+import com.phonoodlesramen.actioncenter.guide.RuleChoices
 import kotlinx.serialization.encodeToString
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -54,6 +57,22 @@ class StationApiTest {
         assertEquals(guide, StationApi.json.decodeFromString<StationGuide>(text))
         val newer = text.replaceFirst("{", "{\"weather\":\"sunny\",")
         assertEquals(guide, StationApi.json.decodeFromString<StationGuide>(newer))
+    }
+
+    @Test
+    fun `a channel's icon crosses the wire (1_4_0), and a 1_3 station's guide and choices read as Automatic and none`() {
+        val channel = StationChannel(
+            id = "c-scifi", number = 4, name = "Sci-Fi", icon = "rocket_launch", enabled = true, alignmentMinutes = 30, filler = "trailers",
+            rule = ChannelRule(), slots = emptyList(),
+        )
+        val text = StationApi.json.encodeToString(channel)
+        assertEquals("rocket_launch", StationApi.json.decodeFromString<StationChannel>(text).icon)
+        assertNull(StationApi.json.decodeFromString<StationChannel>(text.replace(""","icon":"rocket_launch"""", "")).icon)
+
+        val draft = ChannelDraft("Sci-Fi", ChannelRule(), icon = "rocket_launch")
+        assertEquals(draft, StationApi.json.decodeFromString<ChannelDraft>(StationApi.json.encodeToString(draft)))
+        val older = """{"sections":[],"movieGenres":[],"tvGenres":[],"shows":[],"collections":[],"decades":[],"contentRatings":[]}"""
+        assertTrue(StationApi.json.decodeFromString<RuleChoices>(older).icons.isEmpty())
     }
 
     @Test
