@@ -14,6 +14,9 @@ enum class HomeLayout(val title: String, val detail: String) {
 
     /** Live TV leads: back to the last channel, a mini guide, then the pick and Up Next. Needs a Plex guide. */
     ON_NOW("On Now", "Live TV leads: back to your last channel, a mini guide of four channels, then the pick and Up Next. Without a Plex guide, it's the dashboard."),
+
+    /** Quiet until you ask: the wallpaper, a big clock, tonight's one pick and a dock; Down brings up the dashboard. */
+    CALM("Calm", "The wallpaper and a big clock, tonight's one pick with Play, and a dock of your apps. Down brings the dashboard up as a sheet."),
     ;
 
     companion object {
