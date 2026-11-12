@@ -78,6 +78,9 @@ interface HomeActions {
     /** Quick actions › Another lens. */
     fun nextLens() {}
 
+    /** The context chip's Keep the usual layout (Moments, H3): no moment until the mode moves on. */
+    fun keepUsualLayout() {}
+
     /** Up Next › Remove from Up Next (S10): until you play it again. Plex is unchanged. */
     fun removeFromUpNext(item: UpNextItem) {}
 

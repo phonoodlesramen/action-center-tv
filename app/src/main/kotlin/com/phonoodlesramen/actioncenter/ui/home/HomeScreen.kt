@@ -38,6 +38,8 @@ import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.guide.KidGuide
 import com.phonoodlesramen.actioncenter.content.Season
 import com.phonoodlesramen.actioncenter.home.HomeLayout
+import com.phonoodlesramen.actioncenter.home.Moment
+import com.phonoodlesramen.actioncenter.home.Moments
 import com.phonoodlesramen.actioncenter.home.HomeRowsState
 import com.phonoodlesramen.actioncenter.home.HomeUiState
 import com.phonoodlesramen.actioncenter.home.StripCard
@@ -71,6 +73,7 @@ import com.phonoodlesramen.actioncenter.ui.nfl.GameDayCard
 import com.phonoodlesramen.actioncenter.ui.nfl.NflOpen
 import com.phonoodlesramen.actioncenter.ui.home.rows.MarginBringIntoViewSpec
 import com.phonoodlesramen.actioncenter.ui.home.rows.RowMetrics
+import com.phonoodlesramen.actioncenter.ui.theme.AppIcons
 import com.phonoodlesramen.actioncenter.ui.theme.Layout
 import com.phonoodlesramen.actioncenter.ui.wallpaper.FocusedArt
 import com.phonoodlesramen.actioncenter.ui.wallpaper.LocalCardSurface
@@ -85,6 +88,7 @@ import com.phonoodlesramen.actioncenter.wallpaper.WallpaperPrefs
 import com.phonoodlesramen.actioncenter.ui.theme.LocalWallpaperTextShadow
 import com.phonoodlesramen.actioncenter.ui.theme.WallpaperTextShadow
 import com.phonoodlesramen.actioncenter.wallpaper.WallpaperStyle
+import java.time.Duration
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
 
@@ -230,12 +234,37 @@ fun HomeScreen(
     val nflRow = remember(nfl, state.nowMillis, kid) { NflHome.row(nfl, state.nowMillis, kid) }
     // Marquee needs a pick to lead its strip; before the library's in, it's the dashboard with the Plex code.
     val marquee = !kid && state.homeLayout == HomeLayout.MARQUEE && state.content != null && state.pick != null
-    val strip = if (marquee) rememberStrip(state, shownGuide, favorites, backTo) else emptyList()
+    // Moments (H3): what leads the home for the time of day. It's worked out again only when you
+    // come back Home (a new focus request) or switch it, never under your focus.
+    val momentsOn = !kid && state.moments && !state.momentsHeld
+    val liveMoment = if (momentsOn) Moments.at(state.mode, gameOn = gameDay != null) else null
+    val moment = remember(focus, momentsOn) { liveMoment }
+    val game = remember(gameDay, nfl, state.nowMillis) { gameDay?.let { StripCard.Game(it, nfl, state.nowMillis) } }
+    val strip = if (marquee) rememberStrip(state, shownGuide, favorites, backTo, moment, game.takeIf { moment == Moment.GAME_DAY }) else emptyList()
     val marqueeState = remember { MarqueeState() }
+    val chip = remember { FocusRequester() }
+    // The chip's quick actions while a moment leads: Keep the usual layout, until the mode moves on.
+    val onChip: (() -> Unit)? = if (moment == null) {
+        null
+    } else {
+        {
+            openSheet(
+                QuickSheet(
+                    title = state.mode.label,
+                    returnTo = chip,
+                    items = listOf(SheetItem(AppIcons.Grid, "Keep the usual layout", returnTo = gear) { actions.keepUsualLayout() }),
+                ),
+            )
+        }
+    }
 
     LaunchedEffect(focus) {
         // Home and Back from another screen always land at the top [U10].
-        if (focus.target == HomeFocus.PLAY) scroll.scrollTo(0)
+        if (focus.target == HomeFocus.PLAY) {
+            scroll.scrollTo(0)
+            // Marquee shows the strip's first card again, the one Play's focus lands on.
+            marqueeState.shownKey = null
+        }
         picker.dismiss()
         val live = focus.channelId?.takeIf { focus.target == HomeFocus.LIVE }
         // A kid's home has no Guide card (K7): what would land there lands on Play. Marquee's is its live card, if it has one.
@@ -365,10 +394,12 @@ fun HomeScreen(
                                     strip = strip,
                                     marquee = marqueeState,
                                     actions = actions,
-                                    focus = MarqueeFocus(first = play, live = guideCard, gear = gear, avatar = avatar, search = searchButton),
+                                    focus = MarqueeFocus(first = play, live = guideCard, gear = gear, avatar = avatar, search = searchButton, chip = chip),
                                     lateNight = lateNight,
                                     openSheet = openSheet,
                                     modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
+                                    watch = watch,
+                                    onChip = onChip,
                                 )
                                 HomeRows(
                                     state, rows, lateNight, actions, openSheet,
@@ -390,6 +421,9 @@ fun HomeScreen(
                                     gameDay = gameDay?.let { GameDayHome(it, nfl, watch, nflCard) },
                                     modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
                                     lensMotion = lensMotion,
+                                    moment = moment,
+                                    onChip = onChip,
+                                    chip = chip,
                                 )
                                 HomeRows(
                                     state, rows, lateNight, actions, openSheet,
@@ -419,11 +453,19 @@ fun HomeScreen(
  * what's on live (or the guide player's spot, P4) and the next lens, on the minute tick.
  */
 @Composable
-private fun rememberStrip(state: HomeUiState, guide: GuideCardState, favorites: List<String>, backTo: BackTo?): List<StripCard> {
+private fun rememberStrip(
+    state: HomeUiState,
+    guide: GuideCardState,
+    favorites: List<String>,
+    backTo: BackTo?,
+    moment: Moment?,
+    game: StripCard.Game?,
+): List<StripCard> {
     val live = remember(guide, favorites, state.nowMillis, backTo) { TonightStrip.live(guide, favorites, state.nowMillis, backTo) }
-    return remember(state.pick, state.lens, state.content, live, state.enabledLenses, state.lensPrefs, state.now.toLocalDate()) {
+    return remember(state.pick, state.lens, state.content, live, state.enabledLenses, state.lensPrefs, state.now.toLocalDate(), moment, game) {
         val moreLens = TonightStrip.moreLens(state.lensDeck(), state.lens, state.pick?.id, Season.at(state.now.toLocalDate()))
-        TonightStrip.build(state.pick, state.lens, state.content, live = live, moreLens = moreLens)
+        // Moments (H3) choose what leads it.
+        TonightStrip.build(state.pick, state.lens, state.content, live = live, moreLens = moreLens, order = Moments.stripOrder(moment), game = game)
     }
 }
 
@@ -564,12 +606,29 @@ private fun Dashboard(
     tvButton: ChannelButton? = null,
     gameDay: GameDayHome? = null,
     lensMotion: LensMotion = LensMotion(),
+    /** Moments (H3): what leads Row A's two slots now; null is the usual. */
+    moment: Moment? = null,
+    onChip: (() -> Unit)? = null,
+    chip: FocusRequester? = null,
 ) {
     val content = state.content
     val play = focus.play
     val gear = focus.gear
     val lensEntry = focus.lensEntry
     val guideCard = focus.guideCard
+    val pick = state.pick
+    val lens = state.lens
+    // A moment changes what's in Row A's two slots, never their shape (H3), and only what it has.
+    val gameLeads = moment == Moment.GAME_DAY && gameDay != null
+    val lensLeads = (moment == Moment.WEEKEND_MORNING || moment == Moment.LATE_NIGHT) && lens != null && content != null && pick != null
+    val kids = remember(state.profiles) { state.profiles.filter { it.kid } }
+    val league = remember(gameDay, state.nowMillis) { if (gameLeads) aroundTheLeague(gameDay!!.nfl, gameDay.game, state.nowMillis) else emptyList() }
+    val side = when (moment) {
+        Moment.WEEKNIGHT, Moment.LATE_NIGHT -> moment.takeIf { !content?.quickWatch.isNullOrEmpty() }
+        Moment.WEEKEND_MORNING -> moment.takeIf { kids.isNotEmpty() }
+        Moment.GAME_DAY -> moment.takeIf { league.isNotEmpty() }
+        null -> null
+    }
     Column(modifier) {
         TopBar(
             state = state,
@@ -578,16 +637,43 @@ private fun Dashboard(
             modifier = Modifier.fillMaxWidth().weight(Layout.TOP_BAR_WEIGHT).focusRestorer().focusGroup(),
             avatar = focus.avatar,
             search = focus.search,
+            onChip = onChip,
+            chip = chip,
+            kidSwitches = side != Moment.WEEKEND_MORNING,
         )
         Spacer(Modifier.weight(Layout.GAP_WEIGHT))
         Row(Modifier.fillMaxWidth().weight(Layout.ROW_A_WEIGHT)) {
+            val heroArt = if (lensLeads) lens?.pick?.image else pick?.image
             val hero = Modifier.weight(Layout.LEFT_WEIGHT).fillMaxSize()
-                .reportsArt(focusedArt, state.pick?.image).focusRestorer().focusGroup()
-            val pick = state.pick
-            if (content == null || pick == null) {
-                PlexHero(state.plex, actions, play, hero)
-            } else {
-                PickHero(
+                .reportsArt(focusedArt, heroArt).focusRestorer().focusGroup()
+            when {
+                gameLeads -> GameDayCard(
+                    game = gameDay!!.game,
+                    view = gameDay.nfl,
+                    nowMillis = state.nowMillis,
+                    watch = gameDay.watch,
+                    actions = actions,
+                    openSheet = openSheet,
+                    modifier = Modifier.weight(Layout.LEFT_WEIGHT).fillMaxSize(),
+                    self = play,
+                    afterNotToday = gear,
+                )
+                content == null || pick == null -> PlexHero(state.plex, actions, play, hero)
+                lensLeads -> PickHero(
+                    pick = lens!!.pick.asPick(),
+                    undo = null,
+                    note = null,
+                    lateNight = lateNight,
+                    actions = actions,
+                    play = play,
+                    up = gear,
+                    right = FocusRequester.Default,
+                    openSheet = openSheet,
+                    modifier = hero,
+                    eyebrow = lens.title,
+                    next = actions::nextLensPick,
+                )
+                else -> PickHero(
                     pick = pick,
                     undo = state.pickState.undo,
                     note = state.heroNote,
@@ -595,63 +681,39 @@ private fun Dashboard(
                     actions = actions,
                     play = play,
                     up = gear,
-                    right = if (state.lens != null) lensEntry else FocusRequester.Default,
+                    right = if (side == null && lens != null) lensEntry else FocusRequester.Default,
                     openSheet = openSheet,
                     modifier = hero,
                 )
             }
             Spacer(Modifier.weight(Layout.GAP_WEIGHT))
-            Column(Modifier.weight(Layout.RIGHT_WEIGHT).fillMaxSize()) {
-                val lensSlot = Modifier.fillMaxWidth().weight(Layout.LENS_CARD_WEIGHT)
-                val lens = state.lens
-                if (lens == null) {
-                    PlaceholderCard(
-                        when {
-                            content != null -> "Throwbacks and classics show up as your watch history grows"
-                            state.plex.link.linked -> "Throwbacks, classics and more arrive with your library"
-                            else -> "Throwbacks, classics and more appear once Plex is connected"
-                        },
-                        lensSlot,
-                    )
-                } else {
-                    LensCard(
-                        state = lens,
-                        lateNight = lateNight,
-                        actions = actions,
-                        watch = lensEntry,
-                        openSheet = openSheet,
-                        // Coming into the card lands on Watch, not Back above it (L3), unless it remembers otherwise.
-                        modifier = lensSlot.reportsArt(focusedArt, lens.pick.image).focusRestorer(lensEntry).focusGroup(),
-                        motion = lensMotion,
-                    )
-                }
-                Spacer(Modifier.weight(Layout.GAP_WEIGHT))
-                val quickSlot = Modifier.fillMaxWidth().weight(Layout.QUICK_WATCH_WEIGHT)
-                if (gameDay != null) {
-                    // F1: the game-day card takes Quick Watch's spot while a game is on; Not today gives it back.
-                    GameDayCard(
-                        game = gameDay.game,
-                        view = gameDay.nfl,
-                        nowMillis = state.nowMillis,
-                        watch = gameDay.watch,
-                        actions = actions,
-                        openSheet = openSheet,
-                        modifier = quickSlot,
-                        self = gameDay.self,
-                        afterNotToday = play,
-                    )
-                } else if (content == null || content.quickWatch.isEmpty()) {
-                    PlaceholderCard(
-                        when {
-                            content != null -> "Nothing short enough fits before ${content.quickWatchCutoff}"
-                            state.plex.link.linked -> "Quick Watch arrives with your library"
-                            else -> "Quick Watch appears once Plex is connected"
-                        },
-                        quickSlot,
-                    )
-                } else {
-                    QuickWatchCard(content.quickWatchCutoff, content.quickWatch, lateNight, actions, openSheet, quickSlot, afterHide = play)
-                }
+            val sideSlot = Modifier.weight(Layout.RIGHT_WEIGHT).fillMaxSize()
+            when (side) {
+                Moment.WEEKNIGHT -> QuickWatchCard(
+                    cutoff = content!!.quickWatchCutoff,
+                    items = content.quickWatch,
+                    lateNight = lateNight,
+                    actions = actions,
+                    openSheet = openSheet,
+                    modifier = sideSlot,
+                    afterHide = play,
+                    tall = true,
+                    note = untilCutoff(Duration.between(state.now.toLocalTime(), state.quickWatchCutoff).toMinutes(), content.quickWatchCutoff),
+                )
+                Moment.LATE_NIGHT -> QuickWatchCard(
+                    cutoff = content!!.quickWatchCutoff,
+                    items = content.quickWatch,
+                    lateNight = lateNight,
+                    actions = actions,
+                    openSheet = openSheet,
+                    modifier = sideSlot,
+                    afterHide = play,
+                    tall = true,
+                    title = LATE_NIGHT_QUICK,
+                )
+                Moment.WEEKEND_MORNING -> WhosWatchingCard(kids, actions, sideSlot)
+                Moment.GAME_DAY -> AroundTheLeague(league, gameDay!!.nfl, state.nowMillis, actions, sideSlot)
+                null -> UsualSide(state, actions, lateNight, focusedArt, lensEntry, play, openSheet, gameDay.takeIf { !gameLeads }, lensMotion, sideSlot)
             }
         }
         Spacer(Modifier.weight(Layout.GAP_WEIGHT))
@@ -680,6 +742,75 @@ private fun Dashboard(
                 backToTv = backToTv,
                 tvButton = tvButton,
             )
+        }
+    }
+}
+
+/** Row A's right-hand column as usual: the lens card over Quick Watch, or the game-day card in Quick Watch's spot (F1). */
+@Composable
+private fun UsualSide(
+    state: HomeUiState,
+    actions: HomeActions,
+    lateNight: Boolean,
+    focusedArt: FocusedArt,
+    lensEntry: FocusRequester,
+    play: FocusRequester,
+    openSheet: (QuickSheet) -> Unit,
+    gameDay: GameDayHome?,
+    lensMotion: LensMotion,
+    modifier: Modifier = Modifier,
+) {
+    val content = state.content
+    Column(modifier) {
+        val lensSlot = Modifier.fillMaxWidth().weight(Layout.LENS_CARD_WEIGHT)
+        val lens = state.lens
+        if (lens == null) {
+            PlaceholderCard(
+                when {
+                    content != null -> "Throwbacks and classics show up as your watch history grows"
+                    state.plex.link.linked -> "Throwbacks, classics and more arrive with your library"
+                    else -> "Throwbacks, classics and more appear once Plex is connected"
+                },
+                lensSlot,
+            )
+        } else {
+            LensCard(
+                state = lens,
+                lateNight = lateNight,
+                actions = actions,
+                watch = lensEntry,
+                openSheet = openSheet,
+                // Coming into the card lands on Watch, not Back above it (L3), unless it remembers otherwise.
+                modifier = lensSlot.reportsArt(focusedArt, lens.pick.image).focusRestorer(lensEntry).focusGroup(),
+                motion = lensMotion,
+            )
+        }
+        Spacer(Modifier.weight(Layout.GAP_WEIGHT))
+        val quickSlot = Modifier.fillMaxWidth().weight(Layout.QUICK_WATCH_WEIGHT)
+        if (gameDay != null) {
+            // F1: the game-day card takes Quick Watch's spot while a game is on; Not today gives it back.
+            GameDayCard(
+                game = gameDay.game,
+                view = gameDay.nfl,
+                nowMillis = state.nowMillis,
+                watch = gameDay.watch,
+                actions = actions,
+                openSheet = openSheet,
+                modifier = quickSlot,
+                self = gameDay.self,
+                afterNotToday = play,
+            )
+        } else if (content == null || content.quickWatch.isEmpty()) {
+            PlaceholderCard(
+                when {
+                    content != null -> "Nothing short enough fits before ${content.quickWatchCutoff}"
+                    state.plex.link.linked -> "Quick Watch arrives with your library"
+                    else -> "Quick Watch appears once Plex is connected"
+                },
+                quickSlot,
+            )
+        } else {
+            QuickWatchCard(content.quickWatchCutoff, content.quickWatch, lateNight, actions, openSheet, quickSlot, afterHide = play)
         }
     }
 }

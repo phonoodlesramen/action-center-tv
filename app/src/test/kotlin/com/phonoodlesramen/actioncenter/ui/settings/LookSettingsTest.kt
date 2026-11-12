@@ -32,10 +32,16 @@ class LookSettingsTest {
     private var layout by mutableStateOf(HomeLayout.DEFAULT)
     private val chosen = mutableListOf<HomeLayout>()
 
+    private var moments by mutableStateOf(false)
+
     private val actions = object : SettingsActions {
         override fun setHomeLayout(layout: HomeLayout) {
             chosen += layout
             this@LookSettingsTest.layout = layout
+        }
+
+        override fun setMoments(on: Boolean) {
+            moments = on
         }
     }
 
@@ -43,7 +49,7 @@ class LookSettingsTest {
 
     private fun show() = compose.setContent {
         ActionCenterTheme {
-            SettingsScreen(SampleHomeState.state(homeLayout = layout), actions, onBack = {}, initialSection = SettingsSection.LOOK)
+            SettingsScreen(SampleHomeState.state(homeLayout = layout, moments = moments), actions, onBack = {}, initialSection = SettingsSection.LOOK)
         }
     }
 
@@ -57,5 +63,13 @@ class LookSettingsTest {
         assertEquals(listOf(HomeLayout.MARQUEE), chosen)
         compose.onNodeWithText("Marquee").assert(selected)
         compose.onNodeWithText("fills the screen", substring = true).assertExists()
+    }
+
+    @Test
+    fun changeWithTheTimeOfDaySwitchesMomentsOn() {
+        show()
+        compose.onNodeWithText("Change with the time of day").performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(true, moments)
     }
 }

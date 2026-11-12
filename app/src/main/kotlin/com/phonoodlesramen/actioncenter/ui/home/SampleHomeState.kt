@@ -79,6 +79,9 @@ internal object SampleHomeState {
         cursor: LensCursor = LensCursor(),
         lensPrefs: LensPrefs = LensPrefs(),
         homeLayout: HomeLayout = HomeLayout.DEFAULT,
+        moments: Boolean = false,
+        /** Everyone on this TV, you first; just you by default. */
+        profiles: List<ActiveProfile>? = null,
     ): HomeUiState = homeUiState(
         settings = Settings(
             name = "Alex",
@@ -88,6 +91,7 @@ internal object SampleHomeState {
             disabledLenses = disabledLenses,
             lensPrefs = lensPrefs,
             homeLayout = homeLayout,
+            moments = moments,
         ),
         time = time,
         installed = apps,
@@ -98,7 +102,12 @@ internal object SampleHomeState {
         nowMillis = time.millis(),
         plex = plex,
         plexSnapshot = plexSnapshot,
+        profile = profiles?.first() ?: ActiveProfile.owner("Alex"),
+        profiles = profiles ?: listOf(ActiveProfile.owner("Alex")),
     )
+
+    /** You, then Maya and Leo: a house with kids, for "Who's watching?" and the weekend morning's avatars (K11). */
+    val family: List<ActiveProfile> get() = listOf(ActiveProfile.owner("Alex"), maya, leo)
 
     /** A small made-up Plex cache: what the cards look like built from real data (P6). */
     fun plexLibrary(time: LocalDateTime = weeknight): PlexSnapshot {
@@ -184,6 +193,9 @@ internal object SampleHomeState {
             "com.mojang.minecraftpe/com.mojang.minecraftpe.MainActivity",
         ),
     )
+
+    /** Leo, a made-up kid of 6 in green, with Maya's ceiling and apps. */
+    val leo = maya.copy(id = "kid-leo", name = "Leo", color = 0xFFAED581, age = 6)
 
     /**
      * Your favorite channels in the sample guide (Phase 13), in your order: Comedy, then TV Mix.

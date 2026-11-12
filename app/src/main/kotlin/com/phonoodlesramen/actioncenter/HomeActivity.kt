@@ -726,6 +726,7 @@ class HomeActivity : ComponentActivity() {
         override fun previousLensPick() = viewModel.previousLensPick()
         override fun lensShown(pick: LensPick) = viewModel.lensShown(pick)
         override fun nextLens() = viewModel.nextLens()
+        override fun keepUsualLayout() = viewModel.keepUsualLayout()
 
         override fun removeFromUpNext(item: UpNextItem) {
             viewModel.removeFromUpNext(item)
@@ -927,6 +928,7 @@ class HomeActivity : ComponentActivity() {
         override fun setAccent(index: Int) = viewModel.setAccent(index)
         override fun setLayoutScale(scale: Float) = viewModel.setLayoutScale(scale)
         override fun setHomeLayout(layout: HomeLayout) = viewModel.setHomeLayout(layout)
+        override fun setMoments(on: Boolean) = viewModel.setMoments(on)
         override fun setShowSampleContent(show: Boolean) = viewModel.setShowSampleContent(show)
 
         override fun openDeviceCheck() {

@@ -90,6 +90,11 @@ fun TopBar(
     avatar: FocusRequester? = null,
     search: FocusRequester? = null,
     quiet: Boolean = false,
+    /** Moments (H3): the context chip takes focus, and OK or hold opens its quick actions (Keep the usual layout). */
+    onChip: (() -> Unit)? = null,
+    chip: FocusRequester? = null,
+    /** Weekend mornings' small kids' avatars (K11); a moment's Who's watching card shows them instead. */
+    kidSwitches: Boolean = true,
 ) {
     val fade by animateFloatAsState(if (quiet) 0f else 1f, tween(QUIET_FADE_MILLIS), label = "top bar quiet")
     val faded = Modifier.graphicsLayer { alpha = fade }
@@ -122,6 +127,7 @@ fun TopBar(
                 state.stockLauncherBack -> StockLauncherChip(onClick = actions::openDiagnostics)
                 updateChip != null -> UpdateChipButton(updateChip, onClick = actions::openUpdate)
                 setupChip != null -> SetupChipButton(setupChip, onClick = actions::openSetup)
+                onChip != null -> ChipButton(dot = LocalAccent.current, label = state.mode.label, onClick = onChip, self = chip)
                 else -> Chip(dot = LocalAccent.current, label = state.mode.label)
             }
         }
@@ -137,7 +143,7 @@ fun TopBar(
                 UpdatingLabel(Modifier.padding(start = 12.dp))
             }
         }
-        val kids = quickSwitch(state)
+        val kids = if (kidSwitches) quickSwitch(state) else emptyList()
         if (kids.isNotEmpty()) {
             Row(faded, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 kids.forEach { kid -> KidAvatar(kid, onClick = { actions.switchProfile(kid.id) }) }
@@ -180,6 +186,33 @@ private fun Chip(dot: Color, label: String) {
     ) {
         Box(Modifier.size(6.dp).background(dot, CircleShape))
         Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+    }
+}
+
+/** The context chip while a moment leads the home (H3): it takes focus, and OK, hold or Menu opens its quick actions. */
+@Composable
+private fun ChipButton(dot: Color, label: String, onClick: () -> Unit, self: FocusRequester?) {
+    Surface(
+        onClick = onClick,
+        onLongClick = onClick,
+        modifier = Modifier.height(28.dp).then(self?.let { Modifier.focusRequester(it) } ?: Modifier).onMenuKey(onClick),
+        shape = ClickableSurfaceDefaults.shape(RoundedCornerShape(50)),
+        colors = ClickableSurfaceDefaults.colors(
+            containerColor = Palette.Surface2,
+            contentColor = Palette.Text,
+            focusedContainerColor = LocalAccent.current,
+            focusedContentColor = Palette.AccentInk,
+        ),
+        scale = cardLift,
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 12.dp).align(Alignment.Center),
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Box(Modifier.size(6.dp).background(dot, CircleShape))
+            Text(label, style = MaterialTheme.typography.labelLarge, maxLines = 1)
+        }
     }
 }
 

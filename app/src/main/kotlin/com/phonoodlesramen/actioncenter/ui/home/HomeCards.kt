@@ -83,6 +83,9 @@ private const val LONG_TITLE = 24
  * Not now for Not tonight. It has no More like this: their lens card (R1) rotates through
  * the lenses alone.
  *
+ * A moment (H3) puts a lens title here instead: [eyebrow] says its lens, and [next] (the lens's
+ * next title) takes Not tonight's place.
+ *
  * @param up the top bar: geometric search would pick the lens card's buttons, which sit higher.
  * @param right the lens card: geometric search would pick Quick Watch, which lines up better.
  */
@@ -100,6 +103,8 @@ fun PickHero(
     openSheet: (QuickSheet) -> Unit,
     modifier: Modifier = Modifier,
     kid: Boolean = false,
+    eyebrow: String = "Tonight's pick",
+    next: (() -> Unit)? = null,
 ) {
     val trailer = remember { FocusRequester() }
     val skip = remember { FocusRequester() }
@@ -112,8 +117,8 @@ fun PickHero(
             SheetItem(AppIcons.Info, "Why this pick?") { actions.say((listOf(pick.because ?: pick.reason) + pick.evidence).joinToString(" · ")) },
             SheetItem(AppIcons.StartOver, "Start from the beginning") { actions.say(NOT_YET) },
             // The lens card shows them, so focus goes there (S10).
-            if (kid) null else SheetItem(AppIcons.Tv, "More like this", returnTo = right) { actions.moreLikeThis() },
-            SheetItem(AppIcons.Hide, skipLabel) { actions.notTonight() },
+            if (kid || next != null) null else SheetItem(AppIcons.Tv, "More like this", returnTo = right) { actions.moreLikeThis() },
+            if (next != null) SheetItem(AppIcons.Spark, "Next") { next() } else SheetItem(AppIcons.Hide, skipLabel) { actions.notTonight() },
         ),
     )
     val shape = if (kid) KidShape else CardShape
@@ -129,7 +134,7 @@ fun PickHero(
                 animationSpec = tween(250),
                 label = "pick text",
                 modifier = Modifier.weight(1f).fillMaxWidth(HERO_TEXT_WIDTH).clipToBounds(),
-            ) { shown -> if (kid) KidPickText(shown, lateNight) else PickText(shown, lateNight) }
+            ) { shown -> if (kid) KidPickText(shown, lateNight) else PickText(shown, lateNight, eyebrow) }
             val line = if (undo != null) "Skipping ${undo.skippedTitle} for 2 weeks" else note
             if (line != null) {
                 Text(
@@ -161,8 +166,8 @@ fun PickHero(
                         .onMenuKey { openSheet(sheet(trailer)) },
                 )
                 PillButton(
-                    text = if (undo != null) "Undo" else skipLabel,
-                    onClick = { if (undo != null) actions.undo() else actions.notTonight() },
+                    text = if (next != null) "Next" else if (undo != null) "Undo" else skipLabel,
+                    onClick = { if (next != null) next() else if (undo != null) actions.undo() else actions.notTonight() },
                     onLongClick = { openSheet(sheet(skip)) },
                     modifier = Modifier
                         .focusRequester(skip)
@@ -191,7 +196,7 @@ private val BottomScrim = Brush.verticalGradient(0.5f to Color.Transparent, 1f t
  * the logo takes the title's place when the column has room for it ([heroLogo]).
  */
 @Composable
-private fun PickText(pick: Pick, lateNight: Boolean) {
+private fun PickText(pick: Pick, lateNight: Boolean, eyebrow: String) {
     val long = pick.title.length > LONG_TITLE
     val style = (if (long) MaterialTheme.typography.titleLarge else MaterialTheme.typography.headlineMedium)
         .copy(fontWeight = FontWeight.Bold)
@@ -199,22 +204,22 @@ private fun PickText(pick: Pick, lateNight: Boolean) {
         Text(text = pick.title, style = style, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = modifier)
     }
     if (pick.logo == null) {
-        PickColumn(pick, reasonLines = 2) { title(Modifier.padding(top = 6.dp, bottom = 2.dp)) }
+        PickColumn(pick, eyebrow, reasonLines = 2) { title(Modifier.padding(top = 6.dp, bottom = 2.dp)) }
         return
     }
     BoxWithConstraints {
         val logo = heroLogo(pick, max = HERO_LOGO, min = with(LocalDensity.current) { style.lineHeight.toDp() })
-        PickColumn(pick, reasonLines = logo?.fit?.reasonLines ?: 2) {
+        PickColumn(pick, eyebrow, reasonLines = logo?.fit?.reasonLines ?: 2) {
             if (logo == null) title(Modifier.padding(top = 6.dp, bottom = 2.dp)) else HeroLogoArt(pick, logo, lateNight) { title(Modifier) }
         }
     }
 }
 
-/** Tonight's pick's eyebrow, [title] (the title or its logo), the meta and the reason in up to [reasonLines]. */
+/** The hero's [eyebrow] ("Tonight's pick"), [title] (the title or its logo), the meta and the reason in up to [reasonLines]. */
 @Composable
-private fun PickColumn(pick: Pick, reasonLines: Int, title: @Composable () -> Unit) {
+private fun PickColumn(pick: Pick, eyebrow: String, reasonLines: Int, title: @Composable () -> Unit) {
     Column {
-        Eyebrow("Tonight's pick")
+        Eyebrow(eyebrow)
         title()
         Text(pick.meta, style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim, maxLines = 1)
         HeroReason(pick.reason, MaterialTheme.typography.titleMedium, reasonLines)
@@ -324,19 +329,25 @@ fun QuickWatchCard(
     openSheet: (QuickSheet) -> Unit,
     modifier: Modifier = Modifier,
     afterHide: FocusRequester? = null,
+    /** A moment's taller card (H3): three rows, its own [title], and a [note] at its foot. */
+    tall: Boolean = false,
+    title: String = "Quick Watch · fits before $cutoff",
+    note: String? = null,
 ) {
     val focusedArt = LocalFocusedArt.current
+    val rowMax = if (tall) TALL_ROW else 28.dp
+    val thumb = if (tall) Modifier.size(width = 56.dp, height = 32.dp) else Modifier.size(width = 36.dp, height = 20.dp)
     Column(
         modifier
             .cardSurface(LocalCardSurface.current, CardShape)
-            .padding(start = 14.dp, end = 12.dp, top = 10.dp, bottom = 4.dp),
+            .padding(start = 14.dp, end = 12.dp, top = 10.dp, bottom = if (tall) 12.dp else 4.dp),
     ) {
-        Eyebrow("Quick Watch · fits before $cutoff")
+        Eyebrow(title)
         Column(
-            modifier = Modifier.weight(1f).padding(top = 6.dp).focusRestorer().focusGroup(),
-            verticalArrangement = Arrangement.spacedBy(4.dp),
+            modifier = Modifier.weight(1f).padding(top = if (tall) 10.dp else 6.dp).focusRestorer().focusGroup(),
+            verticalArrangement = Arrangement.spacedBy(if (tall) 8.dp else 4.dp),
         ) {
-            items.take(2).forEach { item ->
+            items.take(if (tall) TALL_ROWS else 2).forEach { item ->
                 val self = remember(item.id) { FocusRequester() }
                 val sheet = {
                     openSheet(
@@ -356,8 +367,9 @@ fun QuickWatchCard(
                     onLongClick = sheet,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .weight(1f)
-                        .heightIn(max = 28.dp)
+                        .weight(1f, fill = !tall)
+                        .heightIn(max = rowMax)
+                        .then(if (tall) Modifier.height(rowMax) else Modifier)
                         .reportsArt(focusedArt, item.image)
                         .focusRequester(self)
                         .onMenuKey(sheet),
@@ -379,7 +391,7 @@ fun QuickWatchCard(
                             id = item.id,
                             image = item.image,
                             lateNight = lateNight,
-                            modifier = Modifier.size(width = 36.dp, height = 20.dp).clip(RoundedCornerShape(4.dp)),
+                            modifier = thumb.clip(RoundedCornerShape(4.dp)),
                         )
                         Text(
                             text = item.title,
@@ -393,8 +405,13 @@ fun QuickWatchCard(
                 }
             }
         }
+        if (note != null) Text(note, style = MaterialTheme.typography.bodySmall, color = Palette.TextDim, maxLines = 1)
     }
 }
+
+/** A moment's tall Quick Watch: three rows this tall. */
+private const val TALL_ROWS = 3
+private val TALL_ROW = 44.dp
 
 /**
  * Up Next (spec §4): three stills with progress. Focus rings the still, not the caption.

@@ -66,6 +66,10 @@ data class Settings(
     val searchStreaming: Boolean = true,
     /** Settings › Look › Layout: how your home is laid out; a kid's keeps its own. Dashboard by default. */
     val homeLayout: HomeLayout = HomeLayout.DEFAULT,
+    /** Settings › Look › Change with the time of day (Moments, H3): off by default. */
+    val moments: Boolean = false,
+    /** The chip's Keep the usual layout: the mode and evening it holds for ([com.phonoodlesramen.actioncenter.home.Moments.held]). */
+    val momentsHeld: String? = null,
 ) {
     val enabledLenses: Set<Lens> get() = Lens.entries.toSet() - disabledLenses
 }
@@ -82,6 +86,15 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     /** Settings › Look › Layout. */
     suspend fun setHomeLayout(layout: HomeLayout) = store.edit { it[HOME_LAYOUT] = layout.name }
+
+    /** Settings › Look › Change with the time of day (Moments). Switching it forgets a Keep the usual layout. */
+    suspend fun setMoments(on: Boolean) = store.edit {
+        it[MOMENTS] = on
+        it.remove(MOMENTS_HELD)
+    }
+
+    /** The chip's Keep the usual layout: no moment for [held] ([com.phonoodlesramen.actioncenter.home.Moments.held]). */
+    suspend fun holdMoments(held: String) = store.edit { it[MOMENTS_HELD] = held }
 
     suspend fun setName(name: String) = store.edit { it[NAME] = name.trim().take(MAX_NAME_LENGTH) }
 
@@ -188,6 +201,8 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             .associate { it.key.name.removePrefix(SEARCH_PREFIX) to (it.value as String).split('\n').filter(String::isNotBlank) },
         searchStreaming = this[SEARCH_STREAMING] ?: true,
         homeLayout = HomeLayout.of(this[HOME_LAYOUT]),
+        moments = this[MOMENTS] ?: false,
+        momentsHeld = this[MOMENTS_HELD],
     )
 
     /** The stored hours, each mode falling back to its default; the default schedule if they no longer fit together. */
@@ -231,6 +246,8 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val LENS_MOVE_ON = stringPreferencesKey("lens_move_on")
         val SEARCH_STREAMING = booleanPreferencesKey("search_streaming")
         val HOME_LAYOUT = stringPreferencesKey("home_layout")
+        val MOMENTS = booleanPreferencesKey("home_moments")
+        val MOMENTS_HELD = stringPreferencesKey("home_moments_held")
 
         val CUTOFF = intPreferencesKey("quick_watch_cutoff_minutes")
         const val LAUNCH_PREFIX = "launch:"
