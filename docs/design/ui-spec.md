@@ -108,7 +108,8 @@ five options): **Settings › Look › Layout** chooses how your home is laid ou
 dashboard still the default. A kid's home keeps its own layout in every one (§4 Home layouts).
 They ship one PR at a time: the setting and **Marquee** first, then **Moments**, a switch that lets
 the time of day choose what leads the home, then **the side rail**, a switch that puts the
-profile, Search, Home, Guide, the NFL, Apps and Settings down the left beside any layout.
+profile, Search, Home, Guide, the NFL, Apps and Settings down the left beside any layout, then
+**On Now**, a layout that leads with live TV.
 
 The prototype shows the Phase 1 layout.
 
@@ -1237,8 +1238,8 @@ link on this TV.
 ### Home layouts [H1-H6]
 
 Settings › Look › Layout (H1) lists the layouts: **Dashboard** (v1, the default: everything
-in this section's cards above) and **Marquee** (H2). Later PRs add On Now and Calm, and two
-switches that work with any layout: Side rail and Moments (H3, H4). It's per TV, stored in
+in this section's cards above), **Marquee** (H2) and **On Now** (H5); Calm comes next. Two
+switches work with any layout: Moments and the side rail (H3, H4). It's per TV, stored in
 `SettingsRepository` (`home_layout`). The home's view model is the same
 (`AppContainer.home`): only `HomeScreen` changes what it draws.
 
@@ -1392,6 +1393,50 @@ home has none.
   from the home (the Guide card, the All apps card).
 - **Watch out:** Left at a row's start now opens the rail, as on Google TV.
 
+#### On Now [H5]
+
+Live TV leads (`ui/home/OnNow.kt`), on the dashboard's grid. It needs a Plex Guide with channels:
+without one (or before the library's in), it's the dashboard.
+
+```
+┌ top bar ───────────────────────────────────────────────────────────────────┐
+├ the last channel ──────────────────────┬ mini guide ──────────────────────┤
+│ ● Live · 5 Comedy                      │ ON NOW   8:30     9:00     9:30   │
+│                                        │ 5 ★Comedy [Open…]|  [Open…] [Desk…]│
+│ ON NOW · 5 COMEDY                      │ 3 ★TV Mix [Ridge Line  ]| [Kitch…]│
+│ Open House                             │ 1 Movies  [Quiet Field       |    ]│
+│ 8:30–8:52 · 11 min left   ▬▬▬▬▬▭▭▭▭▭  │ 2 Sci-Fi         |  [Orbit of Glass]│
+├ Tonight's pick ──────────┬ Up next ────┴──────────────────────────────────┤
+│ Severance · ▶ Play S2E9  │ [still] [still] [still]                        │
+└──────────────────────────┴───────────────────────────────────────────────┘
+  LIVE … (the rows below, as in every layout)
+```
+
+- **The big tile** (Row A left) goes back to the last channel: the guide player's spot while it
+  holds (P4: "Back to 2 Sci-Fi", Paused, OK resumes it paused behind live), else what's on your
+  first favorite channel with a program on, else the lineup's first ("On now · 5 Comedy", OK
+  tunes in). Its art fills it under a scrim from the foot; a red badge names the channel; the
+  title, the time and what's left, and a bar for how far through. Hold OK or Menu: Watch live
+  or Resume, Back to live, Full guide, Forget this. When nothing's on, Tonight's Pick takes it.
+  It's still art: no muted live preview, which would need a second decoder on a 2 GB TV.
+- **The mini guide** (Row A right): your favorites, then the lineup, four channels; 90 minutes
+  from the half hour now is in, with 8:30, 9:00 and 9:30 over them. Programs only (filler is a
+  gap, and a sliver at the window's edge is left out); the one on now is lit. The now line, in
+  the accent, moves on the home's minute tick, and the window rolls over on the hour and the
+  half hour: it redraws once a minute, never per frame.
+- **Row B:** Tonight's Pick as a card (its art, title, reason and Play) in the right column's
+  width, then Up Next at its dashboard size, so its captions fit at 115%.
+- **Moments** (H3) lead the big tile: the game on game day, the lens's title on weekend
+  mornings and late at night. Weeknights keep the last channel.
+
+| Focused | Up | Down | Left | Right |
+|---|---|---|---|---|
+| Big tile | top bar | the pick's Play | none | the mini guide |
+| Mini guide program | the channel above | the channel below | earlier, then the big tile | later |
+
+- **OK** on a program on now tunes in; on a later one, its details (2.7).
+- **Home** focuses the big tile; so does **Back** from the full guide.
+
 ### Quick actions side sheet [U6]
 - 336 dp wide from the right, full height, `#121920`, slides in 40 dp + fades
   (200 ms).
@@ -1452,7 +1497,7 @@ still say "Not yet".
 
   States are read again on every resume. HomeWatch's Configure, in TV Settings ›
   Accessibility, opens this section (`setup/OpenSetupActivity`).
-- **Look** (H1): **Layout** first, Dashboard (the default) and Marquee as pills with a tick,
+- **Look** (H1): **Layout** first, Dashboard (the default), Marquee and On Now as pills with a tick,
   and a note on what the chosen one does and that a kid's home keeps its own (§4 Home
   layouts); **Change with the time of day** (Moments, H3) and **Show the side rail** (H4),
   toggle rows, off by default; then the accent colour and the layout scale (U3, U4).
