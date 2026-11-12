@@ -103,6 +103,11 @@ YouTube TV is the last thing you watched, the Guide card is "Back to YouTube TV"
 it back as its app icon does. The YouTube TV channels you open here come right after your
 favorites in the Live row (§4 Plex Guide card, Live row).
 
+**Home layouts (11/12/2026)** (H1-H6), from the design brainstorm's mockup (Dashboard v1 and
+five options): **Settings › Look › Layout** chooses how your home is laid out, with the
+dashboard still the default. A kid's home keeps its own layout in every one (§4 Home layouts).
+They ship one PR at a time: the setting and **Marquee** first.
+
 The prototype shows the Phase 1 layout.
 
 **Tags:** [REQ] brief requirement · [U*n*] UI decision · [PROP] proposal, not settled
@@ -1227,6 +1232,98 @@ and the search providers other apps declare: counts, names and answers, never a 
 also logged under `ActionCenterSearch`. Below, buttons try Google with "heat" and each offer's
 link on this TV.
 
+### Home layouts [H1-H6]
+
+Settings › Look › Layout (H1) lists the layouts: **Dashboard** (v1, the default: everything
+in this section's cards above) and **Marquee** (H2). Later PRs add On Now and Calm, and two
+switches that work with any layout: Side rail and Moments (H3, H4). It's per TV, stored in
+`SettingsRepository` (`home_layout`). The home's view model is the same
+(`AppContainer.home`): only `HomeScreen` changes what it draws.
+
+- **A kid's home** (K7, U13) keeps its own layout in every one.
+- **Before there's a pick** (first run, Plex not linked, the library on its way: §5), every
+  layout is the dashboard, so the Plex code and its placeholders show as they do today.
+- **The rows below** (Live, the NFL, Continue in your apps, Apps) are the same in every
+  layout, and peek into the bottom margin as they do under the dashboard.
+
+#### Marquee [H2]
+
+The title focus rests on fills the screen; under it, its reason and buttons, then a strip of
+six cards for tonight (`ui/home/Marquee.kt`, `home/TonightStrip.kt`).
+
+```
+┌──────────────────────────────── backdrop: the shown card's art, full screen ─┐
+│ 8:41 PM   (greeting, chip, weather, Plex fade while you browse)   🔍 ⚙ (A)  │
+│ TONIGHT'S PICK                                                              │
+│ Severance                       ← 45 sp bold (36 sp past 18 characters),    │
+│ Season 2 · 2 episodes left · TV-MA          or the title's logo, ≤ 72 dp    │
+│ ✦ You're 2 episodes from the end of the season                              │
+│ [▶ Play S2E9] [Trailer] [Not tonight]                                       │
+│ FOR TONIGHT                                                                 │
+│ [Pick][Throwback][Up next][Quick Watch][● Live][Hidden gem]  134×75 dp each │
+│  Severance  Heat      Slow Horses  The Bear  Open House  Arrival           │
+│  LIVE  [peek] …                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+- **Grid:** the dashboard's (§1). The top bar is the top bar, the title sits where Row A is,
+  bottom-aligned on its buttons, 470/864 of the width, and the strip where Row B is: its
+  eyebrow, then six cards with 12 dp gaps that fill the content width, 16:9, each with its
+  title and a caption below.
+- **The strip** (`TonightStrip.build`), in this order, each place taking its first title:
+  Tonight's Pick, the lens card's title, Up Next, Quick Watch, what's on live, the next lens.
+  The rest of Up Next and Quick Watch, taking turns, fill any place that's empty. A title
+  never shows twice.
+  - **Live:** your first favorite channel with a program on (not filler or off air), else
+    the lineup's first; while the guide player's spot holds (P4), "Back to {channel}"
+    instead, which resumes it paused.
+  - **The next lens:** the rotation's first title from another lens that isn't the lens
+    card's title or the pick.
+  - **Badges** (top left, a dark pill): Pick in the accent; the lens's name (Throwback,
+    Comfort rewatch and Seasonal warm, Hidden gem and Classic cool, the rest white); Up
+    next; Quick Watch; ● Live and Paused in red. Up Next, Live and Paused have a 3 dp
+    progress bar along the foot.
+  - **Captions:** the pick's meta while it fits ("Season 2"), "Throwback lens", the
+    episode and time left, "Fits before 10:30", "Live on 5 Comedy".
+- **The title** above the strip is the shown card's: its eyebrow (Tonight's pick, the
+  lens, Up next, "Quick Watch · fits before 10:30", "On now · 5 Comedy"), title or logo
+  (Phase 12), meta and reason [REQ]. The pick's offline note and Undo's "Skipping …" line
+  sit under it, as on the hero (U12, U15).
+- **Buttons:** Play first (Play S2E9, Watch again, Resume, Watch live), then what fits:
+  the pick's Trailer and Not tonight (Undo for 8 s); a lens title's Trailer and, for the
+  lens card's own, Next; live's Full guide; a spot's Back to live. Hold OK or Menu on Play
+  or a strip card opens the card's quick actions, as on the dashboard (U6).
+- **OK on a strip card** does its first button: plays, resumes or tunes in.
+- **Backdrop:** the shown card's art over the whole screen, behind the home. Focus resting
+  200 ms on a card shows it; its art crossfades in over 400 ms and its text over 250 ms.
+  Passing over cards decodes nothing.
+  - **Memory:** decoded at 960×540 px (2.1 MB) and stretched, never at the screen's
+    1920×1080 (8.3 MB); under the scrim the softness doesn't show. The crossfade holds at
+    most two: a card coming before the last fade is done replaces whichever shows less.
+    With the hero gone, a Marquee screen holds about what the dashboard's does (§6).
+  - **Scrims** (§6): 90% `scrim` at the left edge, 55% at 42%, clear from 75%; from the
+    top of the strip down, 86% to 97% at the foot; 60% at the top fading by 20% for the
+    top bar's labels on the right.
+  - **Scrolling:** the backdrop stays put and fades as the home scrolls, gone once the
+    strip reaches the top, so the rows sit on the wallpaper as in every layout. Its alpha
+    is applied draw by draw (`CompositingStrategy.ModulateAlpha`), never through an
+    offscreen copy of the screen.
+  - **Late night:** a 25% black veil (art at 75%, §2), and the accent dims as everywhere.
+- **The top bar** fades back to the clock while focus is in the strip (200 ms): the
+  greeting, chip, weather and Plex status go, and the round buttons dim to 40%. A warning
+  chip (the stock launcher, Home button off) stays. Focus leaving the strip brings it back.
+
+| Focused | Up | Down | Left | Right |
+|---|---|---|---|---|
+| Strip card | the title's buttons (Play the first time, then the one you left) | first row below | previous card | next card |
+| Title's buttons | top bar | the strip card you left | previous button | next button |
+| Top bar | none | the title's buttons | previous item | next item |
+
+- **Home** [U10] focuses the strip's first card, the pick, and shows it. **Back** from the
+  full guide (and from a player the strip's Back-to card resumed) lands on the strip's live
+  card, or the first card when there's none. Back from Settings, Search and "Who's
+  watching?" lands on the top bar's button, as on the dashboard.
+
 ### Quick actions side sheet [U6]
 - 336 dp wide from the right, full height, `#121920`, slides in 40 dp + fades
   (200 ms).
@@ -1287,6 +1384,9 @@ still say "Not yet".
 
   States are read again on every resume. HomeWatch's Configure, in TV Settings ›
   Accessibility, opens this section (`setup/OpenSetupActivity`).
+- **Look** (H1): **Layout** first, Dashboard (the default) and Marquee as pills with a tick,
+  and a note on what the chosen one does and that a kid's home keeps its own (§4 Home
+  layouts); then the accent colour and the layout scale (U3, U4).
 - **Plex Guide** (2.7): its own subsection below, with Edit on your phone.
 - **Plex** (Phase 11): after Account, Server and Library, before Sync now and Sign out:
   - **Play in:** Plezy and Plex pills, the one in use ticked. Unset, it's Plezy when Plezy

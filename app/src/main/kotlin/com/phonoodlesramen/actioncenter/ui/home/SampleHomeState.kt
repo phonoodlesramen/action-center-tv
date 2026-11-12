@@ -8,6 +8,7 @@ import com.phonoodlesramen.actioncenter.content.LensPrefs
 import com.phonoodlesramen.actioncenter.content.LensPick
 import com.phonoodlesramen.actioncenter.content.Pick
 import com.phonoodlesramen.actioncenter.content.UpNextItem
+import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.home.HomeUiState
 import com.phonoodlesramen.actioncenter.home.PlexHome
 import com.phonoodlesramen.actioncenter.home.PickState
@@ -77,6 +78,7 @@ internal object SampleHomeState {
         plexSnapshot: PlexSnapshot? = null,
         cursor: LensCursor = LensCursor(),
         lensPrefs: LensPrefs = LensPrefs(),
+        homeLayout: HomeLayout = HomeLayout.DEFAULT,
     ): HomeUiState = homeUiState(
         settings = Settings(
             name = "Alex",
@@ -85,6 +87,7 @@ internal object SampleHomeState {
             layoutScale = layoutScale,
             disabledLenses = disabledLenses,
             lensPrefs = lensPrefs,
+            homeLayout = homeLayout,
         ),
         time = time,
         installed = apps,
