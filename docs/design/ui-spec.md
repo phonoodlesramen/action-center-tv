@@ -109,7 +109,7 @@ dashboard still the default. A kid's home keeps its own layout in every one (§4
 They ship one PR at a time: the setting and **Marquee** first, then **Moments**, a switch that lets
 the time of day choose what leads the home, then **the side rail**, a switch that puts the
 profile, Search, Home, Guide, the NFL, Apps and Settings down the left beside any layout, then
-**On Now**, a layout that leads with live TV.
+**On Now**, a layout that leads with live TV, and **Calm**, quiet until you ask.
 
 The prototype shows the Phase 1 layout.
 
@@ -1238,7 +1238,7 @@ link on this TV.
 ### Home layouts [H1-H6]
 
 Settings › Look › Layout (H1) lists the layouts: **Dashboard** (v1, the default: everything
-in this section's cards above), **Marquee** (H2) and **On Now** (H5); Calm comes next. Two
+in this section's cards above), **Marquee** (H2), **On Now** (H5) and **Calm** (H6). Two
 switches work with any layout: Moments and the side rail (H3, H4). It's per TV, stored in
 `SettingsRepository` (`home_layout`). The home's view model is the same
 (`AppContainer.home`): only `HomeScreen` changes what it draws.
@@ -1437,6 +1437,44 @@ without one (or before the library's in), it's the dashboard.
 - **OK** on a program on now tunes in; on a later one, its details (2.7).
 - **Home** focuses the big tile; so does **Back** from the full guide.
 
+#### Calm [H6]
+
+Quiet until you ask (`ui/home/Calm.kt`): the wallpaper, a big clock, one line for tonight and a
+dock, with the dashboard a press away as a sheet. Before there's a pick, it's the dashboard.
+
+```
+┌───────────────────────────────────────────────────────────── (A) ┐
+│ 8:41 PM                       ← 112 sp light, drifting for OLED   │
+│ Monday, October 26 · ☁ 54°, overcast                              │
+│ ┌ [art] TONIGHT · Severance · You're 2 episodes from… [▶ Play S2E9] ┐ │
+│ [Plezy][YouTube][Netflix][Spotify][Plex] [Guide][Search]           │
+│                        ⌄ More for tonight                          │
+└────────────────────────────────────────────── (the wallpaper) ────┘
+```
+
+- **The clock and date** sit on the wallpaper with the soft halo of labels on a wallpaper
+  (§6b), and drift a few dp each minute as Now showing's do (`ScreenCare`).
+- **The one line:** a frosted strip, 620 × 86 dp: the title's art, "Tonight" (or a moment's
+  eyebrow), the title, its reason, and Play on the right, where focus starts. Moments (H3) lead
+  it: the game on game day (Watch in the first app that has it), the lens's title on weekend
+  mornings and late at night.
+- **The dock:** your five apps in the Apps row's order (M5), then Guide and Search.
+- **More for tonight** (centred at the foot): focus coming to it, or OK, slides the dashboard up
+  as a sheet over the wallpaper (92% `bg`, 40 dp and a fade over 200 ms, §7), Play focused.
+  **Back** drops it and focus returns to Calm's Play.
+- **The avatar** sits at the top right (with the side rail, the rail has it, and Search).
+
+| Focused | Up | Down | Left / Right |
+|---|---|---|---|
+| Play | the avatar | the dock | none |
+| Dock | Play | More for tonight: the sheet comes up | the dock's next |
+
+- **Home** drops the sheet and focuses Play. **Back** from "Who's watching?", Search and the
+  guide lands on Calm's avatar, Search and Guide; from Settings, All apps, the NFL screen and a
+  Live card's guide, on the sheet's own (the gear, All apps, the NFL row, the Live card).
+- **Watch out:** everything but the pick and the dock is a press further away; Up Next, the
+  guide and the lenses are in the sheet.
+
 ### Quick actions side sheet [U6]
 - 336 dp wide from the right, full height, `#121920`, slides in 40 dp + fades
   (200 ms).
@@ -1497,7 +1535,7 @@ still say "Not yet".
 
   States are read again on every resume. HomeWatch's Configure, in TV Settings ›
   Accessibility, opens this section (`setup/OpenSetupActivity`).
-- **Look** (H1): **Layout** first, Dashboard (the default), Marquee and On Now as pills with a tick,
+- **Look** (H1): **Layout** first, Dashboard (the default), Marquee, On Now and Calm as pills with a tick,
   and a note on what the chosen one does and that a kid's home keeps its own (§4 Home
   layouts); **Change with the time of day** (Moments, H3) and **Show the side rail** (H4),
   toggle rows, off by default; then the accent colour and the layout scale (U3, U4).

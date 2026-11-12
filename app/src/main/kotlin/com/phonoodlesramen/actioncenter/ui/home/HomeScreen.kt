@@ -21,7 +21,14 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.activity.compose.BackHandler
+import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.tween
+import androidx.compose.foundation.background
 import androidx.compose.runtime.remember
+import androidx.compose.ui.graphics.CompositingStrategy
+import androidx.compose.ui.graphics.graphicsLayer
+import com.phonoodlesramen.actioncenter.ui.theme.Palette
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
@@ -248,6 +255,12 @@ fun HomeScreen(
     val onNowGuide = (shownGuide as? GuideCardState.Ready)?.takeIf { it.channels.isNotEmpty() }
     val onNow = !kid && state.homeLayout == HomeLayout.ON_NOW && state.content != null && state.pick != null && onNowGuide != null
     val liveTile = if (onNow) remember(shownGuide, favorites, state.nowMillis, backTo) { TonightStrip.live(shownGuide, favorites, state.nowMillis, backTo) } else null
+    // Calm (H6): quiet until you ask. Before the library's in, it's the dashboard with the Plex code.
+    val calm = !kid && state.homeLayout == HomeLayout.CALM && state.content != null && state.pick != null
+    val calmPlay = remember { FocusRequester() }
+    // Its sheet (the dashboard) is down on Home and when Back lands on Calm's own buttons; up for the rest.
+    var calmSheet by remember(focus) { mutableStateOf(focus.target !in CALM_TARGETS) }
+    var calmFocusNext by remember { mutableStateOf<FocusRequester?>(null) }
     val chip = remember { FocusRequester() }
     // The side rail (H4): beside any layout, never on a kid's home. The top bar's round buttons move into it.
     val rail = !kid && state.sideRail
@@ -257,7 +270,13 @@ fun HomeScreen(
     val goTop: () -> Unit = {
         scope.launch { scroll.animateScrollTo(0) }
         marqueeState.shownKey = null
-        runCatching { play.requestFocus() }
+        if (calm && calmSheet) {
+            // Calm's sheet drops, and its Play takes focus once Calm is back.
+            calmFocusNext = calmPlay
+            calmSheet = false
+        } else {
+            runCatching { (if (calm) calmPlay else play).requestFocus() }
+        }
     }
     // The chip's quick actions while a moment leads: Keep the usual layout, until the mode moves on.
     val onChip: (() -> Unit)? = if (moment == null) {
@@ -287,7 +306,7 @@ fun HomeScreen(
         // On Now's is its big tile, Play's place too.
         val guideOrPlay = if (kid || onNow || (marquee && strip.none { it.key == StripCard.KEY_LIVE })) play else guideCard
         val target = when (focus.target) {
-            HomeFocus.PLAY -> play
+            HomeFocus.PLAY -> if (calm && !calmSheet) calmPlay else play
             HomeFocus.ALL_APPS -> appsRow.allApps
             HomeFocus.SETTINGS -> gear
             HomeFocus.SEARCH -> searchButton
@@ -489,6 +508,50 @@ fun HomeScreen(
                     }
                 }
             }
+            // Calm's sheet: the dashboard slides up 40 dp as it fades in over the wallpaper (spec §7), and Back drops it.
+            val sheetIn = remember(calm && calmSheet) { Animatable(if (calm && calmSheet) 0f else 1f) }
+            LaunchedEffect(sheetIn) { sheetIn.animateTo(1f, tween(SHEET_MILLIS)) }
+            LaunchedEffect(calmSheet) {
+                calmFocusNext?.let { runCatching { it.requestFocus() } }
+                calmFocusNext = null
+            }
+            BackHandler(enabled = calm && calmSheet) {
+                calmFocusNext = calmPlay
+                calmSheet = false
+            }
+            if (calm && calmSheet) Box(Modifier.matchParentSize().graphicsLayer { alpha = sheetIn.value }.background(Palette.Background.copy(alpha = SHEET_DIM)))
+            val area: @Composable (Modifier, Modifier) -> Unit = if (calm && !calmSheet) {
+                { inset, focusable ->
+                    Calm(
+                        state = state,
+                        line = calmLine(moment, state, gameDay?.let { StripCard.Game(it, nfl, state.nowMillis) }),
+                        apps = state.launchpad,
+                        actions = actions,
+                        focus = CalmFocus(play = calmPlay, avatar = avatar.takeIf { !rail }, search = searchButton.takeIf { !rail }, guide = guideCard),
+                        lateNight = lateNight,
+                        onMore = {
+                            calmFocusNext = play
+                            calmSheet = true
+                        },
+                        modifier = inset.then(focusable),
+                        watch = watch,
+                    )
+                }
+            } else if (calm) {
+                { inset, focusable ->
+                    val lift = with(LocalDensity.current) { SHEET_LIFT.toPx() }
+                    homeArea(
+                        inset.graphicsLayer {
+                            translationY = (1f - sheetIn.value) * lift
+                            alpha = sheetIn.value
+                            compositingStrategy = CompositingStrategy.ModulateAlpha
+                        },
+                        focusable,
+                    )
+                }
+            } else {
+                homeArea
+            }
             if (rail) {
                 SideRail(
                     state = state,
@@ -501,10 +564,10 @@ fun HomeScreen(
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     // Right or Back from the rail comes back to the card you left: the home's restorer remembers it.
-                    homeArea(Modifier.besideRail(), Modifier.focusRequester(railContent).focusRestorer().focusGroup())
+                    area(Modifier.besideRail(), Modifier.focusRequester(railContent).focusRestorer().focusGroup())
                 }
             } else {
-                homeArea(Modifier, Modifier)
+                area(Modifier, Modifier)
             }
             NowShowingOverlay(scene, nowShowing, lastInputMillis, Modifier.matchParentSize())
             ArtPickerHost(picker)
@@ -541,6 +604,27 @@ private fun rememberStrip(
 
 /** Marquee's backdrop is gone once the home has scrolled this much of the screen: Row B's top, where the strip is. */
 private const val MARQUEE_FADE = (Layout.SAFE_TOP + Layout.TOP_BAR_WEIGHT + Layout.ROW_A_WEIGHT + 2 * Layout.GAP_WEIGHT) / Layout.CANVAS_HEIGHT
+
+/** Where Back lands on Calm's own first screen (H6): Play, its avatar, its dock's Search and Guide. Anything else is in its sheet. */
+private val CALM_TARGETS = setOf(HomeFocus.PLAY, HomeFocus.PROFILE, HomeFocus.SEARCH, HomeFocus.GUIDE)
+
+/** Calm's sheet: its slide and fade (spec §7's sheets), how far it slides, and how much it covers the wallpaper. */
+private const val SHEET_MILLIS = 200
+private val SHEET_LIFT = 40.dp
+private const val SHEET_DIM = 0.92f
+
+/**
+ * Calm's one line (H6): Tonight's Pick, or what a moment leads with (H3): the game on game day,
+ * the lens's title on weekend mornings and late at night.
+ */
+private fun calmLine(moment: Moment?, state: HomeUiState, game: StripCard.Game?): StripCard {
+    val lens = state.lens
+    return when {
+        moment == Moment.GAME_DAY && game != null -> game
+        (moment == Moment.WEEKEND_MORNING || moment == Moment.LATE_NIGHT) && lens != null -> StripCard.LensTitle(lens)
+        else -> StripCard.Tonight(requireNotNull(state.pick))
+    }
+}
 
 /**
  * The home beside the side rail (H4): its content starts [RAIL_GAP] past the closed rail, as the
