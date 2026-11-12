@@ -61,11 +61,20 @@ import com.phonoodlesramen.actioncenter.home.HomeUiState
 import com.phonoodlesramen.actioncenter.home.StripBadge
 import com.phonoodlesramen.actioncenter.home.StripCard
 import com.phonoodlesramen.actioncenter.home.TonightStrip
+import com.phonoodlesramen.actioncenter.nfl.GameState
+import com.phonoodlesramen.actioncenter.nfl.WatchOptions
 import com.phonoodlesramen.actioncenter.ui.art.LocalArtUrls
 import com.phonoodlesramen.actioncenter.ui.art.LogoArt
 import com.phonoodlesramen.actioncenter.ui.art.TitleArt
 import com.phonoodlesramen.actioncenter.ui.art.placeholderArt
 import com.phonoodlesramen.actioncenter.ui.art.rememberLogoBox
+import com.phonoodlesramen.actioncenter.ui.nfl.NflColors
+import com.phonoodlesramen.actioncenter.ui.nfl.NflOpen
+import com.phonoodlesramen.actioncenter.ui.nfl.NflPage
+import com.phonoodlesramen.actioncenter.ui.nfl.NflTab
+import com.phonoodlesramen.actioncenter.ui.nfl.cardSheet
+import com.phonoodlesramen.actioncenter.ui.nfl.matchup
+import com.phonoodlesramen.actioncenter.ui.nfl.waysFor
 import com.phonoodlesramen.actioncenter.ui.theme.AppIcons
 import com.phonoodlesramen.actioncenter.ui.theme.Layout as Grid
 import com.phonoodlesramen.actioncenter.ui.theme.LocalAccent
@@ -83,6 +92,8 @@ internal class MarqueeFocus(
     val gear: FocusRequester,
     val avatar: FocusRequester,
     val search: FocusRequester,
+    /** The context chip, while a moment makes it focusable (H3). */
+    val chip: FocusRequester? = null,
 )
 
 /**
@@ -119,6 +130,10 @@ internal fun Marquee(
     lateNight: Boolean,
     openSheet: (QuickSheet) -> Unit,
     modifier: Modifier = Modifier,
+    /** Where Watch can go (F6, F7), for game day's card. */
+    watch: WatchOptions = WatchOptions(),
+    /** The context chip's quick actions while a moment leads (H3). */
+    onChip: (() -> Unit)? = null,
 ) {
     // The backdrop waits for focus to rest, so passing over a card decodes nothing.
     LaunchedEffect(marquee.focusedKey) {
@@ -137,14 +152,17 @@ internal fun Marquee(
             avatar = focus.avatar,
             search = focus.search,
             quiet = marquee.browsing,
+            onChip = onChip,
+            chip = focus.chip,
         )
         Spacer(Modifier.weight(Grid.GAP_WEIGHT))
-        MarqueeTitle(shown, state, actions, lateNight, openSheet, Modifier.fillMaxWidth().weight(Grid.ROW_A_WEIGHT))
+        MarqueeTitle(shown, state, actions, watch, lateNight, openSheet, Modifier.fillMaxWidth().weight(Grid.ROW_A_WEIGHT))
         Spacer(Modifier.weight(Grid.GAP_WEIGHT))
         StripRow(
             strip = strip,
             focus = focus,
             actions = actions,
+            watch = watch,
             lateNight = lateNight,
             openSheet = openSheet,
             onFocused = { marquee.focusedKey = it },
@@ -175,9 +193,28 @@ private val STRIP_GAP = 12.dp
 
 private val TileShape = RoundedCornerShape(Grid.TileRadius)
 
-/** What a backdrop shows: a title's placeholder ([id]) and its Plex art. */
+/**
+ * What a backdrop shows: a title's placeholder ([id]) and its Plex art; or, for a game, its two
+ * teams' colours washing in from either side ([wash]).
+ */
 @Immutable
-internal data class BackdropArt(val id: String, val image: String?)
+internal data class BackdropArt(val id: String, val image: String?, val wash: Pair<Color, Color>? = null)
+
+/** A strip card's art: a game's team colours, else its title art. */
+internal fun StripCard.backdrop(): BackdropArt = when (this) {
+    is StripCard.Game -> BackdropArt(artId, null, NflColors.wash(view.team(game.away)) to NflColors.wash(view.team(game.home)))
+    else -> BackdropArt(artId, image)
+}
+
+/** A game's wash: the away team's colour from the left, the home team's from the right, dark between (the mockup's). */
+private fun Modifier.teamWash(wash: Pair<Color, Color>): Modifier = background(Palette.Background).background(
+    Brush.horizontalGradient(
+        0f to wash.first.copy(alpha = 0.55f),
+        0.42f to wash.first.copy(alpha = 0.12f),
+        0.58f to wash.second.copy(alpha = 0.12f),
+        1f to wash.second.copy(alpha = 0.55f),
+    ),
+)
 
 /**
  * The shown card's art over the whole screen, and its scrims: dark at the left for the title,
@@ -197,7 +234,7 @@ internal fun MarqueeBackdrop(card: StripCard, lateNight: Boolean, faded: () -> F
             compositingStrategy = CompositingStrategy.ModulateAlpha
         },
     ) {
-        BackdropCrossfade(BackdropArt(card.artId, card.image), lateNight, Modifier.fillMaxSize())
+        BackdropCrossfade(card.backdrop(), lateNight, Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(SideScrim))
         Box(Modifier.fillMaxSize().background(FootScrim))
         Box(Modifier.fillMaxSize().background(TopScrim))
@@ -264,7 +301,7 @@ internal fun BackdropCrossfade(target: BackdropArt, lateNight: Boolean, modifier
  */
 @Composable
 private fun BackdropLayer(art: BackdropArt, lateNight: Boolean, modifier: Modifier = Modifier) {
-    Box(modifier.placeholderArt(art.id)) {
+    Box(art.wash?.let { modifier.teamWash(it) } ?: modifier.placeholderArt(art.id)) {
         val url = art.image?.let { LocalArtUrls.current.url(it, BACKDROP_WIDTH_PX, BACKDROP_HEIGHT_PX) }
         if (url != null) {
             AsyncImage(
@@ -290,6 +327,7 @@ private fun MarqueeTitle(
     card: StripCard,
     state: HomeUiState,
     actions: HomeActions,
+    watch: WatchOptions,
     lateNight: Boolean,
     openSheet: (QuickSheet) -> Unit,
     modifier: Modifier = Modifier,
@@ -306,7 +344,7 @@ private fun MarqueeTitle(
         if (note != null) {
             Text(note, style = MaterialTheme.typography.bodySmall, color = Palette.TextDim, maxLines = 1, modifier = Modifier.padding(top = 6.dp))
         }
-        MarqueeButtons(card, state, actions, openSheet, Modifier.padding(top = 14.dp))
+        MarqueeButtons(card, state, actions, watch, openSheet, Modifier.padding(top = 14.dp))
     }
 }
 
@@ -355,7 +393,14 @@ private const val LONG_MARQUEE_TITLE = 18
  * full guide). Down goes back to the strip card you left (its focus restorer).
  */
 @Composable
-private fun MarqueeButtons(card: StripCard, state: HomeUiState, actions: HomeActions, openSheet: (QuickSheet) -> Unit, modifier: Modifier = Modifier) {
+private fun MarqueeButtons(
+    card: StripCard,
+    state: HomeUiState,
+    actions: HomeActions,
+    watch: WatchOptions,
+    openSheet: (QuickSheet) -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val primary = remember { FocusRequester() }
     val first = Modifier.focusRequester(primary)
     Row(modifier.focusRestorer(primary).focusGroup(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -363,7 +408,7 @@ private fun MarqueeButtons(card: StripCard, state: HomeUiState, actions: HomeAct
             is StripCard.Tonight -> {
                 val pick = card.pick
                 val undo = state.pickState.undo
-                PillButton(pick.playLabel, onClick = { actions.play(pick.id, pick.title) }, modifier = first.onMenuKey { openSheet(stripSheet(card, actions, primary, primary)) }, icon = AppIcons.Play)
+                PillButton(pick.playLabel, onClick = { actions.play(pick.id, pick.title) }, modifier = first.onMenuKey { openSheet(stripSheet(card, actions, watch, primary, primary)) }, icon = AppIcons.Play)
                 PillButton("Trailer", onClick = { actions.trailer(pick) })
                 PillButton(if (undo != null) "Undo" else "Not tonight", onClick = { if (undo != null) actions.undo() else actions.notTonight() })
             }
@@ -384,12 +429,35 @@ private fun MarqueeButtons(card: StripCard, state: HomeUiState, actions: HomeAct
                 PillButton("Resume", onClick = { actions.resume(card.backTo.spot) }, modifier = first, icon = AppIcons.Play)
                 PillButton("Back to live", onClick = { actions.backToLive(card.backTo.channel.id) })
             }
+            is StripCard.Game -> {
+                // Watch in the first app on this TV that has it (F6, F7); the rest are in its quick actions.
+                val way = waysFor(card.game, card.view, watch).firstOrNull { it.installed }.takeIf { card.game.state != GameState.FINAL }
+                if (way != null) {
+                    PillButton("Watch: ${way.label}", onClick = { actions.watch(way, matchup(card.game, card.view)) }, modifier = first, icon = AppIcons.Play)
+                    PillButton("Game details", onClick = { primaryAction(card, actions) })
+                } else {
+                    PillButton("Game details", onClick = { primaryAction(card, actions) }, modifier = first)
+                }
+            }
         }
     }
 }
 
-/** A lens title as a pick, for Trailer: the year from its meta ("1995 · 2h 50m") narrows the search. */
-private fun LensPick.asPick() = Pick(id = id, title = title, meta = meta, reason = line, image = image, year = meta.take(4).toIntOrNull(), titleKey = titleKey)
+/**
+ * A lens title as a pick: for Trailer, whose search the year from its meta ("1995 · 2h 50m")
+ * narrows, and for a moment's hero (H3), which plays it as Watch (again).
+ */
+internal fun LensPick.asPick() = Pick(
+    id = id,
+    title = title,
+    meta = meta,
+    reason = line,
+    playLabel = watchLabel(this),
+    image = image,
+    year = meta.take(4).toIntOrNull(),
+    titleKey = titleKey,
+    logo = logo,
+)
 
 /** "For tonight" and its six cards. Focus coming back to the strip lands on the card it left. */
 @Composable
@@ -397,6 +465,7 @@ private fun StripRow(
     strip: List<StripCard>,
     focus: MarqueeFocus,
     actions: HomeActions,
+    watch: WatchOptions,
     lateNight: Boolean,
     openSheet: (QuickSheet) -> Unit,
     onFocused: (String) -> Unit,
@@ -424,7 +493,7 @@ private fun StripRow(
                         card = card,
                         lateNight = lateNight,
                         onClick = { primaryAction(card, actions) },
-                        onMenu = { openSheet(stripSheet(card, actions, self, focus.first)) },
+                        onMenu = { openSheet(stripSheet(card, actions, watch, self, focus.first)) },
                         onFocused = { onFocused(card.key) },
                         modifier = tile,
                     )
@@ -443,10 +512,12 @@ private fun primaryAction(card: StripCard, actions: HomeActions) = when (card) {
     is StripCard.Quick -> actions.play(card.item.id, card.item.title)
     is StripCard.Live -> actions.tuneIn(card.channel.id)
     is StripCard.Paused -> actions.resume(card.backTo.spot)
+    is StripCard.Game -> actions.openNfl(NflOpen(NflPage.Tab(NflTab.GAMES, gameId = card.game.id), NflOpen.CARD))
 }
 
 /** A strip card's quick actions (U6): what its card on the dashboard offers. */
-private fun stripSheet(card: StripCard, actions: HomeActions, self: FocusRequester, afterHide: FocusRequester): QuickSheet = when (card) {
+private fun stripSheet(card: StripCard, actions: HomeActions, watch: WatchOptions, self: FocusRequester, afterHide: FocusRequester): QuickSheet = when (card) {
+    is StripCard.Game -> cardSheet(card.game, card.view, card.nowMillis, watch, actions, returnTo = self, afterNotToday = afterHide)
     is StripCard.Tonight -> QuickSheet(
         title = card.pick.title,
         returnTo = self,
@@ -515,7 +586,8 @@ private fun StripTile(
             scale = cardLift,
             border = focusRing(TileShape),
         ) {
-            TitleArt(card.artId, card.image, lateNight, Modifier.fillMaxSize())
+            val wash = card.backdrop().wash
+            if (wash != null) Box(Modifier.fillMaxSize().teamWash(wash)) else TitleArt(card.artId, card.image, lateNight, Modifier.fillMaxSize())
             Badge(card.badge, Modifier.align(Alignment.TopStart).padding(6.dp))
             card.progress?.let { progress ->
                 Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = 0.22f))) {

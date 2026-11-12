@@ -157,6 +157,10 @@ data class HomeUiState(
     val searchStreaming: Boolean = true,
     /** Settings › Look › Layout: yours; a kid's home keeps its own whatever this is. */
     val homeLayout: HomeLayout = HomeLayout.DEFAULT,
+    /** Settings › Look › Change with the time of day (Moments, H3). */
+    val moments: Boolean = false,
+    /** The chip's Keep the usual layout holds for now's mode and evening: no moment until it moves on. */
+    val momentsHeld: Boolean = false,
 )
 
 /** The Plex part of the home screen. Never holds a token. */
@@ -561,6 +565,18 @@ class HomeViewModel(
         viewModelScope.launch { settingsRepository.setHomeLayout(layout) }
     }
 
+    /** Settings › Look › Change with the time of day (Moments). */
+    fun setMoments(on: Boolean) {
+        viewModelScope.launch { settingsRepository.setMoments(on) }
+    }
+
+    /** The context chip's Keep the usual layout: no moment until the mode, or the evening, moves on. */
+    fun keepUsualLayout() {
+        val now = LocalDateTime.now(clock)
+        val mode = state.value.schedule.modeAt(now)
+        viewModelScope.launch { settingsRepository.holdMoments(Moments.held(mode, now)) }
+    }
+
     /** Settings › Time & modes: Quick Watch fits before this (S6). */
     fun setQuickWatchCutoff(cutoff: LocalTime) {
         viewModelScope.launch { settingsRepository.setQuickWatchCutoff(cutoff) }
@@ -675,6 +691,8 @@ fun homeUiState(
         recentSearches = settings.recentSearches[profile.id].orEmpty(),
         searchStreaming = settings.searchStreaming,
         homeLayout = settings.homeLayout,
+        moments = settings.moments,
+        momentsHeld = settings.momentsHeld == Moments.held(mode, time),
     )
 }
 

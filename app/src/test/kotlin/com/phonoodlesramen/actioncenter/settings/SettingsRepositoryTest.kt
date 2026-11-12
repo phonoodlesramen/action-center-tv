@@ -58,6 +58,19 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `Moments is off until switched on, and switching it forgets Keep the usual layout`() = runTest {
+        val repo = repository()
+        assertEquals(false, repo.settings.first().moments)
+
+        repo.setMoments(true)
+        repo.holdMoments("LATE_NIGHT@2026-11-09")
+        assertEquals(true to "LATE_NIGHT@2026-11-09", repo.settings.first().let { it.moments to it.momentsHeld })
+
+        repo.setMoments(true)
+        assertNull(repo.settings.first().momentsHeld)
+    }
+
+    @Test
     fun `Search includes streaming apps until switched off (Phase 15)`() = runTest {
         val repo = repository()
         assertEquals(true, repo.settings.first().searchStreaming)

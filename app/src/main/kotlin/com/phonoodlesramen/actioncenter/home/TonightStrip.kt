@@ -10,6 +10,10 @@ import com.phonoodlesramen.actioncenter.content.UpNextItem
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.guide.GuideChannel
 import com.phonoodlesramen.actioncenter.guide.GuideSlot
+import com.phonoodlesramen.actioncenter.nfl.GameState
+import com.phonoodlesramen.actioncenter.nfl.NflGame
+import com.phonoodlesramen.actioncenter.nfl.NflText
+import com.phonoodlesramen.actioncenter.nfl.NflView
 import com.phonoodlesramen.actioncenter.player.BackTo
 
 /** How a strip card's badge is coloured: the accent, the warm lenses, live red, or the cool lenses. */
@@ -130,7 +134,35 @@ sealed interface StripCard {
         override val progress get() = backTo.progress
     }
 
+    /** The game-day card's game (F1), leading the strip on game day (Moments, H3). */
+    data class Game(val game: NflGame, val view: NflView, val nowMillis: Long) : StripCard {
+        override val key = KEY_GAME
+        override val artId get() = "nfl-${game.id}"
+        override val image: String? get() = null
+        override val title get() = "${name(game.away)} at ${name(game.home)}"
+        override val eyebrow get() = listOf("NFL", NflText.status(game, view.zone), NflText.network(game)).joinToString(" · ")
+        override val meta get() = score
+        override val reason get() = when {
+            game.away in view.settings.yourTeams || game.home in view.settings.yourTeams -> "Your team is on"
+            game.state == GameState.LIVE -> "On now"
+            else -> NflText.kickoffIn(game, nowMillis, view.zone)
+        }
+        override val badge get() = if (game.state == GameState.LIVE) StripBadge("Live", BadgeTone.LIVE) else StripBadge("NFL")
+        override val caption get() = score
+
+        /** "PHI 14 · WSH 17", "Score hidden" (F10), or the kickoff before it starts. */
+        private val score: String
+            get() = when {
+                game.state == GameState.PRE -> NflText.kickoffIn(game, nowMillis, view.zone)
+                view.hidden(game, nowMillis) -> "Score hidden"
+                else -> "${game.away} ${game.awayScore ?: 0} · ${game.home} ${game.homeScore ?: 0}"
+            }
+
+        private fun name(abbr: String) = view.team(abbr)?.name ?: abbr
+    }
+
     companion object {
+        const val KEY_GAME = "game"
         const val KEY_PICK = "pick"
         const val KEY_LENS = "lens"
         const val KEY_MORE_LENS = "lens2"
@@ -164,8 +196,8 @@ sealed interface StripCard {
 object TonightStrip {
     const val SIZE = 6
 
-    /** A place in the strip's order. */
-    enum class Slot { PICK, LENS, UP_NEXT, QUICK_WATCH, LIVE, MORE_LENS }
+    /** A place in the strip's order. [GAME] is only in game day's (Moments). */
+    enum class Slot { PICK, LENS, UP_NEXT, QUICK_WATCH, LIVE, MORE_LENS, GAME }
 
     /** The pick, the lens card, Up Next, Quick Watch, what's on live, and the next lens. */
     val DEFAULT_ORDER = listOf(Slot.PICK, Slot.LENS, Slot.UP_NEXT, Slot.QUICK_WATCH, Slot.LIVE, Slot.MORE_LENS)
@@ -177,6 +209,7 @@ object TonightStrip {
         live: StripCard? = null,
         moreLens: LensCardState? = null,
         order: List<Slot> = DEFAULT_ORDER,
+        game: StripCard.Game? = null,
     ): List<StripCard> {
         val upNext = content?.upNext.orEmpty().map(StripCard::UpNext)
         val quick = content?.quickWatch.orEmpty().map { StripCard.Quick(it, content?.quickWatchCutoff.orEmpty()) }
@@ -188,6 +221,7 @@ object TonightStrip {
                 Slot.QUICK_WATCH -> quick.firstOrNull()
                 Slot.LIVE -> live
                 Slot.MORE_LENS -> moreLens?.let { StripCard.LensTitle(it, StripCard.KEY_MORE_LENS) }
+                Slot.GAME -> game
             }
         }
         // The rest of Up Next and Quick Watch, taking turns, fill the strip.

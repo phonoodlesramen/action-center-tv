@@ -111,6 +111,9 @@ interface SettingsActions {
 
     /** Settings › Look › Layout: how your home is laid out. A kid's keeps its own. */
     fun setHomeLayout(layout: HomeLayout) {}
+
+    /** Settings › Look › Change with the time of day (Moments, H3). */
+    fun setMoments(on: Boolean) {}
     fun setShowSampleContent(show: Boolean) {}
 
     /** The Phase 0 probe screen: device, handoff probes, Watch Next, safe mode. */
@@ -381,6 +384,13 @@ private fun ColumnScope.Look(state: HomeUiState, actions: SettingsActions) {
         }
     }
     Note("${state.homeLayout.detail} A kid's home keeps its own layout.")
+    ToggleRow(
+        title = "Change with the time of day",
+        detail = "Weeknights lead with the finish-it pick, weekend mornings with the family lens, game days with the game, " +
+            "late nights with a comfort rewatch. It changes when you come back Home, never while you're on it.",
+        on = state.moments,
+        onClick = { actions.setMoments(!state.moments) },
+    )
     Eyebrow("Accent colour", Modifier.padding(top = 8.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Palette.Accents.forEachIndexed { index, colour ->

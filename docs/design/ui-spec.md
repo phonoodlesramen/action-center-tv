@@ -106,7 +106,8 @@ favorites in the Live row (§4 Plex Guide card, Live row).
 **Home layouts (11/12/2026)** (H1-H6), from the design brainstorm's mockup (Dashboard v1 and
 five options): **Settings › Look › Layout** chooses how your home is laid out, with the
 dashboard still the default. A kid's home keeps its own layout in every one (§4 Home layouts).
-They ship one PR at a time: the setting and **Marquee** first.
+They ship one PR at a time: the setting and **Marquee** first, then **Moments**, a switch that lets
+the time of day choose what leads the home.
 
 The prototype shows the Phase 1 layout.
 
@@ -1319,10 +1320,37 @@ six cards for tonight (`ui/home/Marquee.kt`, `home/TonightStrip.kt`).
 | Title's buttons | top bar | the strip card you left | previous button | next button |
 | Top bar | none | the title's buttons | previous item | next item |
 
-- **Home** [U10] focuses the strip's first card, the pick, and shows it. **Back** from the
-  full guide (and from a player the strip's Back-to card resumed) lands on the strip's live
-  card, or the first card when there's none. Back from Settings, Search and "Who's
-  watching?" lands on the top bar's button, as on the dashboard.
+- **Home** [U10] focuses the strip's first card, the pick (or a moment's lead), and shows it.
+  **Back** from the full guide (and from a player the strip's Back-to card resumed) lands on
+  the strip's live card, or the first card when there's none. Back from Settings, Search and
+  "Who's watching?" lands on the top bar's button, as on the dashboard.
+
+#### Moments [H3]
+
+Settings › Look › **Change with the time of day** (off by default): the time of day chooses what
+leads the home (`home/Moments.kt`). It's an add-on: it works with any layout, and a kid's home
+has none.
+
+| Moment | When | Dashboard's Row A: left · right | Marquee's strip leads with |
+|---|---|---|---|
+| Weeknight | Weeknight evening (M1) | Tonight's Pick (the finish-it pick leads it, M3) · a taller Quick Watch: three rows and "1h 49m until 10:30" at its foot | the pick, then Quick Watch |
+| Weekend morning | Weekend morning | the lens card's title, the family lens by then, as the hero ("For the family", Watch again, Trailer, Next) · **Who's watching?**: each kid's avatar, 64 dp, one press from their home (K11), and "Maya and Leo each get their own home." The top bar leaves its small avatars out | the family lens's title |
+| Game day | While the game-day card is up (F1), whatever the time | the game-day card, hero-sized · **Around the league**: today's other games, live first, then those to come, then the latest finals, three at most; OK opens one in the NFL screen | the game: the team colours wash in from each side, "Eagles at Commanders", the score, and Watch in the first app that has it, then Game details |
+| Late night | Late night | the comfort rewatch as the hero, dimmed (§2) · Quick Watch as "Fits in the next 45 minutes" (M3) | the comfort rewatch, then Quick Watch |
+
+Weekend evenings and daytime keep the usual home.
+
+- **Only the slots' content changes, never their shape:** Up Next, the Guide card, the top bar
+  and the rows keep their places, so "the guide is bottom right" stays true. A moment without
+  its content (no kids, no Quick Watch, no other games) keeps that slot's usual card.
+- **When it changes:** at the context-mode times in Settings › Time & modes, and only when you
+  come back Home (a new focus request: Home, Back from a screen), never under your focus.
+  Switching it, or Keep the usual layout, applies at once.
+- **The chip:** while a moment leads, the context chip takes focus (between the greeting and
+  the weather). OK, hold or Menu opens its quick actions: **Keep the usual layout**, which holds
+  until the mode moves on or the next evening (a night past midnight is the evening before's),
+  stored as `home_moments_held`. Switching Moments again forgets it.
+- **Focus:** Home lands on the lead's first button (Play, Watch again) or the game-day card.
 
 ### Quick actions side sheet [U6]
 - 336 dp wide from the right, full height, `#121920`, slides in 40 dp + fades
@@ -1386,7 +1414,8 @@ still say "Not yet".
   Accessibility, opens this section (`setup/OpenSetupActivity`).
 - **Look** (H1): **Layout** first, Dashboard (the default) and Marquee as pills with a tick,
   and a note on what the chosen one does and that a kid's home keeps its own (§4 Home
-  layouts); then the accent colour and the layout scale (U3, U4).
+  layouts); **Change with the time of day** (Moments, H3), a toggle row, off by default; then
+  the accent colour and the layout scale (U3, U4).
 - **Plex Guide** (2.7): its own subsection below, with Edit on your phone.
 - **Plex** (Phase 11): after Account, Server and Library, before Sync now and Sign out:
   - **Play in:** Plezy and Plex pills, the one in use ticked. Unset, it's Plezy when Plezy
