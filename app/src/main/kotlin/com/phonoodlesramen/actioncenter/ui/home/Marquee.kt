@@ -134,6 +134,8 @@ internal fun Marquee(
     watch: WatchOptions = WatchOptions(),
     /** The context chip's quick actions while a moment leads (H3). */
     onChip: (() -> Unit)? = null,
+    /** The top bar's round buttons; with the side rail (H4) they're in the rail. */
+    circles: Boolean = true,
 ) {
     // The backdrop waits for focus to rest, so passing over a card decodes nothing.
     LaunchedEffect(marquee.focusedKey) {
@@ -154,6 +156,7 @@ internal fun Marquee(
             quiet = marquee.browsing,
             onChip = onChip,
             chip = focus.chip,
+            circles = circles,
         )
         Spacer(Modifier.weight(Grid.GAP_WEIGHT))
         MarqueeTitle(shown, state, actions, watch, lateNight, openSheet, Modifier.fillMaxWidth().weight(Grid.ROW_A_WEIGHT))

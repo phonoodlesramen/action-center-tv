@@ -161,6 +161,8 @@ data class HomeUiState(
     val moments: Boolean = false,
     /** The chip's Keep the usual layout holds for now's mode and evening: no moment until it moves on. */
     val momentsHeld: Boolean = false,
+    /** Settings › Look › Show the side rail (H4): beside any layout; never on a kid's home. */
+    val sideRail: Boolean = false,
 )
 
 /** The Plex part of the home screen. Never holds a token. */
@@ -570,6 +572,11 @@ class HomeViewModel(
         viewModelScope.launch { settingsRepository.setMoments(on) }
     }
 
+    /** Settings › Look › Show the side rail. */
+    fun setSideRail(on: Boolean) {
+        viewModelScope.launch { settingsRepository.setSideRail(on) }
+    }
+
     /** The context chip's Keep the usual layout: no moment until the mode, or the evening, moves on. */
     fun keepUsualLayout() {
         val now = LocalDateTime.now(clock)
@@ -693,6 +700,7 @@ fun homeUiState(
         homeLayout = settings.homeLayout,
         moments = settings.moments,
         momentsHeld = settings.momentsHeld == Moments.held(mode, time),
+        sideRail = settings.sideRail,
     )
 }
 
