@@ -8,6 +8,7 @@ import com.phonoodlesramen.actioncenter.context.ContextMode
 import com.phonoodlesramen.actioncenter.context.ContextSchedule
 import com.phonoodlesramen.actioncenter.context.Hours
 import com.phonoodlesramen.actioncenter.handoff.PlayIn
+import com.phonoodlesramen.actioncenter.home.HomeLayout
 import java.io.File
 import java.nio.file.Files
 import java.time.LocalTime
@@ -43,6 +44,17 @@ class SettingsRepositoryTest {
 
         repo.setPlayIn(null)
         assertNull("unset again: Plezy if it's installed", repo.settings.first().playIn)
+    }
+
+    @Test
+    fun `the home is the dashboard until another layout is chosen`() = runTest {
+        val repo = repository()
+        assertEquals(HomeLayout.DASHBOARD, repo.settings.first().homeLayout)
+
+        repo.setHomeLayout(HomeLayout.MARQUEE)
+
+        assertEquals(HomeLayout.MARQUEE, repo.settings.first().homeLayout)
+        assertEquals("a layout that's gone reads as the dashboard", HomeLayout.DASHBOARD, HomeLayout.of("CAROUSEL"))
     }
 
     @Test

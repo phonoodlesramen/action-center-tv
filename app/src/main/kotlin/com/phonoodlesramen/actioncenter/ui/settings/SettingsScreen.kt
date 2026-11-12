@@ -73,6 +73,7 @@ import com.phonoodlesramen.actioncenter.context.ContextSchedule
 import com.phonoodlesramen.actioncenter.context.Hours
 import com.phonoodlesramen.actioncenter.guide.GuideEditor
 import com.phonoodlesramen.actioncenter.handoff.PlayIn
+import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.home.HomeUiState
 import com.phonoodlesramen.actioncenter.nfl.NflController
 import com.phonoodlesramen.actioncenter.plex.PlexSignIn
@@ -107,6 +108,9 @@ import kotlinx.coroutines.launch
 interface SettingsActions {
     fun setAccent(index: Int) {}
     fun setLayoutScale(scale: Float) {}
+
+    /** Settings › Look › Layout: how your home is laid out. A kid's keeps its own. */
+    fun setHomeLayout(layout: HomeLayout) {}
     fun setShowSampleContent(show: Boolean) {}
 
     /** The Phase 0 probe screen: device, handoff probes, Watch Next, safe mode. */
@@ -363,7 +367,21 @@ internal fun Note(text: String) {
 
 @Composable
 private fun ColumnScope.Look(state: HomeUiState, actions: SettingsActions) {
-    Eyebrow("Accent colour", Modifier.padding(top = 4.dp))
+    // Home layouts: the biggest choice in Look comes first. A kid's home keeps its own.
+    Eyebrow("Layout", Modifier.padding(top = 4.dp))
+    Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+        HomeLayout.entries.forEach { layout ->
+            val selected = layout == state.homeLayout
+            PillButton(
+                text = layout.title,
+                icon = if (selected) AppIcons.Check else null,
+                onClick = { actions.setHomeLayout(layout) },
+                modifier = Modifier.semantics { this.selected = selected },
+            )
+        }
+    }
+    Note("${state.homeLayout.detail} A kid's home keeps its own layout.")
+    Eyebrow("Accent colour", Modifier.padding(top = 8.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Palette.Accents.forEachIndexed { index, colour ->
             Surface(

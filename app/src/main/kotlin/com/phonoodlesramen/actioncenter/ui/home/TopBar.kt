@@ -3,6 +3,7 @@ package com.phonoodlesramen.actioncenter.ui.home
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.infiniteRepeatable
 import androidx.compose.animation.core.rememberInfiniteTransition
 import androidx.compose.animation.core.tween
@@ -76,6 +77,9 @@ private val AmPmFormat = DateTimeFormatter.ofPattern("a")
  * The avatar is whoever is on (Phase 5): their initial on their colour, and OK opens "Who's
  * watching?" (K1). On weekend mornings, while you're on, the kids' avatars sit small before
  * the gear, each a one-press switch (K11).
+ *
+ * [quiet] (Marquee, while you browse its strip) fades it back to the clock: everything else goes,
+ * and the round buttons dim. A warning chip (the stock launcher, the Home button) stays.
  */
 @Composable
 fun TopBar(
@@ -85,7 +89,11 @@ fun TopBar(
     modifier: Modifier = Modifier,
     avatar: FocusRequester? = null,
     search: FocusRequester? = null,
+    quiet: Boolean = false,
 ) {
+    val fade by animateFloatAsState(if (quiet) 0f else 1f, tween(QUIET_FADE_MILLIS), label = "top bar quiet")
+    val faded = Modifier.graphicsLayer { alpha = fade }
+    val dimmed = Modifier.graphicsLayer { alpha = QUIET_BUTTONS + (1f - QUIET_BUTTONS) * fade }
     Row(
         modifier = modifier,
         verticalAlignment = Alignment.CenterVertically,
@@ -105,18 +113,20 @@ fun TopBar(
             style = MaterialTheme.typography.titleMedium.onWallpaper(),
             maxLines = 1,
             overflow = TextOverflow.Ellipsis,
-            modifier = Modifier.weight(1f),
+            modifier = Modifier.weight(1f).then(faded),
         )
         val setupChip = LocalSetup.current.chip(kid = state.profile.kid)
         val updateChip = UpdateChip.of(LocalUpdates.current, kid = state.profile.kid)
-        when {
-            state.stockLauncherBack -> StockLauncherChip(onClick = actions::openDiagnostics)
-            updateChip != null -> UpdateChipButton(updateChip, onClick = actions::openUpdate)
-            setupChip != null -> SetupChipButton(setupChip, onClick = actions::openSetup)
-            else -> Chip(dot = LocalAccent.current, label = state.mode.label)
+        Box(if (state.stockLauncherBack || setupChip is SetupChip.HomeButtonOff) Modifier else faded) {
+            when {
+                state.stockLauncherBack -> StockLauncherChip(onClick = actions::openDiagnostics)
+                updateChip != null -> UpdateChipButton(updateChip, onClick = actions::openUpdate)
+                setupChip != null -> SetupChipButton(setupChip, onClick = actions::openSetup)
+                else -> Chip(dot = LocalAccent.current, label = state.mode.label)
+            }
         }
-        state.weatherNow?.let { WeatherLabel(it) }
-        Row(verticalAlignment = Alignment.CenterVertically) {
+        state.weatherNow?.let { WeatherLabel(it, faded) }
+        Row(faded, verticalAlignment = Alignment.CenterVertically) {
             PlexStatusLabel(state.plexStatus)
             // It slides in and out, so the chips to its left move rather than jump.
             AnimatedVisibility(
@@ -129,15 +139,15 @@ fun TopBar(
         }
         val kids = quickSwitch(state)
         if (kids.isNotEmpty()) {
-            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Row(faded, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 kids.forEach { kid -> KidAvatar(kid, onClick = { actions.switchProfile(kid.id) }) }
             }
         }
         // Phase 15 (Q5): Search, the gear's size, just before it; Back from Search comes back here.
-        CircleButton(onClick = actions::openSearch, modifier = search?.let { Modifier.focusRequester(it) } ?: Modifier) {
+        CircleButton(onClick = actions::openSearch, modifier = dimmed.then(search?.let { Modifier.focusRequester(it) } ?: Modifier)) {
             Icon(AppIcons.Search, contentDescription = "Search", modifier = Modifier.size(18.dp), tint = Palette.TextDim)
         }
-        CircleButton(onClick = actions::openSettings, modifier = Modifier.focusRequester(gear)) {
+        CircleButton(onClick = actions::openSettings, modifier = dimmed.focusRequester(gear)) {
             Icon(AppIcons.Gear, contentDescription = "Settings", modifier = Modifier.size(18.dp), tint = Palette.TextDim)
         }
         Avatar(
@@ -145,10 +155,14 @@ fun TopBar(
             // A kid's own colour; yours is the accent, dimmed late at night like the rest.
             color = state.profile.color?.let(::argb) ?: LocalAccent.current,
             onClick = actions::openProfiles,
-            modifier = avatar?.let { Modifier.focusRequester(it) } ?: Modifier,
+            modifier = dimmed.then(avatar?.let { Modifier.focusRequester(it) } ?: Modifier),
         )
     }
 }
+
+/** Marquee's quiet top bar: the fade, and how far the round buttons dim. */
+private const val QUIET_FADE_MILLIS = 200
+private const val QUIET_BUTTONS = 0.4f
 
 /** K11: the kids to show beside your avatar, on weekend mornings while you're on; none otherwise. */
 fun quickSwitch(state: HomeUiState): List<ActiveProfile> =
@@ -258,8 +272,8 @@ private fun UpdateChipButton(chip: UpdateChip, onClick: () -> Unit) {
 
 /** Icon and temperature; not focusable, nothing to do here (spec §4). */
 @Composable
-private fun WeatherLabel(weather: WeatherDisplay) {
-    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
+private fun WeatherLabel(weather: WeatherDisplay, modifier: Modifier = Modifier) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp)) {
         Icon(weatherIcon(weather.sky, weather.isDay), contentDescription = weather.condition, modifier = Modifier.size(20.dp), tint = Palette.TextDim)
         Text(weather.temperature, style = MaterialTheme.typography.titleMedium.onWallpaper(), maxLines = 1)
     }

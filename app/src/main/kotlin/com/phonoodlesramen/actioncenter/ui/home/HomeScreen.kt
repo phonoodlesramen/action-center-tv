@@ -36,8 +36,13 @@ import androidx.tv.material3.MaterialTheme
 import com.phonoodlesramen.actioncenter.context.ContextMode
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.guide.KidGuide
+import com.phonoodlesramen.actioncenter.content.Season
+import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.home.HomeRowsState
 import com.phonoodlesramen.actioncenter.home.HomeUiState
+import com.phonoodlesramen.actioncenter.home.StripCard
+import com.phonoodlesramen.actioncenter.home.TonightStrip
+import com.phonoodlesramen.actioncenter.home.lensDeck
 import com.phonoodlesramen.actioncenter.nfl.NflGame
 import com.phonoodlesramen.actioncenter.nfl.NflHome
 import com.phonoodlesramen.actioncenter.nfl.NflView
@@ -161,6 +166,10 @@ fun backToCardFocus(kid: Boolean, channelId: String): FocusRequest =
  * newer; a kid's home never shows it. The YouTube TV channels opened here come after the
  * favorites in the Live row.
  *
+ * Home layouts (Settings › Look › Layout): [HomeLayout.MARQUEE] puts [Marquee] in the
+ * dashboard's place, once there's a pick to lead it; until then (first run, Plex not linked)
+ * it's the dashboard. The rows below are the same in every layout, and a kid's home keeps its own.
+ *
  * @param rows Channels and Continue in your apps; empty rows draw nothing.
  * @param lastInputMillis when the remote was last pressed, for Now showing.
  */
@@ -219,14 +228,18 @@ fun HomeScreen(
     // F1, F9: the game-day card and the NFL row, on the minute tick and as scores move.
     val gameDay = remember(nfl, state.nowMillis, kid) { NflHome.card(nfl, state.nowMillis, kid) }
     val nflRow = remember(nfl, state.nowMillis, kid) { NflHome.row(nfl, state.nowMillis, kid) }
+    // Marquee needs a pick to lead its strip; before the library's in, it's the dashboard with the Plex code.
+    val marquee = !kid && state.homeLayout == HomeLayout.MARQUEE && state.content != null && state.pick != null
+    val strip = if (marquee) rememberStrip(state, shownGuide, favorites, backTo) else emptyList()
+    val marqueeState = remember { MarqueeState() }
 
     LaunchedEffect(focus) {
         // Home and Back from another screen always land at the top [U10].
         if (focus.target == HomeFocus.PLAY) scroll.scrollTo(0)
         picker.dismiss()
         val live = focus.channelId?.takeIf { focus.target == HomeFocus.LIVE }
-        // A kid's home has no Guide card (K7): what would land there lands on Play.
-        val guideOrPlay = if (kid) play else guideCard
+        // A kid's home has no Guide card (K7): what would land there lands on Play. Marquee's is its live card, if it has one.
+        val guideOrPlay = if (kid || (marquee && strip.none { it.key == StripCard.KEY_LIVE })) play else guideCard
         val target = when (focus.target) {
             HomeFocus.PLAY -> play
             HomeFocus.ALL_APPS -> appsRow.allApps
@@ -303,6 +316,15 @@ fun HomeScreen(
                 covered = nowShowing.showing
             }
             if (!covered) WallpaperLayer(scene, Modifier.matchParentSize())
+            if (marquee) {
+                // Marquee's backdrop stays put and fades as the rows scroll up, gone by the strip's top.
+                MarqueeBackdrop(
+                    card = marqueeState.shown(strip),
+                    lateNight = lateNight,
+                    faded = { scroll.value / (scroll.viewportSize.coerceAtLeast(1) * MARQUEE_FADE) },
+                    modifier = Modifier.matchParentSize(),
+                )
+            }
             BoxWithConstraints(Modifier.fillMaxSize()) {
                 val viewport = maxHeight
                 val metrics = RowMetrics.forWidth(maxWidth)
@@ -337,6 +359,21 @@ fun HomeScreen(
                                     lensMotion = lensMotion,
                                 )
                                 KidRows(state, shownGuide, lateNight, actions, openSheet, backTo = backTo, favorites = favorites)
+                            } else if (marquee) {
+                                Marquee(
+                                    state = state,
+                                    strip = strip,
+                                    marquee = marqueeState,
+                                    actions = actions,
+                                    focus = MarqueeFocus(first = play, live = guideCard, gear = gear, avatar = avatar, search = searchButton),
+                                    lateNight = lateNight,
+                                    openSheet = openSheet,
+                                    modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
+                                )
+                                HomeRows(
+                                    state, rows, lateNight, actions, openSheet,
+                                    guide = guide, favorites = favorites, nflRow = nflRow, nfl = nfl, watch = watch, recentTv = tv.channels,
+                                )
                             } else {
                                 Dashboard(
                                     state = state,
@@ -376,6 +413,22 @@ fun HomeScreen(
         }
     }
 }
+
+/**
+ * Marquee's strip (spec §4, Marquee): the pick, the lens card's title, Up Next, Quick Watch,
+ * what's on live (or the guide player's spot, P4) and the next lens, on the minute tick.
+ */
+@Composable
+private fun rememberStrip(state: HomeUiState, guide: GuideCardState, favorites: List<String>, backTo: BackTo?): List<StripCard> {
+    val live = remember(guide, favorites, state.nowMillis, backTo) { TonightStrip.live(guide, favorites, state.nowMillis, backTo) }
+    return remember(state.pick, state.lens, state.content, live, state.enabledLenses, state.lensPrefs, state.now.toLocalDate()) {
+        val moreLens = TonightStrip.moreLens(state.lensDeck(), state.lens, state.pick?.id, Season.at(state.now.toLocalDate()))
+        TonightStrip.build(state.pick, state.lens, state.content, live = live, moreLens = moreLens)
+    }
+}
+
+/** Marquee's backdrop is gone once the home has scrolled this much of the screen: Row B's top, where the strip is. */
+private const val MARQUEE_FADE = (Layout.SAFE_TOP + Layout.TOP_BAR_WEIGHT + Layout.ROW_A_WEIGHT + 2 * Layout.GAP_WEIGHT) / Layout.CANVAS_HEIGHT
 
 /** Room kept under a focused row for its focus ring and lift. */
 private val BOTTOM_ROOM = 8.dp

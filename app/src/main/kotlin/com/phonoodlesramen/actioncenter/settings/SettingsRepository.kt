@@ -16,6 +16,7 @@ import com.phonoodlesramen.actioncenter.context.ContextMode
 import com.phonoodlesramen.actioncenter.context.ContextSchedule
 import com.phonoodlesramen.actioncenter.context.Hours
 import com.phonoodlesramen.actioncenter.handoff.PlayIn
+import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.suggest.QuickWatch
 import com.phonoodlesramen.actioncenter.ui.theme.LayoutScale
 import com.phonoodlesramen.actioncenter.ui.theme.Palette
@@ -63,6 +64,8 @@ data class Settings(
     val recentSearches: Map<String, List<String>> = emptyMap(),
     /** Settings › Search › Include streaming apps (Phase 15, Q3): on by default. */
     val searchStreaming: Boolean = true,
+    /** Settings › Look › Layout: how your home is laid out; a kid's keeps its own. Dashboard by default. */
+    val homeLayout: HomeLayout = HomeLayout.DEFAULT,
 ) {
     val enabledLenses: Set<Lens> get() = Lens.entries.toSet() - disabledLenses
 }
@@ -76,6 +79,9 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
     suspend fun setAccent(index: Int) = store.edit { it[ACCENT] = index.coerceIn(Palette.Accents.indices) }
 
     suspend fun setLayoutScale(scale: Float) = store.edit { it[SCALE] = LayoutScale.clamp(scale) }
+
+    /** Settings › Look › Layout. */
+    suspend fun setHomeLayout(layout: HomeLayout) = store.edit { it[HOME_LAYOUT] = layout.name }
 
     suspend fun setName(name: String) = store.edit { it[NAME] = name.trim().take(MAX_NAME_LENGTH) }
 
@@ -181,6 +187,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
             .filter { it.key.name.startsWith(SEARCH_PREFIX) }
             .associate { it.key.name.removePrefix(SEARCH_PREFIX) to (it.value as String).split('\n').filter(String::isNotBlank) },
         searchStreaming = this[SEARCH_STREAMING] ?: true,
+        homeLayout = HomeLayout.of(this[HOME_LAYOUT]),
     )
 
     /** The stored hours, each mode falling back to its default; the default schedule if they no longer fit together. */
@@ -223,6 +230,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val LENS_SHUFFLE = booleanPreferencesKey("lens_shuffle")
         val LENS_MOVE_ON = stringPreferencesKey("lens_move_on")
         val SEARCH_STREAMING = booleanPreferencesKey("search_streaming")
+        val HOME_LAYOUT = stringPreferencesKey("home_layout")
 
         val CUTOFF = intPreferencesKey("quick_watch_cutoff_minutes")
         const val LAUNCH_PREFIX = "launch:"

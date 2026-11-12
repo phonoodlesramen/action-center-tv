@@ -155,6 +155,8 @@ data class HomeUiState(
     val recentSearches: List<String> = emptyList(),
     /** Settings › Search › Include streaming apps (Phase 15, Q3). */
     val searchStreaming: Boolean = true,
+    /** Settings › Look › Layout: yours; a kid's home keeps its own whatever this is. */
+    val homeLayout: HomeLayout = HomeLayout.DEFAULT,
 )
 
 /** The Plex part of the home screen. Never holds a token. */
@@ -554,6 +556,11 @@ class HomeViewModel(
         viewModelScope.launch { settingsRepository.setLayoutScale(scale) }
     }
 
+    /** Settings › Look › Layout. */
+    fun setHomeLayout(layout: HomeLayout) {
+        viewModelScope.launch { settingsRepository.setHomeLayout(layout) }
+    }
+
     /** Settings › Time & modes: Quick Watch fits before this (S6). */
     fun setQuickWatchCutoff(cutoff: LocalTime) {
         viewModelScope.launch { settingsRepository.setQuickWatchCutoff(cutoff) }
@@ -667,6 +674,7 @@ fun homeUiState(
         lensPrefs = settings.lensPrefs,
         recentSearches = settings.recentSearches[profile.id].orEmpty(),
         searchStreaming = settings.searchStreaming,
+        homeLayout = settings.homeLayout,
     )
 }
 

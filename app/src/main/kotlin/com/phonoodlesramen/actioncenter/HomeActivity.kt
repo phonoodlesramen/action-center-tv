@@ -51,6 +51,7 @@ import com.phonoodlesramen.actioncenter.handoff.Handoffs
 import com.phonoodlesramen.actioncenter.handoff.IntentSpec
 import com.phonoodlesramen.actioncenter.handoff.PlayIn
 import com.phonoodlesramen.actioncenter.home.ChannelButton
+import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.home.HomeState
 import com.phonoodlesramen.actioncenter.home.HomeStateLoader
 import com.phonoodlesramen.actioncenter.home.HomeViewModel
@@ -925,6 +926,7 @@ class HomeActivity : ComponentActivity() {
     private val settingsActions = object : SettingsActions {
         override fun setAccent(index: Int) = viewModel.setAccent(index)
         override fun setLayoutScale(scale: Float) = viewModel.setLayoutScale(scale)
+        override fun setHomeLayout(layout: HomeLayout) = viewModel.setHomeLayout(layout)
         override fun setShowSampleContent(show: Boolean) = viewModel.setShowSampleContent(show)
 
         override fun openDeviceCheck() {
