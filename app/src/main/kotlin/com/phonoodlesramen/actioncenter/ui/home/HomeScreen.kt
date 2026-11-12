@@ -622,7 +622,7 @@ private fun Dashboard(
     val gameLeads = moment == Moment.GAME_DAY && gameDay != null
     val lensLeads = (moment == Moment.WEEKEND_MORNING || moment == Moment.LATE_NIGHT) && lens != null && content != null && pick != null
     val kids = remember(state.profiles) { state.profiles.filter { it.kid } }
-    val league = remember(gameDay, state.nowMillis) { if (gameLeads) aroundTheLeague(gameDay!!.nfl, gameDay.game, state.nowMillis) else emptyList() }
+    val league = remember(gameDay, state.nowMillis) { if (gameLeads) aroundTheLeague(gameDay.nfl, gameDay.game, state.nowMillis) else emptyList() }
     val side = when (moment) {
         Moment.WEEKNIGHT, Moment.LATE_NIGHT -> moment.takeIf { !content?.quickWatch.isNullOrEmpty() }
         Moment.WEEKEND_MORNING -> moment.takeIf { kids.isNotEmpty() }
@@ -643,12 +643,12 @@ private fun Dashboard(
         )
         Spacer(Modifier.weight(Layout.GAP_WEIGHT))
         Row(Modifier.fillMaxWidth().weight(Layout.ROW_A_WEIGHT)) {
-            val heroArt = if (lensLeads) lens?.pick?.image else pick?.image
+            val heroArt = if (lensLeads) lens.pick.image else pick?.image
             val hero = Modifier.weight(Layout.LEFT_WEIGHT).fillMaxSize()
                 .reportsArt(focusedArt, heroArt).focusRestorer().focusGroup()
             when {
                 gameLeads -> GameDayCard(
-                    game = gameDay!!.game,
+                    game = gameDay.game,
                     view = gameDay.nfl,
                     nowMillis = state.nowMillis,
                     watch = gameDay.watch,
@@ -660,7 +660,7 @@ private fun Dashboard(
                 )
                 content == null || pick == null -> PlexHero(state.plex, actions, play, hero)
                 lensLeads -> PickHero(
-                    pick = lens!!.pick.asPick(),
+                    pick = lens.pick.asPick(),
                     undo = null,
                     note = null,
                     lateNight = lateNight,
