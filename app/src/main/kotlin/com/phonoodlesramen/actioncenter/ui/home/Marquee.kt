@@ -508,7 +508,7 @@ private fun StripRow(
 }
 
 /** OK on a strip card: Play, Resume, or the channel live. */
-private fun primaryAction(card: StripCard, actions: HomeActions) = when (card) {
+internal fun primaryAction(card: StripCard, actions: HomeActions) = when (card) {
     is StripCard.Tonight -> actions.play(card.pick.id, card.pick.title)
     is StripCard.LensTitle -> actions.play(card.state.pick.id, card.state.pick.title)
     is StripCard.UpNext -> actions.play(card.item.id, card.item.title)
