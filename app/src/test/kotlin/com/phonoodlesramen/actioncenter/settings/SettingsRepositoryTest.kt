@@ -71,6 +71,16 @@ class SettingsRepositoryTest {
     }
 
     @Test
+    fun `the side rail is off until switched on`() = runTest {
+        val repo = repository()
+        assertEquals(false, repo.settings.first().sideRail)
+
+        repo.setSideRail(true)
+
+        assertEquals(true, repo.settings.first().sideRail)
+    }
+
+    @Test
     fun `Search includes streaming apps until switched off (Phase 15)`() = runTest {
         val repo = repository()
         assertEquals(true, repo.settings.first().searchStreaming)

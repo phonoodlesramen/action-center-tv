@@ -80,6 +80,7 @@ internal object SampleHomeState {
         lensPrefs: LensPrefs = LensPrefs(),
         homeLayout: HomeLayout = HomeLayout.DEFAULT,
         moments: Boolean = false,
+        sideRail: Boolean = false,
         /** Everyone on this TV, you first; just you by default. */
         profiles: List<ActiveProfile>? = null,
     ): HomeUiState = homeUiState(
@@ -92,6 +93,7 @@ internal object SampleHomeState {
             lensPrefs = lensPrefs,
             homeLayout = homeLayout,
             moments = moments,
+            sideRail = sideRail,
         ),
         time = time,
         installed = apps,

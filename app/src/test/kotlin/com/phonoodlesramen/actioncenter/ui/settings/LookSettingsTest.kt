@@ -33,6 +33,7 @@ class LookSettingsTest {
     private val chosen = mutableListOf<HomeLayout>()
 
     private var moments by mutableStateOf(false)
+    private var sideRail by mutableStateOf(false)
 
     private val actions = object : SettingsActions {
         override fun setHomeLayout(layout: HomeLayout) {
@@ -42,6 +43,10 @@ class LookSettingsTest {
 
         override fun setMoments(on: Boolean) {
             moments = on
+        }
+
+        override fun setSideRail(on: Boolean) {
+            sideRail = on
         }
     }
 
@@ -71,5 +76,13 @@ class LookSettingsTest {
         compose.onNodeWithText("Change with the time of day").performSemanticsAction(SemanticsActions.OnClick)
         compose.waitForIdle()
         assertEquals(true, moments)
+    }
+
+    @Test
+    fun showTheSideRailSwitchesItOn() {
+        show()
+        compose.onNodeWithText("Show the side rail").performSemanticsAction(SemanticsActions.OnClick)
+        compose.waitForIdle()
+        assertEquals(true, sideRail)
     }
 }
