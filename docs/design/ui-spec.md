@@ -109,6 +109,12 @@ dashboard still the default. A kid's home keeps its own layout in every one (§4
 They ship one PR at a time: the setting and **Marquee** first, then **Moments**, a switch that lets
 the time of day choose what leads the home.
 
+**Keep my place (11/14/2026, P5)**: your place in a guide program is kept by how much you were
+watching it, not by which button you left with. Back keeps it as Home does, a slip of Channel up
+and straight back carries on where it was, and back on the channel later a pick-up card offers it.
+A program you watched from its start and left partway gets Plex's resume point, so Up Next and
+Plezy carry on once the guide has moved on (§4 Pick up where you left off).
+
 **The die (11/14/2026)**: a die on the top bar, for a moment of indecision. One press throws it at
 your library and it lands on a title, loaded a little toward what you've never seen; three dials
 (What, Genre, Decade) narrow the table (§4 The die).
@@ -843,8 +849,9 @@ Settings › Plex › Play in).
     the Up next card, and behind live a failure rejoins live, as before.
 - **Screen on** only while video plays (G10); the cards and a paused picture let the
   screensaver come on.
-- **Back** closes what's open over the picture, else returns to where it was opened, and
-  saves nothing. That holds when Android has made the home again behind the player (a
+- **Back** closes what's open over the picture (the pick-up card first), else returns to
+  where it was opened. Since P5 it keeps your place as Home does when you were watching the
+  program (Pick up where you left off, below); surfing past, it saves nothing. That holds when Android has made the home again behind the player (a
   configuration change the player rides out, such as an HDMI mode switch): the full guide
   and a program's details keep their place, the guide on the program played. **Home** (or anything else that stops the player: Plezy, the screensaver)
   pauses it where it is and saves that spot for the home's Back-to card (Start over and
@@ -897,8 +904,9 @@ Settings › Plex › Play in).
   profile's Plex user (as above). Once per program per sitting; Home or Plezy at that
   point still counts it.
 - **Every channel** (K1), shuffled ones too. Filler, cards and programs without a file
-  never count. Nothing else is sent: partial viewing writes no position, so surfing stays
-  out of Continue Watching.
+  never count. Partial viewing writes a position only for a program you watched from its
+  start and left partway (P5, Pick up where you left off), so surfing stays out of Continue
+  Watching.
 - Settings › Plex › Count guide viewing in Plex (on by default) turns it off for this TV.
 
 ### Credits card [Phase 11, K5]
@@ -948,9 +956,11 @@ file at a wall-clock time, so it knows how far behind live it is.
   time. One at a time; a newer stop replaces it.
   - **It holds** (`SpotRules`) for 4 hours, while its channel is in the lineup and its
     program is still in that channel's schedule window (about 3 hours back) with its file.
-    Any tune-in to another channel forgets it; its own channel live doesn't.
-  - **Back** saves nothing, and takes back a spot this player saved when it was stopped
-    and came back (Plezy, the screensaver), so Back always leaves none.
+    Since P5, tuning in to another channel no longer forgets it; a newer place replaces it,
+    and a program watched to its end (it counts as watched) takes it away.
+  - **Back** (P5) saves it too when you were watching the program; surfing past, Back saves
+    nothing and takes back a spot this player saved when it was stopped and came back
+    (Plezy, the screensaver).
   - **Resuming** (the Back-to card, §4 Plex Guide card) opens the player on that channel,
     behind live and paused on that frame: "Paused · 9 min behind live", the banner held,
     and Play carries on. The player takes the spot over: Home saves it again, Back leaves
@@ -962,6 +972,45 @@ file at a wall-clock time, so it knows how far behind live it is.
   fails behind live rejoins live rather than showing a card.
 - **Known gap:** after a long pause, the banner's Next can name a program that's already
   over (a 2.7 follow-up).
+
+### Pick up where you left off [P5]
+`player/GuidePlaces.kt` (`PlaceRules`), `player/GuideTuner.kt`, `player/GuidePlayerActivity.kt`,
+`ui/player/GuidePlayerScreen.kt` (`PickUpCardView`). Started from the guide, then a wrong button,
+a trip Home, or a Start over and then Channel up: the place stays yours. What decides whether
+it's kept is how much you were watching, not which button you left by.
+- **Watching** (`PlaceRules.watching`): the program's frames have played 3 minutes this
+  sitting, or you chose it: started it over, paused it, skipped or scrubbed in it, or picked
+  it up. Filler, cards and programs without a file are never kept, nor one watched to its end.
+  Surfing past keeps nothing, so the guide stays a place to browse.
+- **Leaving keeps it, however you leave:** Home and anything else that stops the player
+  (as P3), Back (since P5), and a channel change (Up, Down, the mini guide, another
+  channel chosen) keep the place in the program you were watching: in the tuner for the
+  sitting (the last 8 programs), and on the home's Back-to card once the player closes.
+- **A slip of the thumb:** back on the channel within 2 minutes in the same sitting, the
+  program carries on where it was, playing, with nothing to press: "Picked up · 1 min behind
+  live" on the banner, Back to live in the control row.
+- **The pick-up card:** back on the channel later (a surf, the mini guide, the guide, the
+  Live row), or after the player has closed (the home's place, `SpotStore`), while that
+  program is still in the channel's schedule, the channel tunes in live as ever and a card
+  offers the place. It sits where the credits card goes (340 dp, top right inside the safe
+  area, `#161D25` at 94%): the program's art (96 dp, 16:9), "PICK UP WHERE YOU LEFT OFF" in the
+  accent, its title, "42:10 in · 9 min ago" (or "Left in the living room · 9 min ago" from
+  another TV, N6), and an accent "OK" chip with "Pick up". It fades in and out over 200 ms.
+  - **OK** (a tap) picks it up: the program behind live from that place, playing, "Picked up ·
+    9 min behind live" on the banner. Holding OK or Menu still opens the options, which take
+    the card away.
+  - **Back** takes it away and the channel carries on live; Back again leaves the player.
+  - **Left alone** it goes after 15 s. Up, Down and the mini guide take it with the channel.
+  - It shows only when there's something to pick up: 30 s or more behind live (or the end).
+    When it and the credits card are both due, it has the corner.
+- **Plex** (Count guide viewing in Plex, on by default): leaving a program you watched from
+  its start, give or take 5 minutes, past its first minute and short of its watched point,
+  puts Plex's resume point there (`/:/progress`, `state=stopped`, as Watch in does) for whoever's watching
+  (K3). Up Next, Plezy and every Plex app then carry on from it after the guide has moved on.
+  Joined midway, nothing is sent: a resume point there would start a film where you never saw
+  its beginning. Nothing for a kid without a Plex user.
+- **Not yet:** the full guide doesn't mark a program you have a place in, and the home keeps
+  one place at a time (the newest); older ones live on in Plex when they qualify.
 
 ### Mini guide [G12]
 `ui/player/MiniGuide.kt`. Left or Right opens a strip over the bottom third of the
@@ -1480,9 +1529,7 @@ still say "Not yet".
     is installed (its launcher entry), else Plex. A note says where every Play goes, the
     fallback, why (when nothing's chosen), and that Plezy switches to whoever's watching
     or that Plex may ask who's watching first. Per TV (K4).
-  - **Count guide viewing in Plex:** a toggle row, on by default: "A program watched to
-    its credits on a guide channel, three quarters of it, is marked watched for whoever's
-    watching. Nothing else is sent, and nothing for a kid without a Plex user."
+  - **Count guide viewing in Plex:** a toggle row, on by default: "A program watched to its credits on a guide channel, three quarters of it, is marked watched for whoever's watching. One you've watched from its start and left partway keeps its place in Plex, for Up Next and Plezy. Surfing sends nothing, and nothing goes for a kid without a Plex user."
 - **Wallpaper** [L1-L4]: styles grouped Classic / Creative / Frontier, then only the
   chosen style's controls (folder, image or slideshow, blur, speed, dim), then the card
   style and Now showing. Remote-friendly steps only, no sliders. No live preview: Back

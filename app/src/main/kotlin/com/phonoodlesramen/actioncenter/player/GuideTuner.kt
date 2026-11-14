@@ -116,6 +116,8 @@ data class GuidePlayerState(
     val scrub: Scrub? = null,
     /** The credits card (Phase 11, K5): over an episode's credits, its show's next episode, for 15 s. */
     val creditsCard: CreditsCard? = null,
+    /** The pick-up card (P5): a program you were watching on this channel and left, for 15 s as it tunes in. */
+    val pickUp: PickUpCard? = null,
 ) {
     /** The program on screen has a file to play from its start (G11): not filler, not off air, not behind a card. */
     val canStartOver: Boolean
@@ -192,6 +194,12 @@ data class Scrub(val forward: Boolean, val speed: Int, val fromMs: Long, val tar
  *   ([nextEpisode]) shows for [GuideViewing.CARD_MILLIS], once per program. A channel
  *   change, an overlay or the next program takes it away; [takeCreditsCard] picks it.
  *
+ * - **Keeping your place (P5, [PlaceRules]):** leaving a program you were watching (a surf,
+ *   another channel chosen, the player stopping) keeps its place for the sitting, and tells
+ *   [onLeftOff] when you'd seen it from its start. Back on its channel within 2 minutes, it
+ *   carries on from there ([resumePlace]); later, or for the home's place ([kept]), the
+ *   pick-up card offers it ([takePickUp]). [placeToKeep] is the place Back keeps.
+ *
  * The video exists only between [start] and [stop] (the activity's ON_START and ON_STOP).
  *
  * @param lineup the guide's lineup, from the cache.
@@ -211,6 +219,10 @@ class GuideTuner(
     private val nextEpisode: suspend (itemKey: String) -> NextEpisode? = { null },
     private val onWatched: (GuideSlot) -> Unit = {},
     private val favorites: Flow<List<String>> = flowOf(emptyList()),
+    /** The place the home keeps (P3, P5): back on its channel, the pick-up card offers it. */
+    private val kept: Flow<SavedSpot?> = flowOf(null),
+    /** Left a program you'd seen from its start, short of its watched point (P5): where Plex's resume point goes. */
+    private val onLeftOff: (GuideSlot, Long) -> Unit = { _, _ -> },
 ) : GuideVideo.Events {
     private val mutableState = MutableStateFlow(GuidePlayerState())
     val state: StateFlow<GuidePlayerState> = mutableState.asStateFlow()
@@ -273,11 +285,25 @@ class GuideTuner(
 
     private var retry: Retry? = null
 
-    /** A program's viewing this sitting (Phase 11): how long its frames played, and whether it's been counted or carded. */
-    private class Viewing(var watchedMs: Long = 0, var counted: Boolean = false, var carded: Boolean = false)
+    /**
+     * A program's viewing this sitting (Phase 11): how long its frames played, whether it's been
+     * counted or carded, and whether you chose it (P5): started it over, paused, skipped or picked it up.
+     */
+    private class Viewing(var watchedMs: Long = 0, var counted: Boolean = false, var carded: Boolean = false, var chose: Boolean = false)
 
     /** The last few programs' viewing, by [programId]: surfing away and back keeps what was watched. */
     private val viewings = LinkedHashMap<String, Viewing>()
+
+    /** Programs you were watching and left this sitting (P5), by [programId], oldest first: back on their channel, they're picked up. */
+    private val places = LinkedHashMap<String, Place>()
+
+    /** The home's place ([kept]), as last read. */
+    private var keptSpot: SavedSpot? = null
+    private var keptJob: Job? = null
+    private var pickUpJob: Job? = null
+
+    /** When the channel last tuned in, for the home's place arriving a moment after it ([offerKeptLate]). */
+    private var tunedAtMillis: Long? = null
 
     /** The program whose frames were playing at the last [sample], and when that was. */
     private var sampling: Viewing? = null
@@ -303,10 +329,12 @@ class GuideTuner(
      * has gone from the lineup, or whose file can't be had, tunes in live.
      */
     fun select(channelId: String?, startOver: Boolean = false, resume: SavedSpot? = null) {
+        if (started) leaveProgram(clock())
         this.channelId = channelId
         behind = null
         setOverlay(Overlay.None)
         dropCreditsCard()
+        dropPickUp()
         update { it.copy(controls = false, scrub = null) }
         pending = when {
             resume != null -> Pending.Resume(resume)
@@ -314,9 +342,10 @@ class GuideTuner(
             else -> null
         }
         val list = channels?.takeIf { it.isNotEmpty() } ?: return
-        present(current(list))
+        val channel = current(list)
+        present(channel)
         showBanner()
-        if (!takePending()) tune()
+        if (!takePending() && !pickUp(channel, clock())) tune()
     }
 
     /** Opens the video and tunes in from the lineup. */
@@ -355,6 +384,18 @@ class GuideTuner(
                 .distinctUntilChanged()
                 .collect { ids -> update { it.copy(favorites = ids) } }
         }
+        keptJob = scope.launch {
+            kept
+                .catch { e ->
+                    log("player: kept place: ${e.summary()}")
+                    emit(null)
+                }
+                .distinctUntilChanged()
+                .collect { spot ->
+                    keptSpot = spot
+                    offerKeptLate()
+                }
+        }
     }
 
     /**
@@ -369,12 +410,16 @@ class GuideTuner(
         // What played up to now counts, and may reach the watched point (Home during the credits).
         sample()
         checkViewing()
+        // P5: a program you were watching tells Plex where you left it, however the player stops.
+        leaveProgram(clock())
         started = false
         holdForLater()
         viewingJob?.cancel()
         dropCreditsCard()
+        dropPickUp()
         lineupJob?.cancel()
         favoritesJob?.cancel()
+        keptJob?.cancel()
         tuneJob?.cancel()
         bannerJob?.cancel()
         overlayJob?.cancel()
@@ -423,9 +468,12 @@ class GuideTuner(
     fun surf(step: Int) {
         val list = channels?.takeIf { it.isNotEmpty() } ?: return
         val target = GuideTuning.channelAfter(list, channelId, step) ?: return
+        // P5: a program you were watching is kept, so surfing back picks it up.
+        leaveProgram(clock())
         channelId = target.id
         behind = null
         dropCreditsCard()
+        dropPickUp()
         stopVideo()
         onAir = null
         present(target)
@@ -534,6 +582,7 @@ class GuideTuner(
         val held = behind?.paused == true
         val sought = BehindLive(slot, target.coerceAtLeast(0), now, paused = held, startedOver = false)
         behind = sought
+        viewing(slot).chose = true
         onAir = slot
         log("player: channel $channelId, sought to ${sought.positionMs / 1_000} s, ${sought.behindAt(now) / 1_000} s behind live")
         try {
@@ -572,6 +621,7 @@ class GuideTuner(
         val now = clock()
         val position = position()
         behind = current?.pausedAt(now, position) ?: BehindLive.pausedLive(slot, now, position)
+        viewing(slot).chose = true
         log("player: paused, ${(behind?.behindAt(now) ?: 0) / 1_000} s behind live")
         tuneJob?.cancel()
         settling = false
@@ -745,7 +795,7 @@ class GuideTuner(
                 when {
                     pending != null && takePending() -> Unit
                     behind != null -> followBehind(open = true)
-                    else -> tune()
+                    else -> if (!pickUp(channel, now)) tune()
                 }
             }
             // Behind live, the program plays on whatever the schedule does.
@@ -776,7 +826,11 @@ class GuideTuner(
             GuideTuning.nextProgram(channel, slot?.endMillis ?: now)
         }
         update { state ->
-            state.copy(channel = channel, slot = slot, next = next, creditsCard = state.creditsCard?.takeIf { slot != null && same(it.program, slot) })
+            state.copy(
+                channel = channel, slot = slot, next = next,
+                creditsCard = state.creditsCard?.takeIf { slot != null && same(it.program, slot) },
+                pickUp = state.pickUp?.takeIf { it.place.channelId == channel.id },
+            )
         }
     }
 
@@ -793,6 +847,10 @@ class GuideTuner(
         tuneJob = scope.launch {
             if (afterMillis > 0) delay(afterMillis)
             settling = false
+            // A surf that settles on a channel with a program you were watching (P5): picked up at once, or offered.
+            val settled = channels?.takeIf { afterMillis > 0 && it.isNotEmpty() }?.let { current(it) }
+            // Picked up, [followBehind] has taken over this job.
+            if (settled != null && pickUp(settled, clock())) return@launch
             followSchedule()
         }
     }
@@ -934,7 +992,9 @@ class GuideTuner(
         val slot = behind?.slot ?: channel.slotAt(now)
         if (slot == null || !GuideTuning.canStartOver(slot)) return false
         log("player: channel $channelId, ${slot.itemKey} started over")
+        dropPickUp()
         behind = BehindLive.startedOver(slot, now)
+        viewing(slot).chose = true
         onAir = slot
         present(channel, now)
         showBanner()
@@ -1082,7 +1142,10 @@ class GuideTuner(
     private fun setOverlay(overlay: Overlay) {
         overlayJob?.cancel()
         if (overlay != Overlay.None) bannerJob?.cancel()
-        if (overlay != Overlay.None) dropCreditsCard()
+        if (overlay != Overlay.None) {
+            dropCreditsCard()
+            dropPickUp()
+        }
         update {
             if (overlay == Overlay.None) it.copy(overlay = overlay) else it.copy(overlay = overlay, banner = false, controls = false, scrub = null)
         }
@@ -1175,6 +1238,8 @@ class GuideTuner(
         if (!viewing.counted && GuideViewing.counts(position, viewing.watchedMs, duration, credits)) {
             viewing.counted = true
             log("player: channel $channelId, $key watched, ${viewing.watchedMs / 60_000} of ${duration / 60_000} min")
+            // Watched to its end, there's no place to come back to (P5).
+            places.remove(programId(slot))
             onWatched(slot)
         }
         if (!viewing.carded && slot.showKey != null && GuideViewing.inCredits(position, duration, credits)) {
@@ -1209,6 +1274,138 @@ class GuideTuner(
                 creditsAsked.remove(key)
             }
         }
+    }
+
+    // P5: keeping your place.
+
+    /**
+     * Back over the picture (P5): the place in the program on screen, as the home keeps it,
+     * when you were watching it; null when you weren't (surfing past), so Back leaves nothing.
+     */
+    fun placeToKeep(): SavedSpot? {
+        val place = keptPlace(clock()) ?: return null
+        val key = place.slot.itemKey ?: return null
+        return SavedSpot(place.channelId, place.slot.startMillis, key, place.positionMs, place.leftAtMillis)
+    }
+
+    /** OK on the pick-up card (P5): the program from where you left it, playing. False when there's no card. */
+    fun takePickUp(): Boolean {
+        val card = mutableState.value.pickUp ?: return false
+        val list = channels?.takeIf { it.isNotEmpty() } ?: return false
+        val channel = list.firstOrNull { it.id == card.place.channelId } ?: return false
+        resumePlace(channel, card.place, clock())
+        return true
+    }
+
+    /** Back on the pick-up card: it goes, and the channel carries on live. */
+    fun dismissPickUp() = dropPickUp()
+
+    /**
+     * The program on screen as a place at [now], when you were watching it ([PlaceRules.watching]):
+     * one with a file whose frames show, or held behind live, and not yet watched to its end.
+     */
+    private fun keptPlace(now: Long): Place? {
+        sample()
+        val channel = channelId ?: return null
+        val slot = behind?.slot ?: onAir?.takeIf { videoActive && mutableState.value.picture == Picture.Video } ?: return null
+        if (!GuideTuning.canStartOver(slot)) return null
+        val viewing = viewings[programId(slot)] ?: return null
+        if (viewing.counted || !PlaceRules.watching(viewing.watchedMs, viewing.chose)) return null
+        return Place(channel, slot, behind?.positionAt(now) ?: position() ?: slot.offsetAt(now), now)
+    }
+
+    /**
+     * Leaving the program on screen (P5): a surf, another channel chosen, or the player
+     * stopping. When you were watching it, it's kept for this sitting; when you'd seen it from
+     * its start, Plex is told where you left it ([PlaceRules.leftOff]).
+     */
+    private fun leaveProgram(now: Long) {
+        val place = keptPlace(now) ?: return
+        val id = programId(place.slot)
+        places.remove(id)
+        places[id] = place
+        while (places.size > KEPT) places.remove(places.keys.first())
+        val viewing = viewings[id] ?: return
+        val key = place.slot.itemKey ?: return
+        // Until Plex says where its credits are, the watched point is 90%.
+        val watchedAt = GuideViewing.watchedPoint(durationOf(place.slot), creditsByKey[key])
+        PlaceRules.leftOff(place.positionMs, viewing.watchedMs, watchedAt)?.let { onLeftOff(place.slot, it) }
+    }
+
+    /**
+     * Tuning in to [channel] (P5): a program you were watching on it and left, still in its
+     * schedule with something to pick up, is picked up at once when you're back within
+     * [PlaceRules.QUICK_RETURN_MILLIS] this sitting, and otherwise offered on the pick-up card
+     * while the channel tunes in live. True when it was picked up, so nothing tunes in live.
+     */
+    private fun pickUp(channel: GuideChannel, now: Long): Boolean {
+        tunedAtMillis = now
+        val sitting = placeInSitting(channel, now)
+        if (sitting != null && PlaceRules.quickReturn(sitting.leftAtMillis, now)) {
+            resumePlace(channel, sitting, now)
+            return true
+        }
+        val place = sitting ?: keptPlaceOn(channel, now) ?: return false
+        offerPickUp(place)
+        return false
+    }
+
+    /** The newest place this sitting on [channel] still worth picking up at [now], with its slot as the schedule has it now. */
+    private fun placeInSitting(channel: GuideChannel, now: Long): Place? = places.values.toList().asReversed()
+        .firstNotNullOfOrNull { place -> scheduled(channel, place.slot)?.takeIf { place.channelId == channel.id }?.let { place.copy(slot = it) } }
+        ?.takeIf { PlaceRules.missed(it.positionMs, it.slot.offsetAt(now)) }
+
+    /** The home's place (P3), when it's on [channel] and still worth picking up at [now]. */
+    private fun keptPlaceOn(channel: GuideChannel, now: Long): Place? {
+        val spot = keptSpot?.takeIf { it.channelId == channel.id } ?: return null
+        val slot = channel.slots.firstOrNull { spot.isFor(it) }?.takeIf { GuideTuning.canStartOver(it) } ?: return null
+        return Place(channel.id, slot, spot.positionMs, spot.savedAtMillis, spot.room).takeIf { PlaceRules.missed(it.positionMs, slot.offsetAt(now)) }
+    }
+
+    /** [slot] in [channel]'s schedule as it is now, while it's there with a file. */
+    private fun scheduled(channel: GuideChannel, slot: GuideSlot): GuideSlot? =
+        channel.slots.firstOrNull { same(it, slot) }?.takeIf { GuideTuning.canStartOver(it) }
+
+    /** Carries on from [place] (P5): its program behind live, playing, the banner saying it was picked up. */
+    private fun resumePlace(channel: GuideChannel, place: Place, now: Long) {
+        dropPickUp()
+        places.remove(programId(place.slot))
+        val length = (place.slot.endMillis - place.slot.startMillis).coerceAtLeast(0)
+        behind = BehindLive(place.slot, place.positionMs.coerceIn(0, length), now, paused = false, startedOver = false, pickedUp = true)
+        viewing(place.slot).chose = true
+        log("player: channel ${channel.id}, ${place.slot.itemKey} picked up at ${place.positionMs / 1_000} s")
+        onAir = place.slot
+        present(channel, now)
+        showBanner()
+        followBehind(open = true)
+    }
+
+    /** The pick-up card for [place], for [PlaceRules.CARD_MILLIS]; the channel plays on live under it. */
+    private fun offerPickUp(place: Place) {
+        pickUpJob?.cancel()
+        update { it.copy(pickUp = PickUpCard(place)) }
+        pickUpJob = scope.launch {
+            delay(PlaceRules.CARD_MILLIS)
+            update { it.copy(pickUp = null) }
+        }
+    }
+
+    private fun dropPickUp() {
+        pickUpJob?.cancel()
+        pickUpJob = null
+        if (mutableState.value.pickUp != null) update { it.copy(pickUp = null) }
+    }
+
+    /**
+     * The home's place is read from storage, so it can arrive a moment after the channel tuned
+     * in live: it's offered then, while the tune-in is fresh and nothing's been picked up.
+     */
+    private fun offerKeptLate() {
+        val list = channels?.takeIf { it.isNotEmpty() } ?: return
+        val tuned = tunedAtMillis ?: return
+        val now = clock()
+        if (behind != null || settling || mutableState.value.pickUp != null || now - tuned > PlaceRules.CARD_MILLIS) return
+        keptPlaceOn(current(list), now)?.let { offerPickUp(it) }
     }
 
     private fun viewing(slot: GuideSlot): Viewing {

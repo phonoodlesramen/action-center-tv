@@ -20,6 +20,8 @@ data class BehindLive(
     val paused: Boolean,
     /** Started over from the program's start, rather than paused from live: the banner says which. */
     val startedOver: Boolean,
+    /** Picked up where you left it (P5): the banner says so. */
+    val pickedUp: Boolean = false,
 ) {
     private val lengthMs: Long get() = (slot.endMillis - slot.startMillis).coerceAtLeast(0)
 

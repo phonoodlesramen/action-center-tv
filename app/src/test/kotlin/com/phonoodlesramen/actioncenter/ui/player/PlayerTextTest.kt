@@ -3,6 +3,7 @@ package com.phonoodlesramen.actioncenter.ui.player
 import com.phonoodlesramen.actioncenter.guide.GuideSlot
 import com.phonoodlesramen.actioncenter.player.BehindLive
 import com.phonoodlesramen.actioncenter.player.OffAirReason
+import com.phonoodlesramen.actioncenter.player.Place
 import com.phonoodlesramen.actioncenter.player.Scrub
 import com.phonoodlesramen.actioncenter.ui.guide.NoChannelsYet
 import com.phonoodlesramen.actioncenter.ui.guide.SampleGuide
@@ -135,5 +136,19 @@ class PlayerTextTest {
         assertEquals("Fast forward ×4 · Live", PlayerText.scrubEyebrow(Scrub(true, 4, 9 * minute, 11 * minute), ridgeLine, now))
         // Behind live past the slot's end, the schedule has moved on further still.
         assertEquals("Rewind ×2 · 1 hr 8 min behind live", PlayerText.scrubEyebrow(Scrub(false, 2, 50 * minute, 30 * minute), ridgeLine, halfPastEight + 98 * minute))
+    }
+
+    @Test
+    fun `a program picked up says so, and the pick-up card says where and when you left it`() {
+        val ridgeLine = slot(halfPastEight, 52)
+        val pickedUp = BehindLive(ridgeLine, 2 * minute, now, paused = false, startedOver = false, pickedUp = true)
+        assertEquals("Picked up · 9 min behind live", PlayerText.behindEyebrow(pickedUp, now))
+        // Paused after it, it's paused.
+        assertEquals("Paused · 9 min behind live", PlayerText.behindEyebrow(pickedUp.pausedAt(now), now))
+
+        val place = Place("tv-mix", ridgeLine, 42 * minute + 10_000, now - 9 * minute)
+        assertEquals("42:10 in · 9 min ago", PickUpText.line(place, now))
+        assertEquals("1:02:00 in · just now", PickUpText.line(place.copy(positionMs = 62 * minute, leftAtMillis = now), now))
+        assertEquals("Left in the living room · 9 min ago", PickUpText.line(place.copy(room = "Living room"), now))
     }
 }

@@ -3,8 +3,10 @@ package com.phonoodlesramen.actioncenter.ui.player
 import com.phonoodlesramen.actioncenter.guide.GuideSlot
 import com.phonoodlesramen.actioncenter.player.BehindLive
 import com.phonoodlesramen.actioncenter.player.OffAirReason
+import com.phonoodlesramen.actioncenter.player.Place
 import com.phonoodlesramen.actioncenter.player.Scrub
 import com.phonoodlesramen.actioncenter.player.Seeking
+import com.phonoodlesramen.actioncenter.ui.guide.BackToText
 import com.phonoodlesramen.actioncenter.ui.guide.NoChannelsYet
 import java.time.Instant
 import java.time.ZoneId
@@ -45,11 +47,15 @@ internal object PlayerText {
         }
     }
 
-    /** The banner's eyebrow behind live: "Paused · 12 min behind live", "Started over · …", or just how far behind after a pause. */
+    /**
+     * The banner's eyebrow behind live: "Paused · 12 min behind live", "Started over · …",
+     * "Picked up · …" (P5), or just how far behind after a pause.
+     */
     fun behindEyebrow(behind: BehindLive, nowMillis: Long): String {
         val how = when {
             behind.paused -> "Paused"
             behind.startedOver -> "Started over"
+            behind.pickedUp -> "Picked up"
             else -> null
         }
         return listOfNotNull(how, behindLive(behind.behindAt(nowMillis))).joinToString(" · ")
@@ -116,4 +122,16 @@ internal object PlayerText {
     }
 
     private fun two(value: Long) = value.toString().padStart(2, '0')
+}
+
+/** The pick-up card's line (P5), apart from Compose so it's unit-tested. */
+internal object PickUpText {
+    /**
+     * Where and when you left it: "42:10 in · 9 min ago", or, left on another TV (Phase 8,
+     * N6), "Left in the living room · 9 min ago".
+     */
+    fun line(place: Place, nowMillis: Long): String {
+        val where = place.room?.let { "Left in ${BackToText.inRoom(it)}" } ?: "${PlayerText.position(place.positionMs)} in"
+        return "$where · ${BackToText.ago(nowMillis - place.leftAtMillis)}"
+    }
 }

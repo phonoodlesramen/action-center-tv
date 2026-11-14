@@ -880,7 +880,8 @@ private fun ColumnScope.PlayInSettings(state: HomeUiState, actions: SettingsActi
     ToggleRow(
         title = "Count guide viewing in Plex",
         detail = "A program watched to its credits on a guide channel, three quarters of it, is marked watched " +
-            "for whoever's watching. Nothing else is sent, and nothing for a kid without a Plex user.",
+            "for whoever's watching. One you've watched from its start and left partway keeps its place in Plex, " +
+            "for Up Next and Plezy. Surfing sends nothing, and nothing goes for a kid without a Plex user.",
         on = state.countGuideViewing,
         onClick = { actions.setCountGuideViewing(!state.countGuideViewing) },
     )
