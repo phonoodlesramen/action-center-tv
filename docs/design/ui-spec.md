@@ -109,6 +109,10 @@ dashboard still the default. A kid's home keeps its own layout in every one (§4
 They ship one PR at a time: the setting and **Marquee** first, then **Moments**, a switch that lets
 the time of day choose what leads the home.
 
+**The die (11/14/2026)**: a die on the top bar, for a moment of indecision. One press throws it at
+your library and it lands on a title, loaded a little toward what you've never seen; three dials
+(What, Genre, Decade) narrow the table (§4 The die).
+
 The prototype shows the Phase 1 layout.
 
 **Tags:** [REQ] brief requirement · [U*n*] UI decision · [PROP] proposal, not settled
@@ -299,6 +303,8 @@ Left to right:
     gone. It slides in and out over 200 ms, so the chips to its left move rather than
     jump. The run covers the work after the sync too (picks, the kids, the guide), since
     the cards change until then. Not while Plex isn't connected;
+- **die** (11/14/2026): a 36 dp circle with a die, just before the magnifier, once your library
+  is on this TV (the cards are from Plex). It opens its tray (§4 The die), and Back lands on it;
 - **search** (Phase 15, Q5): a 36 dp circle with the magnifier, just before the gear; it
   opens Search, and Back from Search lands on it;
 - **gear** (36 dp circle, focusable) [U9];
@@ -1233,6 +1239,58 @@ and the search providers other apps declare: counts, names and answers, never a 
 also logged under `ActionCenterSearch`. Below, buttons try Google with "heat" and each offer's
 link on this TV.
 
+### The die [11/14/2026]
+A die on the top bar (`ui/dice/`, `dice/`): small, until you can't decide. Yours and a kid's.
+- **On the top bar:** a die in the icons' dim, 18 dp, drawn as Material Symbols' `casino` draws
+  its five (a rounded square, round pips), so it sits with the magnifier and the gear. It shows
+  the face it last landed on, five until it's thrown, and rests at a 12° tilt, as if tossed onto
+  the bar. Focused, it wiggles square (14°, −8°, 4°, 0°, 90 ms each). Not before the library is
+  on this TV: there's nothing to throw at.
+- **The tray:** OK opens it over the home, 640 dp wide in the middle, `#121920` with 16 dp
+  corners, on the sheet's scrim; it slides up 40 dp as it fades in (200 ms). It **throws as it
+  opens**: one press of the die, and a title. Focus stays inside; Back closes it, to the die.
+  Home closes it too.
+  - **The stage** (196 dp): the die at the left, 104 dp, the accent with ink pips, its shadow on
+    the table under it. At the right, the title over its art (64% of the width, faded into the
+    tray at the left and the bottom; late night dims it), with:
+    - an eyebrow in the accent that has a little more to say each time you roll again: "The die
+      has spoken", "Rolled again", "Third time's the charm", "Still deciding?", "The die is
+      getting dizzy", then "Roll 7. The die believes in you". "The only one that fits" when only
+      one does; "That's all of them. Round two" when everything that fits has come up;
+    - the title (headlineSmall, bold, two lines at most);
+    - what it is: "1995 · R · 2h 50m · Crime, Drama", a show's "2019 · TV-14 · 48m episodes";
+    - why it's a fair landing, and when it'd be over: "New to you · over by 10:42 PM", "Last
+      seen in 2019", a show's "New to you · starts at S1 · E1" or "Picks up at S2 · E4";
+    - **Play** (the movie, or the show's next episode: the one after the furthest you've
+      watched, else its first), **Roll again** (the `casino` symbol) and **Trailer** (grown-ups
+      only: its fallback is a YouTube search). Play and Trailer close the tray. They're there
+      from the start, faint until the die lands, so nothing moves under focus. Focus opens on
+      Roll again and moves to Play on the first landing, unless you've gone to the dials.
+  - **The dials** (What, Genre, Decade): a row of chips each, 30 dp pills, each with the number
+    of titles it would leave given the other two dials (faint at none). The chosen one is ticked,
+    in the accent; focused, a chip fills with the accent. OK on a chip throws at once with it (OK
+    on the chosen one throws again). What: Anything, Movies, Shows. Genre: Any genre, then up to
+    24 from your library, the biggest first. Decade: Any decade, then each decade in your library,
+    newest first. A dial's order never moves with the others, only its counts. They stay where
+    you left them, for each profile, until the app restarts.
+  - **The footer:** "Back to close", and "3,612 on the table", or "47 of 3,612 fit".
+- **What's on the table:** films with a file and shows with an episode, from the Plex cache on
+  this TV (read as the tray opens, once per sync and day, never from the network). Not what
+  you've watched in the last year or started, nothing in Continue Watching (Up Next's), nothing
+  Not tonight hides, nothing you rated 2 stars or fewer. A kid's table is their own view of the
+  library: their ceiling (unrated hidden) and their plays (K2-K4).
+- **The throw:** the die is loaded, a little: a title you've never seen is three times as likely
+  as one you saw more than a year ago. What's come up doesn't come up again tonight until
+  everything that fits has; then the table starts over.
+- **The motion** (900 ms, §7): the die hops three times, each lower (44 dp, a third of that,
+  a twelfth), spins five to eight quarter turns so it lands square, and flickers through faces
+  fast then slow, landing on its own. It squashes a little each time it lands, and its shadow
+  shrinks and fades as it rises. While the table is read it shakes in its cup ("Shaking the
+  cup…"). A newer throw takes it mid-air.
+- **Nothing fits:** "No dice", "Nothing fits all three", "Turn a dial back to Any.", and Roll
+  again faint. **Nothing on the table** (the library still coming, or all watched): "Nothing to
+  roll yet", why, and Close.
+
 ### Home layouts [H1-H6]
 
 Settings › Look › Layout (H1) lists the layouts: **Dashboard** (v1, the default: everything
@@ -1861,6 +1919,8 @@ bigger tiles; rows 44 / 214 / 196 dp, corners 18 / 12 dp.
 | Sheets, overlays | 200 ms | slide 40 dp + fade, ease-out |
 | Hero swap (Not tonight / Undo) | 250 ms | crossfade |
 | All apps scroll | 200 ms | ease-out |
+| The die's throw | 900 ms | spins and flickers ease-out (cubic), three hops |
+| The die's wiggle (focused on the top bar) | 4 × 90 ms | tween |
 
 No parallax. Ambient and animated backgrounds are a wallpaper choice (L1, §6b),
 never the default. Honour the system animation scale.

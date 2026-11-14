@@ -37,6 +37,7 @@ means `guide-core/src/commonMain/kotlin/com/phonoodlesramen/actioncenter/`.
 | AI blurbs (the user's own Claude key) | `ai` | `ClaudeBlurbs.kt`, `AiKeyVault.kt` |
 | Profiles and kids | `profiles`, `ui/profiles`, `ui/home` | `Profiles.kt`, `KidPlex.kt`, `WhosWatchingScreen.kt`, `KidHome.kt` |
 | Search | `search`, `ui/search` | `LibrarySearch.kt`, `StreamingSearch.kt`, `SearchScreen.kt` |
+| The die (a roll at your library) | `dice`, `ui/dice` | `Dice.kt`, `DiceTable.kt`, `DiceTray.kt` |
 | The NFL (off until turned on) | `core/nfl`, `nfl`, `ui/nfl` | `EspnClient.kt`, `NflRules.kt`, `NflSource.kt`, `NflScreen.kt` |
 | Guide station: the TV's side | `station` | `GuideStation.kt`, `StationClient.kt` |
 | Guide station: the server | `station/src/main/kotlin/com/phonoodlesramen/actioncenter/station/` | `StationServer.kt`, `Pairing.kt`, and the types in `core/guide/station/StationApi.kt` |

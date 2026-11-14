@@ -26,6 +26,8 @@ import com.phonoodlesramen.actioncenter.apps.LaunchableAppsRepository
 import com.phonoodlesramen.actioncenter.apps.StoredCustomBanners
 import com.phonoodlesramen.actioncenter.apps.usage.AndroidAppUsage
 import com.phonoodlesramen.actioncenter.apps.usage.AndroidUsageEvents
+import com.phonoodlesramen.actioncenter.dice.Dice
+import com.phonoodlesramen.actioncenter.dice.DiceTable
 import com.phonoodlesramen.actioncenter.lastapp.DataStoreTvChannels
 import com.phonoodlesramen.actioncenter.lastapp.TvChannelStore
 import com.phonoodlesramen.actioncenter.lastapp.UsageRecentApps
@@ -120,7 +122,11 @@ import com.phonoodlesramen.actioncenter.update.UpdateConfig
 import com.phonoodlesramen.actioncenter.update.Updater
 import com.phonoodlesramen.actioncenter.update.WorkUpdateSchedule
 import com.phonoodlesramen.actioncenter.suggest.EngineFeedback
+import com.phonoodlesramen.actioncenter.suggest.FeedbackRules
 import com.phonoodlesramen.actioncenter.suggest.FeedbackStore
+import com.phonoodlesramen.actioncenter.suggest.KidLibrary
+import com.phonoodlesramen.actioncenter.suggest.KidView
+import com.phonoodlesramen.actioncenter.suggest.Library
 import com.phonoodlesramen.actioncenter.suggest.Profiles
 import com.phonoodlesramen.actioncenter.suggest.SuggestionDatabase
 import com.phonoodlesramen.actioncenter.suggest.SuggestionEngine
@@ -156,6 +162,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.withContext
 import okhttp3.OkHttpClient
 
 /**
@@ -391,6 +398,30 @@ class AppContainer(
             titlesLike = plexDatabase.dao()::titlesLike,
             items = plexDatabase.dao()::items,
             titles = { plexDatabase.suggestLibrary().titles() },
+        )
+    }
+
+    /**
+     * The die (the top bar, spec §4): the Plex cache as a table to roll at, for whoever's on. A
+     * kid's is their own view of it (their ceiling, their plays, K2-K4); Not tonight's titles
+     * stay off it. Read when the tray opens, once per sync and day.
+     */
+    val dice: DiceTable by lazy {
+        val kids = StoredKidSource(profileStore, profileDatabase.kidPlex())
+        DiceTable(
+            read = { profile ->
+                val now = System.currentTimeMillis()
+                val shared = Library.read(plexDatabase.suggestLibrary())
+                val library = if (!profile.kid) {
+                    shared
+                } else {
+                    val theirs = kids.kids(LocalDate.now()).firstOrNull { it.id == profile.id } ?: KidView(profile.id, profile.ceiling.orEmpty())
+                    KidLibrary.of(shared, theirs)
+                }
+                val notTonight = FeedbackRules.hides(suggestionDatabase.dao().feedback(profile.id), now) { library.lastViewed(it) }.notTonight
+                withContext(Dispatchers.Default) { Dice.deck(library, notTonight, now) }
+            },
+            log = { Log.i(SuggestionEngine.LOG_TAG, it) },
         )
     }
 

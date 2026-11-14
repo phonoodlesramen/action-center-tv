@@ -22,6 +22,9 @@ affiliated with NVIDIA, Google, Plex or anyone else whose service it talks to (s
 - **The Live row:** your guide channels, then YouTube TV's networks.
 - **Search:** one box that covers your library (through Plex's own search), what's on now,
   and titles on the streaming apps installed on this TV.
+- **The die:** for when nobody can decide. One press on the top bar's die throws it at your
+  library and it lands on a title, a little more likely one you've never seen. Narrow it by
+  movies or shows, genre and decade.
 - **Profiles:** "Who's watching?" on wake. Kid profiles have a rating ceiling that moves up
   on each birthday, their own Plex user, and a kids' home.
 - **The Apps row:** ordered by what you open at this time of day, with custom banners if you

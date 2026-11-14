@@ -37,6 +37,7 @@ import com.phonoodlesramen.actioncenter.context.ContextMode
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.guide.KidGuide
 import com.phonoodlesramen.actioncenter.content.Season
+import com.phonoodlesramen.actioncenter.dice.DiceTable
 import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.home.Moment
 import com.phonoodlesramen.actioncenter.home.Moments
@@ -59,6 +60,9 @@ import com.phonoodlesramen.actioncenter.player.SpotRules
 import com.phonoodlesramen.actioncenter.ui.apps.ArtPickerHost
 import com.phonoodlesramen.actioncenter.ui.apps.ArtPickerState
 import com.phonoodlesramen.actioncenter.ui.apps.LocalArtPicker
+import com.phonoodlesramen.actioncenter.ui.dice.DiceTray
+import com.phonoodlesramen.actioncenter.ui.dice.DieHandle
+import com.phonoodlesramen.actioncenter.ui.dice.LocalDie
 import com.phonoodlesramen.actioncenter.ui.guide.GuideCard
 import com.phonoodlesramen.actioncenter.ui.home.rows.AppsRowFocus
 import com.phonoodlesramen.actioncenter.ui.home.rows.HomeRows
@@ -170,6 +174,9 @@ fun backToCardFocus(kid: Boolean, channelId: String): FocusRequest =
  * newer; a kid's home never shows it. The YouTube TV channels opened here come after the
  * favorites in the Live row.
  *
+ * The die (spec §4): once the library is on this TV, the top bar has a die ([LocalDie]), and its
+ * tray ([DiceTray]) opens over the home like a sheet. Back from it lands on the die.
+ *
  * Home layouts (Settings › Look › Layout): [HomeLayout.MARQUEE] puts [Marquee] in the
  * dashboard's place, once there's a pick to lead it; until then (first run, Plex not linked)
  * it's the dashboard. The rows below are the same in every layout, and a kid's home keeps its own.
@@ -200,6 +207,8 @@ fun HomeScreen(
     watch: WatchOptions = WatchOptions(),
     /** The last app you watched and the YouTube TV channels opened here. */
     tv: TvState = TvState(),
+    /** The die's table (spec §4): the top bar's die rolls at it once your library is on this TV. */
+    dice: DiceTable = DiceTable.None,
 ) {
     val play = remember { FocusRequester() }
     val nflCard = remember { FocusRequester() }
@@ -213,6 +222,9 @@ fun HomeScreen(
     val liveRow = remember { LiveRowFocus() }
     val picker = remember { ArtPickerState() }
     var sheet by remember { mutableStateOf<QuickSheet?>(null) }
+    // The die (spec §4): on the top bar once the library is on this TV, its tray over the home.
+    val die = remember(dice) { DieHandle(dice.face) }
+    val dieShown = state.content?.fromPlex == true
     var returnTo by remember { mutableStateOf<FocusRequester?>(null) }
     val openSheet: (QuickSheet) -> Unit = { sheet = it }
     val scroll = rememberScrollState()
@@ -280,11 +292,12 @@ fun HomeScreen(
             HomeFocus.NFL -> if (focus.nflKey == NflOpen.CARD) nflCard else play
         }
         val nflKey = focus.nflKey?.takeIf { focus.target == HomeFocus.NFL }
-        // An open sheet keeps focus inside it: close it first, then move.
+        // An open sheet or dice tray keeps focus inside it: close it first, then move.
         when {
-            sheet != null -> {
+            sheet != null || die.open -> {
                 returnTo = target
                 sheet = null
+                die.open = false
             }
             // The All apps card may be scrolled out of its row, so it isn't there to focus yet.
             // A kid's is in My apps, always there.
@@ -305,8 +318,15 @@ fun HomeScreen(
         scroll.scrollTo(0)
         runCatching { play.requestFocus() }
     }
-    LaunchedEffect(sheet) {
-        if (sheet == null) returnTo?.let { runCatching { it.requestFocus() } }
+    LaunchedEffect(sheet, die.open) {
+        if (sheet == null && !die.open) returnTo?.let { runCatching { it.requestFocus() } }
+    }
+    // The library went (signed out, say): so does the die, and its tray with it.
+    LaunchedEffect(dieShown) {
+        if (!dieShown && die.open) {
+            returnTo = play
+            die.open = false
+        }
     }
 
     val lateNight = state.mode == ContextMode.LATE_NIGHT
@@ -314,7 +334,7 @@ fun HomeScreen(
     val lensMotion = LensMotion(
         rotateSeconds = state.lensPrefs.rotateSeconds,
         shuffling = state.lensPrefs.shuffle,
-        covered = sheet != null || nowShowing.showing || picker.app != null,
+        covered = sheet != null || die.open || nowShowing.showing || picker.app != null,
     )
     val scene = WallpaperScene(
         prefs = wallpaper,
@@ -335,6 +355,7 @@ fun HomeScreen(
         LocalLiveRowFocus provides liveRow,
         LocalNflRowFocus provides nflRowFocus,
         LocalArtPicker provides picker,
+        LocalDie provides die.takeIf { dieShown },
     ) {
         Box(modifier.fillMaxSize().onPreviewKeyEvent { nowShowing.onKey(it) }) {
             // Once Now showing covers the screen, the wallpaper underneath stops: no
@@ -443,6 +464,21 @@ fun HomeScreen(
                     returnTo = target
                     sheet = null
                 }
+            }
+            if (die.open && dieShown) {
+                DiceTray(
+                    profile = state.profile,
+                    version = state.plex.lastSyncMillis,
+                    table = dice,
+                    now = state.now,
+                    lateNight = lateNight,
+                    actions = actions,
+                    onLanded = { die.face = it },
+                    onClose = {
+                        returnTo = die.button
+                        die.open = false
+                    },
+                )
             }
         }
     }

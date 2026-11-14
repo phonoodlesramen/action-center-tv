@@ -1,6 +1,7 @@
 package com.phonoodlesramen.actioncenter.ui.home
 
 import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.animateFloat
 import androidx.compose.animation.core.animateFloatAsState
@@ -22,11 +23,16 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
@@ -50,6 +56,9 @@ import com.phonoodlesramen.actioncenter.home.PlexStatus
 import com.phonoodlesramen.actioncenter.profiles.ActiveProfile
 import com.phonoodlesramen.actioncenter.setup.LocalSetup
 import com.phonoodlesramen.actioncenter.setup.SetupChip
+import com.phonoodlesramen.actioncenter.ui.dice.DieGlyph
+import com.phonoodlesramen.actioncenter.ui.dice.DieHandle
+import com.phonoodlesramen.actioncenter.ui.dice.LocalDie
 import com.phonoodlesramen.actioncenter.ui.profiles.argb
 import com.phonoodlesramen.actioncenter.ui.profiles.initialOf
 import com.phonoodlesramen.actioncenter.ui.theme.AppIcons
@@ -72,7 +81,8 @@ private val AmPmFormat = DateTimeFormatter.ofPattern("a")
  * stock launcher is back, a red chip replaces the context chip. While Plex syncs, a spinner
  * and "Updating" follow the Plex status ([com.phonoodlesramen.actioncenter.home.Updating]).
  *
- * The magnifier (Phase 15) opens Search.
+ * The magnifier (Phase 15) opens Search. The die before it opens its tray over the home, once
+ * your library is on this TV ([LocalDie], spec §4).
  *
  * The avatar is whoever is on (Phase 5): their initial on their colour, and OK opens "Who's
  * watching?" (K1). On weekend mornings, while you're on, the kids' avatars sit small before
@@ -149,6 +159,8 @@ fun TopBar(
                 kids.forEach { kid -> KidAvatar(kid, onClick = { actions.switchProfile(kid.id) }) }
             }
         }
+        // The die (spec §4): once your library is on this TV, just before Search; Back from its tray comes back here.
+        LocalDie.current?.let { DieButton(it, dimmed) }
         // Phase 15 (Q5): Search, the gear's size, just before it; Back from Search comes back here.
         CircleButton(onClick = actions::openSearch, modifier = dimmed.then(search?.let { Modifier.focusRequester(it) } ?: Modifier)) {
             Icon(AppIcons.Search, contentDescription = "Search", modifier = Modifier.size(18.dp), tint = Palette.TextDim)
@@ -366,6 +378,37 @@ private fun Spinner(color: Color, modifier: Modifier = Modifier) {
 
 private const val SPIN_MILLIS = 1_000
 private const val UPDATING_FADE_MILLIS = 200
+
+/**
+ * The die (spec §4): the face it last landed on, in the icons' dim, at a tilt as if tossed onto
+ * the bar. Focused, it wiggles square; OK opens its tray.
+ */
+@Composable
+private fun DieButton(die: DieHandle, modifier: Modifier = Modifier) {
+    var focused by remember { mutableStateOf(false) }
+    val tilt = remember { Animatable(DIE_REST_TILT) }
+    LaunchedEffect(focused) {
+        if (focused) {
+            DIE_WIGGLE.forEach { tilt.animateTo(it, tween(DIE_WIGGLE_STEP_MILLIS)) }
+        } else {
+            tilt.animateTo(DIE_REST_TILT, tween(DIE_WIGGLE_STEP_MILLIS * 2))
+        }
+    }
+    CircleButton(
+        onClick = { die.open = true },
+        modifier = modifier
+            .focusRequester(die.button)
+            .onFocusChanged { focused = it.isFocused }
+            .semantics { contentDescription = "Roll the die" },
+    ) {
+        DieGlyph(die.face, Palette.TextDim, Modifier.size(18.dp).graphicsLayer { rotationZ = tilt.value })
+    }
+}
+
+/** The die's tilt at rest, and the wiggle it gives when focused, ending square. */
+private const val DIE_REST_TILT = -12f
+private val DIE_WIGGLE = listOf(14f, -8f, 4f, 0f)
+private const val DIE_WIGGLE_STEP_MILLIS = 90
 
 @Composable
 private fun CircleButton(

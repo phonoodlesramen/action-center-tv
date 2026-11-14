@@ -293,6 +293,7 @@ class HomeActivity : ComponentActivity() {
                             nfl = nfl,
                             watch = watch,
                             tv = tv,
+                            dice = container.dice,
                         )
                     }
                     // Phase 13 (F3, F4): inside the home like the full guide; Back to the card that opened it.
