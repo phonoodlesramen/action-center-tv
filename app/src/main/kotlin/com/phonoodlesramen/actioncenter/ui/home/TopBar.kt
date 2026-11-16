@@ -105,6 +105,8 @@ fun TopBar(
     chip: FocusRequester? = null,
     /** Weekend mornings' small kids' avatars (K11); a moment's Who's watching card shows them instead. */
     kidSwitches: Boolean = true,
+    /** The die, magnifier, gear and avatar; the side rail (H4) has them instead. */
+    circles: Boolean = true,
 ) {
     val fade by animateFloatAsState(if (quiet) 0f else 1f, tween(QUIET_FADE_MILLIS), label = "top bar quiet")
     val faded = Modifier.graphicsLayer { alpha = fade }
@@ -159,6 +161,8 @@ fun TopBar(
                 kids.forEach { kid -> KidAvatar(kid, onClick = { actions.switchProfile(kid.id) }) }
             }
         }
+        // The die, the magnifier, the gear and the avatar: the side rail (H4) has them instead.
+        if (!circles) return@Row
         // The die (spec §4): once your library is on this TV, just before Search; Back from its tray comes back here.
         LocalDie.current?.let { DieButton(it, dimmed) }
         // Phase 15 (Q5): Search, the gear's size, just before it; Back from Search comes back here.

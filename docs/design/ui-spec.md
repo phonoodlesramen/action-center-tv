@@ -107,7 +107,8 @@ favorites in the Live row (§4 Plex Guide card, Live row).
 five options): **Settings › Look › Layout** chooses how your home is laid out, with the
 dashboard still the default. A kid's home keeps its own layout in every one (§4 Home layouts).
 They ship one PR at a time: the setting and **Marquee** first, then **Moments**, a switch that lets
-the time of day choose what leads the home.
+the time of day choose what leads the home, then **the side rail**, a switch that puts the
+profile, Search, Home, Guide, the NFL, Apps and Settings down the left beside any layout.
 
 **Keep my place (11/14/2026, P5)**: your place in a guide program is kept by how much you were
 watching it, not by which button you left with. Back keeps it as Home does, a slip of Channel up
@@ -1294,7 +1295,8 @@ A die on the top bar (`ui/dice/`, `dice/`): small, until you can't decide. Yours
   its five (a rounded square, round pips), so it sits with the magnifier and the gear. It shows
   the face it last landed on, five until it's thrown, and rests at a 12° tilt, as if tossed onto
   the bar. Focused, it wiggles square (14°, −8°, 4°, 0°, 90 ms each). Not before the library is
-  on this TV: there's nothing to throw at.
+  on this TV: there's nothing to throw at. With the side rail on (H4), it's the rail's "Roll the
+  die" (the `casino` symbol, after Search) instead, and Back from the tray lands there.
 - **The tray:** OK opens it over the home, 640 dp wide in the middle, `#121920` with 16 dp
   corners, on the sheet's scrim; it slides up 40 dp as it fades in (200 ms). It **throws as it
   opens**: one press of the die, and a title. Focus stays inside; Back closes it, to the die.
@@ -1459,6 +1461,45 @@ Weekend evenings and daytime keep the usual home.
   stored as `home_moments_held`. Switching Moments again forgets it.
 - **Focus:** Home lands on the lead's first button (Play, Watch again) or the game-day card.
 
+#### The side rail [H4]
+
+Settings › Look › **Show the side rail** (off by default): a column of icons down the left, beside
+whichever layout is chosen (`ui/home/SideRail.kt`, tv-material's `ModalNavigationDrawer`). A kid's
+home has none.
+
+```
+┌──┬──────────────────────────────────────────────┐        ┌───────────────┬───────────────┐
+│Ⓐ │ 8:41 PM  Good evening, Alex   ● Weeknight …  │  focus │ Ⓐ  Alex       │ (the home,    │
+│🔍│ ┌ Tonight's pick ─────────┐ ┌ lens ─────────┐ │  on it │ 🔍 Search     │  under a      │
+│⌂ │ │                         │ │               │ │  ───▶  │ ⌂  Home       │  scrim)       │
+│▤ │ └─────────────────────────┘ └ Quick Watch ──┘ │        │ ▤  Guide      │               │
+│🏈│  Up next …                   Plex Guide …     │        │    6 channels │               │
+│⋮⋮│                                               │        │ 🏈 NFL        │               │
+│⚙ │  LIVE …                                       │        │ ⋮⋮ Apps  …  ⚙ Settings        │
+└──┴──────────────────────────────────────────────┘        └───────────────┴───────────────┘
+```
+
+- **Items:** the profile (their initial on their colour; OK opens "Who's watching?"), Search,
+  Roll the die (once the library's on this TV, §4 The die), **Home** (selected: a `surface2` pill), Guide (with its channel count), NFL (while Show the NFL is
+  on), Apps (All apps), and Settings at the foot. Focused, an item fills with the accent (§3).
+- **Closed** it's 96 dp: 28 dp, NavigationDrawerItem's 56 dp collapsed width, 12 dp. The home
+  starts 12 dp past it, at 108 dp as in the mockup, and keeps its grid: the cards lose about 60
+  of the content's 864 dp, a little more at 115%, where the rail's icons grow too.
+- **Open** (focus on it), the items show their labels over the home, which sits under a scrim
+  from the left.
+- **The top bar** loses its die, magnifier, gear and avatar: they're the rail's Roll the die,
+  Search, Settings and profile. The kids' small avatars on weekend mornings (K11) stay in the top bar.
+
+| Focused | Up / Down | Left | Right | OK | Back |
+|---|---|---|---|---|---|
+| A rail item | the item above / below | none | the card you left (the home's focus restorer) | opens its screen; Home goes to the top of the home | the card you left |
+| The first card of a panel or row | as before | opens the rail on Home | as before | as before | as before |
+
+- **Back from a screen the rail opened:** Settings, Search, "Who's watching?" and the die's tray
+  land on their rail item, the rail open; the NFL screen on NFL (`NflOpen.RAIL`); the guide and All apps as
+  from the home (the Guide card, the All apps card).
+- **Watch out:** Left at a row's start now opens the rail, as on Google TV.
+
 ### Quick actions side sheet [U6]
 - 336 dp wide from the right, full height, `#121920`, slides in 40 dp + fades
   (200 ms).
@@ -1521,8 +1562,8 @@ still say "Not yet".
   Accessibility, opens this section (`setup/OpenSetupActivity`).
 - **Look** (H1): **Layout** first, Dashboard (the default) and Marquee as pills with a tick,
   and a note on what the chosen one does and that a kid's home keeps its own (§4 Home
-  layouts); **Change with the time of day** (Moments, H3), a toggle row, off by default; then
-  the accent colour and the layout scale (U3, U4).
+  layouts); **Change with the time of day** (Moments, H3) and **Show the side rail** (H4),
+  toggle rows, off by default; then the accent colour and the layout scale (U3, U4).
 - **Plex Guide** (2.7): its own subsection below, with Edit on your phone.
 - **Plex** (Phase 11): after Account, Server and Library, before Sync now and Sign out:
   - **Play in:** Plezy and Plex pills, the one in use ticked. Unset, it's Plezy when Plezy

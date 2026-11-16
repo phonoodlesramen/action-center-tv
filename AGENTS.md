@@ -25,7 +25,7 @@ means `guide-core/src/commonMain/kotlin/com/phonoodlesramen/actioncenter/`.
 | Feature | Package | Start with |
 |---|---|---|
 | The home screen | `home`, `ui/home`, `ui/home/rows` | `HomeViewModel.kt`, `HomeStateLoader.kt`, `HomeScreen.kt` |
-| Home layouts (Settings › Look › Layout) | `home`, `ui/home` | `HomeLayout.kt`, `TonightStrip.kt`, `Marquee.kt`, `Moments.kt` |
+| Home layouts (Settings › Look › Layout) | `home`, `ui/home` | `HomeLayout.kt`, `TonightStrip.kt`, `Marquee.kt`, `Moments.kt`, `SideRail.kt` |
 | HomeWatch (Home on Google TV) | `home` | `HomeWatchService.kt`, `HomeWatch.kt` |
 | Setup checklist | `setup`, `ui/settings` | `SetupMonitor.kt`, `SetupChecks.kt`, `SetupSettings.kt` |
 | Settings | `ui/settings`, `settings` | `SettingsScreen.kt` (one file per section), `SettingsRepository.kt` |

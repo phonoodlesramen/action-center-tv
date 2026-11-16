@@ -114,6 +114,9 @@ interface SettingsActions {
 
     /** Settings › Look › Change with the time of day (Moments, H3). */
     fun setMoments(on: Boolean) {}
+
+    /** Settings › Look › Show the side rail (H4). */
+    fun setSideRail(on: Boolean) {}
     fun setShowSampleContent(show: Boolean) {}
 
     /** The Phase 0 probe screen: device, handoff probes, Watch Next, safe mode. */
@@ -390,6 +393,13 @@ private fun ColumnScope.Look(state: HomeUiState, actions: SettingsActions) {
             "late nights with a comfort rewatch. It changes when you come back Home, never while you're on it.",
         on = state.moments,
         onClick = { actions.setMoments(!state.moments) },
+    )
+    ToggleRow(
+        title = "Show the side rail",
+        detail = "Profile, Search, Home, Guide, the NFL, Apps and Settings on the left, beside any layout. " +
+            "Left at the start of a row opens it; Right or Back returns to where you were.",
+        on = state.sideRail,
+        onClick = { actions.setSideRail(!state.sideRail) },
     )
     Eyebrow("Accent colour", Modifier.padding(top = 8.dp))
     Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {

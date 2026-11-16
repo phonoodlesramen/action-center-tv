@@ -93,7 +93,7 @@ sealed interface NflPage {
 
 /**
  * How the NFL screen opens (F3): on [page], from [opener], the home's card that opened it, where
- * Back lands: [CARD], [ALL_GAMES], [DIVISION] or a game's id on the NFL row.
+ * Back lands: [CARD], [ALL_GAMES], [DIVISION] or a game's id on the NFL row, or [RAIL].
  */
 @Immutable
 data class NflOpen(val page: NflPage = NflPage.Tab(NflTab.GAMES), val opener: String = CARD) {
@@ -101,6 +101,9 @@ data class NflOpen(val page: NflPage = NflPage.Tab(NflTab.GAMES), val opener: St
         const val CARD = "card"
         const val ALL_GAMES = "all-games"
         const val DIVISION = "division"
+
+        /** The side rail's NFL (H4): Back lands on it. */
+        const val RAIL = "rail"
     }
 }
 
