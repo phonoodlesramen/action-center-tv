@@ -244,6 +244,10 @@ fun HomeScreen(
     val game = remember(gameDay, nfl, state.nowMillis) { gameDay?.let { StripCard.Game(it, nfl, state.nowMillis) } }
     val strip = if (marquee) rememberStrip(state, shownGuide, favorites, backTo, moment, game.takeIf { moment == Moment.GAME_DAY }) else emptyList()
     val marqueeState = remember { MarqueeState() }
+    // On Now (H5) leads with live TV, so it needs a lineup; without one, it's the dashboard.
+    val onNowGuide = (shownGuide as? GuideCardState.Ready)?.takeIf { it.channels.isNotEmpty() }
+    val onNow = !kid && state.homeLayout == HomeLayout.ON_NOW && state.content != null && state.pick != null && onNowGuide != null
+    val liveTile = if (onNow) remember(shownGuide, favorites, state.nowMillis, backTo) { TonightStrip.live(shownGuide, favorites, state.nowMillis, backTo) } else null
     val chip = remember { FocusRequester() }
     // The side rail (H4): beside any layout, never on a kid's home. The top bar's round buttons move into it.
     val rail = !kid && state.sideRail
@@ -280,7 +284,8 @@ fun HomeScreen(
         picker.dismiss()
         val live = focus.channelId?.takeIf { focus.target == HomeFocus.LIVE }
         // A kid's home has no Guide card (K7): what would land there lands on Play. Marquee's is its live card, if it has one.
-        val guideOrPlay = if (kid || (marquee && strip.none { it.key == StripCard.KEY_LIVE })) play else guideCard
+        // On Now's is its big tile, Play's place too.
+        val guideOrPlay = if (kid || onNow || (marquee && strip.none { it.key == StripCard.KEY_LIVE })) play else guideCard
         val target = when (focus.target) {
             HomeFocus.PLAY -> play
             HomeFocus.ALL_APPS -> appsRow.allApps
@@ -421,6 +426,36 @@ fun HomeScreen(
                                         state, rows, lateNight, actions, openSheet,
                                         guide = guide, favorites = favorites, nflRow = nflRow, nfl = nfl, watch = watch, recentTv = tv.channels,
                                     )
+                                } else if (onNow) {
+                                    OnNow(
+                                        state = state,
+                                        guide = onNowGuide,
+                                        favorites = favorites,
+                                        live = liveTile,
+                                        actions = actions,
+                                        tile = play,
+                                        lateNight = lateNight,
+                                        openSheet = openSheet,
+                                        topBar = { bar ->
+                                            TopBar(
+                                                state = state,
+                                                actions = actions,
+                                                gear = gear,
+                                                modifier = bar.focusRestorer().focusGroup(),
+                                                avatar = avatar,
+                                                search = searchButton,
+                                                onChip = onChip,
+                                                chip = chip,
+                                                circles = !rail,
+                                            )
+                                        },
+                                        modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
+                                        lead = onNowLead(moment, state, gameDay?.let { GameDayHome(it, nfl, watch, nflCard) }, liveTile, lateNight, actions, play, gear, openSheet),
+                                    )
+                                    HomeRows(
+                                        state, rows, lateNight, actions, openSheet,
+                                        guide = guide, favorites = favorites, nflRow = nflRow, nfl = nfl, watch = watch, recentTv = tv.channels,
+                                    )
                                 } else {
                                     Dashboard(
                                         state = state,
@@ -518,6 +553,62 @@ private fun Modifier.besideRail() = layout { measurable, constraints ->
     val inset = ((RAIL_WIDTH + RAIL_GAP).toPx() - width * margin).div(1f - margin).roundToInt().coerceIn(0, width / 4)
     val placeable = measurable.measure(constraints.copy(minWidth = width - inset, maxWidth = width - inset))
     layout(width, placeable.height) { placeable.place(inset, 0) }
+}
+
+/**
+ * What takes On Now's big tile instead of the last channel (H5): a moment's lead (H3), the game
+ * on game day or the lens's title on weekend mornings and late at night; or Tonight's Pick when
+ * nothing's on the guide channels. Null keeps the last channel.
+ */
+private fun onNowLead(
+    moment: Moment?,
+    state: HomeUiState,
+    gameDay: GameDayHome?,
+    live: StripCard?,
+    lateNight: Boolean,
+    actions: HomeActions,
+    play: FocusRequester,
+    gear: FocusRequester,
+    openSheet: (QuickSheet) -> Unit,
+): (@Composable (Modifier) -> Unit)? {
+    val lens = state.lens
+    val pick = state.pick
+    return when {
+        moment == Moment.GAME_DAY && gameDay != null -> { big ->
+            GameDayCard(gameDay.game, gameDay.nfl, state.nowMillis, gameDay.watch, actions, openSheet, big, self = play, afterNotToday = gear)
+        }
+        (moment == Moment.WEEKEND_MORNING || moment == Moment.LATE_NIGHT) && lens != null -> { big ->
+            PickHero(
+                pick = lens.pick.asPick(),
+                undo = null,
+                note = null,
+                lateNight = lateNight,
+                actions = actions,
+                play = play,
+                up = gear,
+                right = FocusRequester.Default,
+                openSheet = openSheet,
+                modifier = big.focusRestorer().focusGroup(),
+                eyebrow = lens.title,
+                next = actions::nextLensPick,
+            )
+        }
+        live == null && pick != null -> { big ->
+            PickHero(
+                pick = pick,
+                undo = state.pickState.undo,
+                note = state.heroNote,
+                lateNight = lateNight,
+                actions = actions,
+                play = play,
+                up = gear,
+                right = FocusRequester.Default,
+                openSheet = openSheet,
+                modifier = big.focusRestorer().focusGroup(),
+            )
+        }
+        else -> null
+    }
 }
 
 /** Room kept under a focused row for its focus ring and lift. */

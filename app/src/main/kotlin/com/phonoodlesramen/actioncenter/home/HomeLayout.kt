@@ -11,6 +11,9 @@ enum class HomeLayout(val title: String, val detail: String) {
 
     /** The title you rest on fills the screen, over a strip of what's on for tonight. */
     MARQUEE("Marquee", "The title you rest on fills the screen, above a strip of tonight's picks. The rows below stay as they are."),
+
+    /** Live TV leads: back to the last channel, a mini guide, then the pick and Up Next. Needs a Plex guide. */
+    ON_NOW("On Now", "Live TV leads: back to your last channel, a mini guide of four channels, then the pick and Up Next. Without a Plex guide, it's the dashboard."),
     ;
 
     companion object {
