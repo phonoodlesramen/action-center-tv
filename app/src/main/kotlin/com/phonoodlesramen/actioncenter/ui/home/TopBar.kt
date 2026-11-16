@@ -95,6 +95,8 @@ fun TopBar(
     chip: FocusRequester? = null,
     /** Weekend mornings' small kids' avatars (K11); a moment's Who's watching card shows them instead. */
     kidSwitches: Boolean = true,
+    /** The magnifier, gear and avatar; the side rail (H4) has them instead. */
+    circles: Boolean = true,
 ) {
     val fade by animateFloatAsState(if (quiet) 0f else 1f, tween(QUIET_FADE_MILLIS), label = "top bar quiet")
     val faded = Modifier.graphicsLayer { alpha = fade }
@@ -149,6 +151,7 @@ fun TopBar(
                 kids.forEach { kid -> KidAvatar(kid, onClick = { actions.switchProfile(kid.id) }) }
             }
         }
+        if (!circles) return@Row
         // Phase 15 (Q5): Search, the gear's size, just before it; Back from Search comes back here.
         CircleButton(onClick = actions::openSearch, modifier = dimmed.then(search?.let { Modifier.focusRequester(it) } ?: Modifier)) {
             Icon(AppIcons.Search, contentDescription = "Search", modifier = Modifier.size(18.dp), tint = Palette.TextDim)

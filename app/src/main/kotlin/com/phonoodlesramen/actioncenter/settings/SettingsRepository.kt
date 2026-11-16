@@ -70,6 +70,8 @@ data class Settings(
     val moments: Boolean = false,
     /** The chip's Keep the usual layout: the mode and evening it holds for ([com.phonoodlesramen.actioncenter.home.Moments.held]). */
     val momentsHeld: String? = null,
+    /** Settings › Look › Show the side rail (H4): off by default. */
+    val sideRail: Boolean = false,
 ) {
     val enabledLenses: Set<Lens> get() = Lens.entries.toSet() - disabledLenses
 }
@@ -95,6 +97,9 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
 
     /** The chip's Keep the usual layout: no moment for [held] ([com.phonoodlesramen.actioncenter.home.Moments.held]). */
     suspend fun holdMoments(held: String) = store.edit { it[MOMENTS_HELD] = held }
+
+    /** Settings › Look › Show the side rail (H4). */
+    suspend fun setSideRail(on: Boolean) = store.edit { it[SIDE_RAIL] = on }
 
     suspend fun setName(name: String) = store.edit { it[NAME] = name.trim().take(MAX_NAME_LENGTH) }
 
@@ -203,6 +208,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         homeLayout = HomeLayout.of(this[HOME_LAYOUT]),
         moments = this[MOMENTS] ?: false,
         momentsHeld = this[MOMENTS_HELD],
+        sideRail = this[SIDE_RAIL] ?: false,
     )
 
     /** The stored hours, each mode falling back to its default; the default schedule if they no longer fit together. */
@@ -248,6 +254,7 @@ class SettingsRepository(private val store: DataStore<Preferences>) {
         val HOME_LAYOUT = stringPreferencesKey("home_layout")
         val MOMENTS = booleanPreferencesKey("home_moments")
         val MOMENTS_HELD = stringPreferencesKey("home_moments_held")
+        val SIDE_RAIL = booleanPreferencesKey("home_side_rail")
 
         val CUTOFF = intPreferencesKey("quick_watch_cutoff_minutes")
         const val LAUNCH_PREFIX = "launch:"

@@ -22,6 +22,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -91,6 +92,7 @@ import com.phonoodlesramen.actioncenter.wallpaper.WallpaperStyle
 import java.time.Duration
 import kotlin.math.roundToInt
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
 
 /** Where focus lands when the home screen appears [U10]. */
 enum class HomeFocus {
@@ -243,6 +245,16 @@ fun HomeScreen(
     val strip = if (marquee) rememberStrip(state, shownGuide, favorites, backTo, moment, game.takeIf { moment == Moment.GAME_DAY }) else emptyList()
     val marqueeState = remember { MarqueeState() }
     val chip = remember { FocusRequester() }
+    // The side rail (H4): beside any layout, never on a kid's home. The top bar's round buttons move into it.
+    val rail = !kid && state.sideRail
+    val railFocus = remember { RailFocus(avatar = avatar, search = searchButton, gear = gear) }
+    val railContent = remember { FocusRequester() }
+    val scope = rememberCoroutineScope()
+    val goTop: () -> Unit = {
+        scope.launch { scroll.animateScrollTo(0) }
+        marqueeState.shownKey = null
+        runCatching { play.requestFocus() }
+    }
     // The chip's quick actions while a moment leads: Keep the usual layout, until the mode moves on.
     val onChip: (() -> Unit)? = if (moment == null) {
         null
@@ -291,6 +303,8 @@ fun HomeScreen(
             focus.target == HomeFocus.ALL_APPS && !kid -> appsRow.focusAllApps()
             // So may a Live card; and its channel may have gone meanwhile, leaving the Guide card.
             live != null -> if (!liveRow.focus(live)) runCatching { guideOrPlay.requestFocus() }
+            // Back from the NFL screen the side rail opened: its NFL, while the rail's there.
+            nflKey == NflOpen.RAIL -> runCatching { railFocus.nfl.requestFocus() }.onFailure { runCatching { play.requestFocus() } }
             // Back from the NFL screen: the card that opened it, or the row's first, or Play (the card may have gone).
             nflKey != null && nflKey != NflOpen.CARD -> if (!nflRowFocus.focus(nflKey) && !nflRowFocus.focus(NflOpen.ALL_GAMES)) runCatching { play.requestFocus() }
             nflKey == NflOpen.CARD -> runCatching { nflCard.requestFocus() }.onFailure { runCatching { play.requestFocus() } }
@@ -354,87 +368,108 @@ fun HomeScreen(
                     modifier = Modifier.matchParentSize(),
                 )
             }
-            BoxWithConstraints(Modifier.fillMaxSize()) {
-                val viewport = maxHeight
-                val metrics = RowMetrics.forWidth(maxWidth)
-                val geometry = DashboardGeometry(constraints.maxWidth, constraints.maxHeight, if (kid) DashboardRows.Kid else DashboardRows.Adult)
-                val density = LocalDensity.current
-                val labelHeight = MaterialTheme.typography.labelMedium.lineHeight
-                val stops = remember(geometry, metrics, density, labelHeight) {
-                    with(density) {
-                        geometry.stops(
-                            rowLead = (metrics.spaceAbove + metrics.labelGap).toPx() + labelHeight.toPx(),
-                            spaceAbove = metrics.spaceAbove.toPx(),
-                            cardHeight = metrics.cardHeight.toPx(),
-                            bottomRoom = BOTTOM_ROOM.toPx(),
-                        )
+            val homeArea: @Composable (Modifier, Modifier) -> Unit = { area, scroller ->
+                BoxWithConstraints(area.fillMaxSize()) {
+                    val viewport = maxHeight
+                    val metrics = RowMetrics.forWidth(maxWidth)
+                    val geometry = DashboardGeometry(constraints.maxWidth, constraints.maxHeight, if (kid) DashboardRows.Kid else DashboardRows.Adult)
+                    val density = LocalDensity.current
+                    val labelHeight = MaterialTheme.typography.labelMedium.lineHeight
+                    val stops = remember(geometry, metrics, density, labelHeight) {
+                        with(density) {
+                            geometry.stops(
+                                rowLead = (metrics.spaceAbove + metrics.labelGap).toPx() + labelHeight.toPx(),
+                                spaceAbove = metrics.spaceAbove.toPx(),
+                                cardHeight = metrics.cardHeight.toPx(),
+                                bottomRoom = BOTTOM_ROOM.toPx(),
+                            )
+                        }
                     }
-                }
-                val homeScroll = remember(scroll, stops) { HomeBringIntoViewSpec(scroll, stops) }
-                val rowScroll = remember(metrics, density) { MarginBringIntoViewSpec(with(density) { metrics.margin.toPx() }) }
-                // The scroller reads the home's spec; the rows inside it scroll by their own.
-                CompositionLocalProvider(LocalBringIntoViewSpec provides homeScroll) {
-                    Column(Modifier.fillMaxSize().verticalScroll(scroll)) {
-                        CompositionLocalProvider(LocalBringIntoViewSpec provides rowScroll, LocalRowMetrics provides metrics) {
-                            if (kid) {
-                                KidDashboard(
-                                    state = state,
-                                    actions = actions,
-                                    lateNight = lateNight,
-                                    focusedArt = focusedArt,
-                                    focus = KidFocus(play = play, gear = gear, avatar = avatar, side = sideEntry, allApps = appsRow.allApps, search = searchButton),
-                                    openSheet = openSheet,
-                                    modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
-                                    lensMotion = lensMotion,
-                                )
-                                KidRows(state, shownGuide, lateNight, actions, openSheet, backTo = backTo, favorites = favorites)
-                            } else if (marquee) {
-                                Marquee(
-                                    state = state,
-                                    strip = strip,
-                                    marquee = marqueeState,
-                                    actions = actions,
-                                    focus = MarqueeFocus(first = play, live = guideCard, gear = gear, avatar = avatar, search = searchButton, chip = chip),
-                                    lateNight = lateNight,
-                                    openSheet = openSheet,
-                                    modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
-                                    watch = watch,
-                                    onChip = onChip,
-                                )
-                                HomeRows(
-                                    state, rows, lateNight, actions, openSheet,
-                                    guide = guide, favorites = favorites, nflRow = nflRow, nfl = nfl, watch = watch, recentTv = tv.channels,
-                                )
-                            } else {
-                                Dashboard(
-                                    state = state,
-                                    actions = actions,
-                                    lateNight = lateNight,
-                                    focusedArt = focusedArt,
-                                    focus = DashboardFocus(play = play, gear = gear, avatar = avatar, lensEntry = lensEntry, guideCard = guideCard, search = searchButton),
-                                    openSheet = openSheet,
-                                    guide = guide,
-                                    backTo = backTo.takeIf { backToTv == null },
-                                    backToTv = backToTv,
-                                    tvButton = tvButton,
-                                    favorites = favorites,
-                                    gameDay = gameDay?.let { GameDayHome(it, nfl, watch, nflCard) },
-                                    modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
-                                    lensMotion = lensMotion,
-                                    moment = moment,
-                                    onChip = onChip,
-                                    chip = chip,
-                                )
-                                HomeRows(
-                                    state, rows, lateNight, actions, openSheet,
-                                    guide = guide, favorites = favorites, nflRow = nflRow, nfl = nfl, watch = watch, recentTv = tv.channels,
-                                )
+                    val homeScroll = remember(scroll, stops) { HomeBringIntoViewSpec(scroll, stops) }
+                    val rowScroll = remember(metrics, density) { MarginBringIntoViewSpec(with(density) { metrics.margin.toPx() }) }
+                    // The scroller reads the home's spec; the rows inside it scroll by their own.
+                    CompositionLocalProvider(LocalBringIntoViewSpec provides homeScroll) {
+                        Column(Modifier.fillMaxSize().verticalScroll(scroll).then(scroller)) {
+                            CompositionLocalProvider(LocalBringIntoViewSpec provides rowScroll, LocalRowMetrics provides metrics) {
+                                if (kid) {
+                                    KidDashboard(
+                                        state = state,
+                                        actions = actions,
+                                        lateNight = lateNight,
+                                        focusedArt = focusedArt,
+                                        focus = KidFocus(play = play, gear = gear, avatar = avatar, side = sideEntry, allApps = appsRow.allApps, search = searchButton),
+                                        openSheet = openSheet,
+                                        modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
+                                        lensMotion = lensMotion,
+                                    )
+                                    KidRows(state, shownGuide, lateNight, actions, openSheet, backTo = backTo, favorites = favorites)
+                                } else if (marquee) {
+                                    Marquee(
+                                        state = state,
+                                        strip = strip,
+                                        marquee = marqueeState,
+                                        actions = actions,
+                                        focus = MarqueeFocus(first = play, live = guideCard, gear = gear, avatar = avatar, search = searchButton, chip = chip),
+                                        lateNight = lateNight,
+                                        openSheet = openSheet,
+                                        modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
+                                        watch = watch,
+                                        onChip = onChip,
+                                        circles = !rail,
+                                    )
+                                    HomeRows(
+                                        state, rows, lateNight, actions, openSheet,
+                                        guide = guide, favorites = favorites, nflRow = nflRow, nfl = nfl, watch = watch, recentTv = tv.channels,
+                                    )
+                                } else {
+                                    Dashboard(
+                                        state = state,
+                                        actions = actions,
+                                        lateNight = lateNight,
+                                        focusedArt = focusedArt,
+                                        focus = DashboardFocus(play = play, gear = gear, avatar = avatar, lensEntry = lensEntry, guideCard = guideCard, search = searchButton),
+                                        openSheet = openSheet,
+                                        guide = guide,
+                                        backTo = backTo.takeIf { backToTv == null },
+                                        backToTv = backToTv,
+                                        tvButton = tvButton,
+                                        favorites = favorites,
+                                        gameDay = gameDay?.let { GameDayHome(it, nfl, watch, nflCard) },
+                                        modifier = Modifier.fillMaxWidth().dashboardArea(geometry),
+                                        lensMotion = lensMotion,
+                                        moment = moment,
+                                        onChip = onChip,
+                                        chip = chip,
+                                        circles = !rail,
+                                    )
+                                    HomeRows(
+                                        state, rows, lateNight, actions, openSheet,
+                                        guide = guide, favorites = favorites, nflRow = nflRow, nfl = nfl, watch = watch, recentTv = tv.channels,
+                                    )
+                                }
+                                // Room to scroll the last row up to its stop; nothing is drawn here.
+                                Spacer(Modifier.height(viewport))
                             }
-                            // Room to scroll the last row up to its stop; nothing is drawn here.
-                            Spacer(Modifier.height(viewport))
                         }
                     }
                 }
+            }
+            if (rail) {
+                SideRail(
+                    state = state,
+                    actions = actions,
+                    focus = railFocus,
+                    content = railContent,
+                    guide = shownGuide,
+                    nfl = nfl.showing,
+                    onHome = goTop,
+                    modifier = Modifier.fillMaxSize(),
+                ) {
+                    // Right or Back from the rail comes back to the card you left: the home's restorer remembers it.
+                    homeArea(Modifier.besideRail(), Modifier.focusRequester(railContent).focusRestorer().focusGroup())
+                }
+            } else {
+                homeArea(Modifier, Modifier)
             }
             NowShowingOverlay(scene, nowShowing, lastInputMillis, Modifier.matchParentSize())
             ArtPickerHost(picker)
@@ -471,6 +506,19 @@ private fun rememberStrip(
 
 /** Marquee's backdrop is gone once the home has scrolled this much of the screen: Row B's top, where the strip is. */
 private const val MARQUEE_FADE = (Layout.SAFE_TOP + Layout.TOP_BAR_WEIGHT + Layout.ROW_A_WEIGHT + 2 * Layout.GAP_WEIGHT) / Layout.CANVAS_HEIGHT
+
+/**
+ * The home beside the side rail (H4): its content starts [RAIL_GAP] past the closed rail, as the
+ * mockup's 108 dp do. The home keeps its own side margins, a share of its width, so it moves over
+ * by just what's left to clear the rail.
+ */
+private fun Modifier.besideRail() = layout { measurable, constraints ->
+    val width = constraints.maxWidth
+    val margin = Layout.SAFE_SIDE / Layout.CANVAS_WIDTH
+    val inset = ((RAIL_WIDTH + RAIL_GAP).toPx() - width * margin).div(1f - margin).roundToInt().coerceIn(0, width / 4)
+    val placeable = measurable.measure(constraints.copy(minWidth = width - inset, maxWidth = width - inset))
+    layout(width, placeable.height) { placeable.place(inset, 0) }
+}
 
 /** Room kept under a focused row for its focus ring and lift. */
 private val BOTTOM_ROOM = 8.dp
@@ -610,6 +658,8 @@ private fun Dashboard(
     moment: Moment? = null,
     onChip: (() -> Unit)? = null,
     chip: FocusRequester? = null,
+    /** The top bar's round buttons; with the side rail (H4) they're in the rail. */
+    circles: Boolean = true,
 ) {
     val content = state.content
     val play = focus.play
@@ -640,6 +690,7 @@ private fun Dashboard(
             onChip = onChip,
             chip = chip,
             kidSwitches = side != Moment.WEEKEND_MORNING,
+            circles = circles,
         )
         Spacer(Modifier.weight(Layout.GAP_WEIGHT))
         Row(Modifier.fillMaxWidth().weight(Layout.ROW_A_WEIGHT)) {

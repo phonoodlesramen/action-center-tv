@@ -929,6 +929,7 @@ class HomeActivity : ComponentActivity() {
         override fun setLayoutScale(scale: Float) = viewModel.setLayoutScale(scale)
         override fun setHomeLayout(layout: HomeLayout) = viewModel.setHomeLayout(layout)
         override fun setMoments(on: Boolean) = viewModel.setMoments(on)
+        override fun setSideRail(on: Boolean) = viewModel.setSideRail(on)
         override fun setShowSampleContent(show: Boolean) = viewModel.setShowSampleContent(show)
 
         override fun openDeviceCheck() {
