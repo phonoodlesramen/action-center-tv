@@ -88,6 +88,9 @@ interface PlayerActions {
     /** Back on the credits card (K5): it goes, and the channel carries on. */
     fun dismissCreditsCard() {}
 
+    /** Back on the pick-up card (P5): it goes, and the channel carries on live. */
+    fun dismissPickUp() {}
+
     /** Settings › Plex › Play in (Phase 11): which app the credits card names. */
     fun playIn(): PlayIn = PlayIn.PLEZY
 

@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.input.key.Key
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.ExperimentalTestApi
+import androidx.compose.ui.test.assertCountEquals
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.junit4.v2.createAndroidComposeRule
 import androidx.compose.ui.test.onAllNodesWithContentDescription
@@ -17,6 +18,9 @@ import androidx.compose.ui.test.performKeyInput
 import androidx.compose.ui.test.performSemanticsAction
 import androidx.compose.ui.test.pressKey
 import com.github.takahirom.roborazzi.captureRoboImage
+import com.phonoodlesramen.actioncenter.dice.DiceDeck
+import com.phonoodlesramen.actioncenter.dice.DiceTable
+import com.phonoodlesramen.actioncenter.dice.DieTitle
 import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.home.HomeUiState
 import com.phonoodlesramen.actioncenter.nfl.NflView
@@ -141,6 +145,29 @@ class SideRailTest {
         compose.activity.onBackPressedDispatcher.onBackPressed()
         settle()
         compose.onNodeWithText("Play S2E9").assertIsFocused()
+    }
+
+    /** The die (spec §4): with the rail on it's the rail's Roll the die, and Back from its tray lands there. */
+    @Test
+    fun theDieIsTheRailsAndBackFromItsTrayLandsOnIt() {
+        val state = SampleHomeState.state(sample = false, plex = SampleHomeState.plexLinked, plexSnapshot = SampleHomeState.engineLibrary(), sideRail = true)
+        val table = DiceTable(read = { DiceDeck(listOf(DieTitle("lanterns", "lanterns", "movie", "Paper Lanterns", 1994))) })
+        compose.setContent {
+            ActionCenterTheme(accent = state.accent, layoutScale = state.layoutScale) {
+                HomeScreen(state, actions, focus = focus, guide = SampleGuide.ready(state.nowMillis), dice = table)
+            }
+        }
+        settle()
+        // One die, the rail's: the top bar keeps none of its round buttons.
+        compose.onAllNodesWithContentDescription("Roll the die").assertCountEquals(1)
+        compose.onNodeWithContentDescription("Roll the die").performSemanticsAction(SemanticsActions.OnClick)
+        settle()
+        compose.onNodeWithText("Paper Lanterns").assertExists()
+        compose.activity.onBackPressedDispatcher.onBackPressed()
+        settle()
+        compose.onNodeWithText("Paper Lanterns").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Roll the die").assertIsFocused()
+        capture("home_side_rail_die")
     }
 
     @Test

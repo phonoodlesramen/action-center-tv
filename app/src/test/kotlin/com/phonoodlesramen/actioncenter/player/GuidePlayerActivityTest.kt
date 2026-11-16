@@ -814,14 +814,56 @@ class GuidePlayerActivityTest {
         assertNull(GuidePlayerActivity.spotOf(GuidePlayerActivity.intent(app, "tv-mix")))
     }
 
+    // P5: keeping your place, whichever button you leave by.
+
     @Test
-    fun `tuning in to another channel forgets the spot, its own channel keeps it`() {
+    fun `tuning in to another channel keeps the spot`() {
         val spot = SavedSpot("tv-mix", ridgeLine.startMillis, "sample-tv-mix-3", 2 * minute, SampleGuide.WEEKNIGHT)
         runBlocking { app.spots.save(spot) }
         launch("tv-mix").run {
-            assertEquals(spot, app.spots.value)
             press(KeyEvent.KEYCODE_DPAD_DOWN)
-            assertNull(app.spots.value)
+            assertEquals(spot, app.spots.value)
+        }
+    }
+
+    @Test
+    fun `Back keeps the place of a program you were watching`() {
+        launch("tv-mix").run {
+            playing()
+            // Paused, a moment in: you were watching, not surfing past.
+            press(KeyEvent.KEYCODE_MEDIA_PAUSE)
+            onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            close()
+            scenario = null
+        }
+        assertEquals(SavedSpot("tv-mix", ridgeLine.startMillis, "sample-tv-mix-3", 11 * minute, SampleGuide.WEEKNIGHT), app.spots.value)
+    }
+
+    @Test
+    fun `back on its channel, the pick-up card offers the place, and OK picks it up`() {
+        runBlocking { app.spots.save(SavedSpot("tv-mix", ridgeLine.startMillis, "sample-tv-mix-3", 2 * minute, SampleGuide.WEEKNIGHT - 9 * minute)) }
+        launch("tv-mix").run {
+            // It tunes in live underneath.
+            assertEquals(play("sample-tv-mix-3", 11 * minute), video.calls.last())
+            text("PICK UP WHERE YOU LEFT OFF").assertExists()
+            text("2:00 in · 9 min ago").assertExists()
+            press(KeyEvent.KEYCODE_DPAD_CENTER)
+            assertEquals(play("sample-tv-mix-3", 2 * minute), video.calls.last())
+            text("PICK UP WHERE YOU LEFT OFF").assertDoesNotExist()
+            text("PICKED UP · 9 MIN BEHIND LIVE").assertExists()
+        }
+    }
+
+    @Test
+    fun `Back takes the pick-up card away, and the channel carries on live`() {
+        runBlocking { app.spots.save(SavedSpot("tv-mix", ridgeLine.startMillis, "sample-tv-mix-3", 2 * minute, SampleGuide.WEEKNIGHT - 9 * minute)) }
+        launch("tv-mix").run {
+            text("PICK UP WHERE YOU LEFT OFF").assertExists()
+            onActivity { it.onBackPressedDispatcher.onBackPressed() }
+            compose.waitForIdle()
+            text("PICK UP WHERE YOU LEFT OFF").assertDoesNotExist()
+            assertEquals(play("sample-tv-mix-3", 11 * minute), video.calls.last())
+            assertFalse(finishing())
         }
     }
 }

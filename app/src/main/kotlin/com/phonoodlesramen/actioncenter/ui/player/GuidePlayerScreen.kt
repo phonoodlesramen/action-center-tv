@@ -51,6 +51,7 @@ import com.phonoodlesramen.actioncenter.player.CreditsCard
 import com.phonoodlesramen.actioncenter.player.GuidePlayerState
 import com.phonoodlesramen.actioncenter.player.OffAirReason
 import com.phonoodlesramen.actioncenter.player.Overlay
+import com.phonoodlesramen.actioncenter.player.PickUpCard
 import com.phonoodlesramen.actioncenter.player.Picture
 import com.phonoodlesramen.actioncenter.ui.art.TitleArt
 import com.phonoodlesramen.actioncenter.ui.guide.ChannelMark
@@ -120,8 +121,22 @@ fun GuidePlayerScreen(
         val slide = with(LocalDensity.current) { OVERLAY_SLIDE.roundToPx() }
         // Back with the control row up takes the row away (P2), before Back can leave.
         BackHandler(enabled = state.showsControls, onBack = actions::hideControls)
-        // Back on the credits card (K5) takes the card away first.
-        val card = state.creditsCard?.takeIf { state.overlay == Overlay.None }
+        // Back on the pick-up card (P5) takes it away first, and the channel carries on live.
+        val pickUp = state.pickUp?.takeIf { state.overlay == Overlay.None }
+        BackHandler(enabled = pickUp != null, onBack = actions::dismissPickUp)
+        AnimatedVisibility(
+            visible = pickUp != null,
+            enter = fadeIn(tween(OVERLAY_MILLIS)),
+            exit = fadeOut(tween(OVERLAY_MILLIS)),
+            modifier = Modifier.fillMaxSize(),
+        ) {
+            // The last card stays while it fades out.
+            val shown = remember { mutableStateOf(pickUp) }
+            if (pickUp != null) shown.value = pickUp
+            shown.value?.let { PickUpCardView(it, now()) }
+        }
+        // Back on the credits card (K5) takes the card away first. The pick-up card, when it's up, has the corner.
+        val card = state.creditsCard?.takeIf { state.overlay == Overlay.None && pickUp == null }
         BackHandler(enabled = card != null, onBack = actions::dismissCreditsCard)
         AnimatedVisibility(
             visible = card != null,
@@ -249,6 +264,59 @@ private fun CreditsCardView(card: CreditsCard, app: PlayIn) {
                         modifier = Modifier.background(LocalAccent.current, RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 1.dp),
                     )
                     Text("Watch in ${app.label}", style = MaterialTheme.typography.bodySmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The pick-up card (P5): where the credits card goes, at the top right inside the safe area,
+ * while the channel tunes in live. The program's art, "PICK UP WHERE YOU LEFT OFF" in the
+ * accent, its title, where and when you left it ([PickUpText]), and "OK · Pick up". It goes
+ * after 15 s by itself.
+ */
+@Composable
+private fun PickUpCardView(card: PickUpCard, nowMillis: Long) {
+    val slot = card.place.slot
+    Box(Modifier.fillMaxSize().safeArea(), contentAlignment = Alignment.TopEnd) {
+        Row(
+            modifier = Modifier
+                .width(CREDITS_CARD_WIDTH)
+                .clip(CardShape)
+                .background(Palette.Surface.copy(alpha = 0.94f))
+                .padding(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(14.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            TitleArt(
+                id = slot.showKey ?: slot.itemKey ?: slot.title,
+                image = slot.art,
+                lateNight = false,
+                modifier = Modifier.size(CREDITS_ART_WIDTH, CREDITS_ART_WIDTH * 9 / 16).clip(RoundedCornerShape(Layout.TileRadius)),
+            )
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                Eyebrow("Pick up where you left off", color = LocalAccent.current)
+                Text(slot.title, style = MaterialTheme.typography.titleSmall, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                Text(
+                    text = PickUpText.line(card.place, nowMillis),
+                    style = MaterialTheme.typography.bodySmall,
+                    color = Palette.TextDim,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                )
+                Row(
+                    modifier = Modifier.padding(top = 4.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = "OK",
+                        style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                        color = Palette.AccentInk,
+                        modifier = Modifier.background(LocalAccent.current, RoundedCornerShape(4.dp)).padding(horizontal = 6.dp, vertical = 1.dp),
+                    )
+                    Text("Pick up", style = MaterialTheme.typography.bodySmall, maxLines = 1)
                 }
             }
         }

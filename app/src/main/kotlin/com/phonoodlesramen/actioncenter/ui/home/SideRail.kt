@@ -45,6 +45,7 @@ import androidx.tv.material3.Text
 import androidx.tv.material3.rememberDrawerState
 import com.phonoodlesramen.actioncenter.guide.GuideCardState
 import com.phonoodlesramen.actioncenter.home.HomeUiState
+import com.phonoodlesramen.actioncenter.ui.dice.LocalDie
 import com.phonoodlesramen.actioncenter.ui.nfl.NflOpen
 import com.phonoodlesramen.actioncenter.ui.profiles.argb
 import com.phonoodlesramen.actioncenter.ui.profiles.initialOf
@@ -66,7 +67,8 @@ internal class RailFocus(
 
 /**
  * The side rail (spec §4, Home layouts, H4): tv-material's [ModalNavigationDrawer] beside any
- * layout, with the profile, Search, Home, Guide, the NFL (while it shows), Apps and Settings.
+ * layout, with the profile, Search, the die (once the library's in), Home, Guide, the NFL (while it
+ * shows), Apps and Settings.
  * Closed, it's a column of icons [RAIL_WIDTH] wide; focus on it opens it, with labels, over the
  * home behind a scrim.
  *
@@ -166,6 +168,8 @@ private fun NavigationDrawerScope.RailItems(
         colors = railColors(),
     ) { Label(profile.name.ifBlank { "Who's watching?" }) }
     RailItem(AppIcons.Search, "Search", actions::openSearch, Modifier.focusRequester(focus.search))
+    // The die (spec §4), once your library is on this TV: its tray opens over the home, and Back lands here.
+    LocalDie.current?.let { die -> RailItem(AppIcons.Die, "Roll the die", { die.open = true }, Modifier.focusRequester(die.button)) }
     RailItem(AppIcons.Home, "Home", onHome, Modifier.focusRequester(focus.home), selected = true)
     val channels = (guide as? GuideCardState.Ready)?.channels?.size
     RailItem(AppIcons.Guide, "Guide", { actions.openGuide() }, supporting = channels?.let { if (it == 1) "1 channel" else "$it channels" })

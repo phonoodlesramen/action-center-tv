@@ -55,7 +55,8 @@ data class Settings(
     /**
      * Settings › Plex › Count guide viewing in Plex (Phase 11, K1, K2): a guide program watched
      * to its credits, three quarters of it in one sitting, is marked watched for whoever's
-     * watching. On by default.
+     * watching; one watched from its start and left partway gets Plex's resume point (P5). On
+     * by default.
      */
     val countGuideViewing: Boolean = true,
     /** Settings › Lenses (Phase 14, L1-L5): rotating, its speed, Shuffle, and when a title moves on. */

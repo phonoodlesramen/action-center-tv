@@ -64,7 +64,6 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.mapNotNull
 import kotlinx.coroutines.launch
 
 /**
@@ -79,10 +78,13 @@ import kotlinx.coroutines.launch
  *   (G11), ⏪ and ⏩ skip, or scrub while held (P1), and Back finishes. The mini guide takes
  *   Up, Down and OK while it's open; the control row, the sheets and the details take the
  *   D-pad by Compose focus. Up and Down still surf with the row up.
- * - **Leaving (P3):** anything that stops it but Back (Home, Plezy, the screensaver) holds
- *   the picture where it is and saves that spot ([SpotStore]) for the home's Back-to card.
- *   Back leaves nothing saved: a spot this player saved earlier is taken back. Any tune-in
- *   to another channel forgets the spot.
+ * - **Leaving (P3, P5):** anything that stops it but Back (Home, Plezy, the screensaver)
+ *   holds the picture where it is and saves that spot ([SpotStore]) for the home's Back-to
+ *   card. Back saves it too when you were watching the program ([PlaceRules.watching]);
+ *   surfing past, Back leaves nothing, taking back a spot this player saved earlier. Another
+ *   channel playing no longer forgets the spot; a program watched to its end does.
+ * - **Picking up (P5):** back on a channel whose program you were watching, the tuner picks
+ *   it up ([GuideTuner]'s pick-up card); OK takes the card.
  * - **The player** exists only between onStart and onStop, so no decoder or buffer is held
  *   while the home or another app is in front. It reports no playback to Plex: no timeline
  *   and no session (G6).
@@ -158,6 +160,8 @@ class GuidePlayerActivity : ComponentActivity() {
 
         override fun dismissCreditsCard() = tuner.dismissCreditsCard()
 
+        override fun dismissPickUp() = tuner.dismissPickUp()
+
         override fun playIn(): PlayIn = playIn
 
         override fun setFavorite(favorite: Boolean) {
@@ -186,8 +190,14 @@ class GuidePlayerActivity : ComponentActivity() {
             credits = parts.credits,
             nextEpisode = parts.nextEpisode,
             // K1, K2: off this activity's scope, which Plezy or Home may end at once.
-            onWatched = { slot -> slot.itemKey?.let { key -> parts.background.launch { parts.plexWrites.watched(key) } } },
+            onWatched = { slot ->
+                slot.itemKey?.let { key -> parts.background.launch { parts.plexWrites.watched(key) } }
+                // P5: watched to its end, there's nothing to come back to.
+                parts.background.launch { parts.spots.spot.first()?.takeIf { it.isFor(slot) }?.let { parts.spots.clear(only = it) } }
+            },
             favorites = parts.favorites,
+            kept = parts.spots.spot,
+            onLeftOff = { slot, position -> slot.itemKey?.let { key -> parts.background.launch { parts.plexWrites.leftOff(key, position) } } },
         )
         // Below every overlay's own Back (Compose registers those later, so they come first).
         onBackPressedDispatcher.addCallback(this) { leave() }
@@ -215,12 +225,6 @@ class GuidePlayerActivity : ComponentActivity() {
                 launch { tuner.state.map { it.playing }.distinctUntilChanged().collect(::keepScreenOn) }
                 launch { parts.serverId.collect { serverId = it } }
                 launch { parts.playIn.collect { playIn = it } }
-                // Another channel playing forgets a spot saved on any other (P3).
-                launch {
-                    tuner.state.mapNotNull { it.channel?.id }.distinctUntilChanged().collect { id ->
-                        parts.background.launch { parts.spots.channelPlays(id) }
-                    }
-                }
                 while (true) {
                     now = parts.clock()
                     delay(SECOND_MILLIS - now % SECOND_MILLIS)
@@ -258,11 +262,22 @@ class GuidePlayerActivity : ComponentActivity() {
         parts.background.launch { parts.spots.save(spot) }
     }
 
-    /** Back over the picture: the player closes and leaves no spot, taking back one it saved when it was last stopped (P3). */
+    /**
+     * Back over the picture: the player closes. A program you were watching is kept for the
+     * home's Back-to card, as Home keeps it (P5): Back is too easy to press by mistake to lose
+     * your place by. Surfing past leaves nothing, taking back a spot this player saved when it
+     * was last stopped (P3).
+     */
     private fun leave() {
         leavingByBack = true
-        savedSpot?.let { saved -> parts.background.launch { parts.spots.clear(only = saved) } }
-        savedSpot = null
+        val kept = tuner.placeToKeep()
+        if (kept != null) {
+            savedSpot = kept
+            parts.background.launch { parts.spots.save(kept) }
+        } else {
+            savedSpot?.let { saved -> parts.background.launch { parts.spots.clear(only = saved) } }
+            savedSpot = null
+        }
         finish()
     }
 
@@ -355,6 +370,8 @@ class GuidePlayerActivity : ComponentActivity() {
                             tuner.keepControls()
                             return false
                         }
+                        // The pick-up card (P5): a tap carries on where you left off.
+                        tuner.state.value.pickUp != null -> tuner.takePickUp()
                         // The credits card (K5): a tap picks it; holding still opens the options.
                         tuner.state.value.creditsCard != null -> takeCreditsCard()
                         else -> tuner.showControls()
@@ -545,7 +562,7 @@ class GuidePlayerParts(
     val serverId: Flow<String?> = flowOf(null),
     /** The first of a handoff's intents that something on the Shield can open, or null. */
     val resolve: (List<IntentSpec>) -> Intent? = { null },
-    /** Where the player was left (P3): saved when it stops, but not by Back. */
+    /** Where the player was left (P3): saved when it stops, and by Back when you were watching (P5). */
     val spots: SpotStore = SpotStore.None,
     /** Where saving and forgetting the spot, and counting a program watched, run: they outlive the activity, which Home ends at once. */
     val background: CoroutineScope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate),

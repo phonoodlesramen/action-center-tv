@@ -13,7 +13,9 @@ import com.phonoodlesramen.actioncenter.player.GuideTuning
 import com.phonoodlesramen.actioncenter.player.NextEpisode
 import com.phonoodlesramen.actioncenter.player.OffAirReason
 import com.phonoodlesramen.actioncenter.player.Overlay
+import com.phonoodlesramen.actioncenter.player.PickUpCard
 import com.phonoodlesramen.actioncenter.player.Picture
+import com.phonoodlesramen.actioncenter.player.Place
 import com.phonoodlesramen.actioncenter.player.Scrub
 import com.phonoodlesramen.actioncenter.player.TrackKind
 import com.phonoodlesramen.actioncenter.player.TrackMenu
@@ -287,5 +289,37 @@ class GuidePlayerScreenshotTest {
         val (state, now) = credits()
         show(state.copy(banner = true), now, actions = watchIn(PlayIn.PLEX))
         capture("player_credits_card_banner_plex")
+    }
+
+    // P5: keeping your place.
+
+    /** TV Mix at 8:41, tuned in live: Ridge Line, which you left 2:00 in nine minutes ago. */
+    private fun pickUp(): Pair<GuidePlayerState, Long> {
+        val now = SampleGuide.WEEKNIGHT
+        val live = state("tv-mix", now, Picture.Video, banner = true)
+        return live.copy(pickUp = PickUpCard(Place("tv-mix", live.slot!!, 2 * minute, now - 9 * minute))) to now
+    }
+
+    @Test
+    fun pickUpCard() {
+        val (state, now) = pickUp()
+        show(state, now)
+        capture("player_pick_up_card")
+    }
+
+    @Test
+    fun pickUpCardAtLargestScale() {
+        val (state, now) = pickUp()
+        show(state.copy(banner = false), now, scale = LayoutScale.MAX)
+        capture("player_pick_up_card_scale_115")
+    }
+
+    /** OK on the card: Ridge Line from 2:00 in, nine minutes behind live, the banner saying it was picked up. */
+    @Test
+    fun pickedUp() {
+        val (state, now) = pickUp()
+        val slot = state.slot!!
+        show(state.copy(pickUp = null, behind = BehindLive(slot, 2 * minute, now, paused = false, startedOver = false, pickedUp = true)), now)
+        capture("player_picked_up")
     }
 }

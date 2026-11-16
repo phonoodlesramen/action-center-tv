@@ -111,6 +111,16 @@ the time of day choose what leads the home, then **the side rail**, a switch tha
 profile, Search, Home, Guide, the NFL, Apps and Settings down the left beside any layout, then
 **On Now**, a layout that leads with live TV, and **Calm**, quiet until you ask.
 
+**Keep my place (11/14/2026, P5)**: your place in a guide program is kept by how much you were
+watching it, not by which button you left with. Back keeps it as Home does, a slip of Channel up
+and straight back carries on where it was, and back on the channel later a pick-up card offers it.
+A program you watched from its start and left partway gets Plex's resume point, so Up Next and
+Plezy carry on once the guide has moved on (§4 Pick up where you left off).
+
+**The die (11/14/2026)**: a die on the top bar, for a moment of indecision. One press throws it at
+your library and it lands on a title, loaded a little toward what you've never seen; three dials
+(What, Genre, Decade) narrow the table (§4 The die).
+
 The prototype shows the Phase 1 layout.
 
 **Tags:** [REQ] brief requirement · [U*n*] UI decision · [PROP] proposal, not settled
@@ -301,6 +311,8 @@ Left to right:
     gone. It slides in and out over 200 ms, so the chips to its left move rather than
     jump. The run covers the work after the sync too (picks, the kids, the guide), since
     the cards change until then. Not while Plex isn't connected;
+- **die** (11/14/2026): a 36 dp circle with a die, just before the magnifier, once your library
+  is on this TV (the cards are from Plex). It opens its tray (§4 The die), and Back lands on it;
 - **search** (Phase 15, Q5): a 36 dp circle with the magnifier, just before the gear; it
   opens Search, and Back from Search lands on it;
 - **gear** (36 dp circle, focusable) [U9];
@@ -839,8 +851,9 @@ Settings › Plex › Play in).
     the Up next card, and behind live a failure rejoins live, as before.
 - **Screen on** only while video plays (G10); the cards and a paused picture let the
   screensaver come on.
-- **Back** closes what's open over the picture, else returns to where it was opened, and
-  saves nothing. That holds when Android has made the home again behind the player (a
+- **Back** closes what's open over the picture (the pick-up card first), else returns to
+  where it was opened. Since P5 it keeps your place as Home does when you were watching the
+  program (Pick up where you left off, below); surfing past, it saves nothing. That holds when Android has made the home again behind the player (a
   configuration change the player rides out, such as an HDMI mode switch): the full guide
   and a program's details keep their place, the guide on the program played. **Home** (or anything else that stops the player: Plezy, the screensaver)
   pauses it where it is and saves that spot for the home's Back-to card (Start over and
@@ -893,8 +906,9 @@ Settings › Plex › Play in).
   profile's Plex user (as above). Once per program per sitting; Home or Plezy at that
   point still counts it.
 - **Every channel** (K1), shuffled ones too. Filler, cards and programs without a file
-  never count. Nothing else is sent: partial viewing writes no position, so surfing stays
-  out of Continue Watching.
+  never count. Partial viewing writes a position only for a program you watched from its
+  start and left partway (P5, Pick up where you left off), so surfing stays out of Continue
+  Watching.
 - Settings › Plex › Count guide viewing in Plex (on by default) turns it off for this TV.
 
 ### Credits card [Phase 11, K5]
@@ -944,9 +958,11 @@ file at a wall-clock time, so it knows how far behind live it is.
   time. One at a time; a newer stop replaces it.
   - **It holds** (`SpotRules`) for 4 hours, while its channel is in the lineup and its
     program is still in that channel's schedule window (about 3 hours back) with its file.
-    Any tune-in to another channel forgets it; its own channel live doesn't.
-  - **Back** saves nothing, and takes back a spot this player saved when it was stopped
-    and came back (Plezy, the screensaver), so Back always leaves none.
+    Since P5, tuning in to another channel no longer forgets it; a newer place replaces it,
+    and a program watched to its end (it counts as watched) takes it away.
+  - **Back** (P5) saves it too when you were watching the program; surfing past, Back saves
+    nothing and takes back a spot this player saved when it was stopped and came back
+    (Plezy, the screensaver).
   - **Resuming** (the Back-to card, §4 Plex Guide card) opens the player on that channel,
     behind live and paused on that frame: "Paused · 9 min behind live", the banner held,
     and Play carries on. The player takes the spot over: Home saves it again, Back leaves
@@ -958,6 +974,45 @@ file at a wall-clock time, so it knows how far behind live it is.
   fails behind live rejoins live rather than showing a card.
 - **Known gap:** after a long pause, the banner's Next can name a program that's already
   over (a 2.7 follow-up).
+
+### Pick up where you left off [P5]
+`player/GuidePlaces.kt` (`PlaceRules`), `player/GuideTuner.kt`, `player/GuidePlayerActivity.kt`,
+`ui/player/GuidePlayerScreen.kt` (`PickUpCardView`). Started from the guide, then a wrong button,
+a trip Home, or a Start over and then Channel up: the place stays yours. What decides whether
+it's kept is how much you were watching, not which button you left by.
+- **Watching** (`PlaceRules.watching`): the program's frames have played 3 minutes this
+  sitting, or you chose it: started it over, paused it, skipped or scrubbed in it, or picked
+  it up. Filler, cards and programs without a file are never kept, nor one watched to its end.
+  Surfing past keeps nothing, so the guide stays a place to browse.
+- **Leaving keeps it, however you leave:** Home and anything else that stops the player
+  (as P3), Back (since P5), and a channel change (Up, Down, the mini guide, another
+  channel chosen) keep the place in the program you were watching: in the tuner for the
+  sitting (the last 8 programs), and on the home's Back-to card once the player closes.
+- **A slip of the thumb:** back on the channel within 2 minutes in the same sitting, the
+  program carries on where it was, playing, with nothing to press: "Picked up · 1 min behind
+  live" on the banner, Back to live in the control row.
+- **The pick-up card:** back on the channel later (a surf, the mini guide, the guide, the
+  Live row), or after the player has closed (the home's place, `SpotStore`), while that
+  program is still in the channel's schedule, the channel tunes in live as ever and a card
+  offers the place. It sits where the credits card goes (340 dp, top right inside the safe
+  area, `#161D25` at 94%): the program's art (96 dp, 16:9), "PICK UP WHERE YOU LEFT OFF" in the
+  accent, its title, "42:10 in · 9 min ago" (or "Left in the living room · 9 min ago" from
+  another TV, N6), and an accent "OK" chip with "Pick up". It fades in and out over 200 ms.
+  - **OK** (a tap) picks it up: the program behind live from that place, playing, "Picked up ·
+    9 min behind live" on the banner. Holding OK or Menu still opens the options, which take
+    the card away.
+  - **Back** takes it away and the channel carries on live; Back again leaves the player.
+  - **Left alone** it goes after 15 s. Up, Down and the mini guide take it with the channel.
+  - It shows only when there's something to pick up: 30 s or more behind live (or the end).
+    When it and the credits card are both due, it has the corner.
+- **Plex** (Count guide viewing in Plex, on by default): leaving a program you watched from
+  its start, give or take 5 minutes, past its first minute and short of its watched point,
+  puts Plex's resume point there (`/:/progress`, `state=stopped`, as Watch in does) for whoever's watching
+  (K3). Up Next, Plezy and every Plex app then carry on from it after the guide has moved on.
+  Joined midway, nothing is sent: a resume point there would start a film where you never saw
+  its beginning. Nothing for a kid without a Plex user.
+- **Not yet:** the full guide doesn't mark a program you have a place in, and the home keeps
+  one place at a time (the newest); older ones live on in Plex when they qualify.
 
 ### Mini guide [G12]
 `ui/player/MiniGuide.kt`. Left or Right opens a strip over the bottom third of the
@@ -1235,6 +1290,59 @@ and the search providers other apps declare: counts, names and answers, never a 
 also logged under `ActionCenterSearch`. Below, buttons try Google with "heat" and each offer's
 link on this TV.
 
+### The die [11/14/2026]
+A die on the top bar (`ui/dice/`, `dice/`): small, until you can't decide. Yours and a kid's.
+- **On the top bar:** a die in the icons' dim, 18 dp, drawn as Material Symbols' `casino` draws
+  its five (a rounded square, round pips), so it sits with the magnifier and the gear. It shows
+  the face it last landed on, five until it's thrown, and rests at a 12° tilt, as if tossed onto
+  the bar. Focused, it wiggles square (14°, −8°, 4°, 0°, 90 ms each). Not before the library is
+  on this TV: there's nothing to throw at. With the side rail on (H4), it's the rail's "Roll the
+  die" (the `casino` symbol, after Search) instead, and Back from the tray lands there.
+- **The tray:** OK opens it over the home, 640 dp wide in the middle, `#121920` with 16 dp
+  corners, on the sheet's scrim; it slides up 40 dp as it fades in (200 ms). It **throws as it
+  opens**: one press of the die, and a title. Focus stays inside; Back closes it, to the die.
+  Home closes it too.
+  - **The stage** (196 dp): the die at the left, 104 dp, the accent with ink pips, its shadow on
+    the table under it. At the right, the title over its art (64% of the width, faded into the
+    tray at the left and the bottom; late night dims it), with:
+    - an eyebrow in the accent that has a little more to say each time you roll again: "The die
+      has spoken", "Rolled again", "Third time's the charm", "Still deciding?", "The die is
+      getting dizzy", then "Roll 7. The die believes in you". "The only one that fits" when only
+      one does; "That's all of them. Round two" when everything that fits has come up;
+    - the title (headlineSmall, bold, two lines at most);
+    - what it is: "1995 · R · 2h 50m · Crime, Drama", a show's "2019 · TV-14 · 48m episodes";
+    - why it's a fair landing, and when it'd be over: "New to you · over by 10:42 PM", "Last
+      seen in 2019", a show's "New to you · starts at S1 · E1" or "Picks up at S2 · E4";
+    - **Play** (the movie, or the show's next episode: the one after the furthest you've
+      watched, else its first), **Roll again** (the `casino` symbol) and **Trailer** (grown-ups
+      only: its fallback is a YouTube search). Play and Trailer close the tray. They're there
+      from the start, faint until the die lands, so nothing moves under focus. Focus opens on
+      Roll again and moves to Play on the first landing, unless you've gone to the dials.
+  - **The dials** (What, Genre, Decade): a row of chips each, 30 dp pills, each with the number
+    of titles it would leave given the other two dials (faint at none). The chosen one is ticked,
+    in the accent; focused, a chip fills with the accent. OK on a chip throws at once with it (OK
+    on the chosen one throws again). What: Anything, Movies, Shows. Genre: Any genre, then up to
+    24 from your library, the biggest first. Decade: Any decade, then each decade in your library,
+    newest first. A dial's order never moves with the others, only its counts. They stay where
+    you left them, for each profile, until the app restarts.
+  - **The footer:** "Back to close", and "3,612 on the table", or "47 of 3,612 fit".
+- **What's on the table:** films with a file and shows with an episode, from the Plex cache on
+  this TV (read as the tray opens, once per sync and day, never from the network). Not what
+  you've watched in the last year or started, nothing in Continue Watching (Up Next's), nothing
+  Not tonight hides, nothing you rated 2 stars or fewer. A kid's table is their own view of the
+  library: their ceiling (unrated hidden) and their plays (K2-K4).
+- **The throw:** the die is loaded, a little: a title you've never seen is three times as likely
+  as one you saw more than a year ago. What's come up doesn't come up again tonight until
+  everything that fits has; then the table starts over.
+- **The motion** (900 ms, §7): the die hops three times, each lower (44 dp, a third of that,
+  a twelfth), spins five to eight quarter turns so it lands square, and flickers through faces
+  fast then slow, landing on its own. It squashes a little each time it lands, and its shadow
+  shrinks and fades as it rises. While the table is read it shakes in its cup ("Shaking the
+  cup…"). A newer throw takes it mid-air.
+- **Nothing fits:** "No dice", "Nothing fits all three", "Turn a dial back to Any.", and Roll
+  again faint. **Nothing on the table** (the library still coming, or all watched): "Nothing to
+  roll yet", why, and Close.
+
 ### Home layouts [H1-H6]
 
 Settings › Look › Layout (H1) lists the layouts: **Dashboard** (v1, the default: everything
@@ -1373,23 +1481,23 @@ home has none.
 ```
 
 - **Items:** the profile (their initial on their colour; OK opens "Who's watching?"), Search,
-  **Home** (selected: a `surface2` pill), Guide (with its channel count), NFL (while Show the NFL is
+  Roll the die (once the library's on this TV, §4 The die), **Home** (selected: a `surface2` pill), Guide (with its channel count), NFL (while Show the NFL is
   on), Apps (All apps), and Settings at the foot. Focused, an item fills with the accent (§3).
 - **Closed** it's 96 dp: 28 dp, NavigationDrawerItem's 56 dp collapsed width, 12 dp. The home
   starts 12 dp past it, at 108 dp as in the mockup, and keeps its grid: the cards lose about 60
   of the content's 864 dp, a little more at 115%, where the rail's icons grow too.
 - **Open** (focus on it), the items show their labels over the home, which sits under a scrim
   from the left.
-- **The top bar** loses its magnifier, gear and avatar: they're the rail's Search, Settings and
-  profile. The kids' small avatars on weekend mornings (K11) stay in the top bar.
+- **The top bar** loses its die, magnifier, gear and avatar: they're the rail's Roll the die,
+  Search, Settings and profile. The kids' small avatars on weekend mornings (K11) stay in the top bar.
 
 | Focused | Up / Down | Left | Right | OK | Back |
 |---|---|---|---|---|---|
 | A rail item | the item above / below | none | the card you left (the home's focus restorer) | opens its screen; Home goes to the top of the home | the card you left |
 | The first card of a panel or row | as before | opens the rail on Home | as before | as before | as before |
 
-- **Back from a screen the rail opened:** Settings, Search and "Who's watching?" land on their
-  rail item, the rail open; the NFL screen on NFL (`NflOpen.RAIL`); the guide and All apps as
+- **Back from a screen the rail opened:** Settings, Search, "Who's watching?" and the die's tray
+  land on their rail item, the rail open; the NFL screen on NFL (`NflOpen.RAIL`); the guide and All apps as
   from the home (the Guide card, the All apps card).
 - **Watch out:** Left at a row's start now opens the rail, as on Google TV.
 
@@ -1545,9 +1653,7 @@ still say "Not yet".
     is installed (its launcher entry), else Plex. A note says where every Play goes, the
     fallback, why (when nothing's chosen), and that Plezy switches to whoever's watching
     or that Plex may ask who's watching first. Per TV (K4).
-  - **Count guide viewing in Plex:** a toggle row, on by default: "A program watched to
-    its credits on a guide channel, three quarters of it, is marked watched for whoever's
-    watching. Nothing else is sent, and nothing for a kid without a Plex user."
+  - **Count guide viewing in Plex:** a toggle row, on by default: "A program watched to its credits on a guide channel, three quarters of it, is marked watched for whoever's watching. One you've watched from its start and left partway keeps its place in Plex, for Up Next and Plezy. Surfing sends nothing, and nothing goes for a kid without a Plex user."
 - **Wallpaper** [L1-L4]: styles grouped Classic / Creative / Frontier, then only the
   chosen style's controls (folder, image or slideshow, blur, speed, dim), then the card
   style and Now showing. Remote-friendly steps only, no sliders. No live preview: Back
@@ -1984,6 +2090,8 @@ bigger tiles; rows 44 / 214 / 196 dp, corners 18 / 12 dp.
 | Sheets, overlays | 200 ms | slide 40 dp + fade, ease-out |
 | Hero swap (Not tonight / Undo) | 250 ms | crossfade |
 | All apps scroll | 200 ms | ease-out |
+| The die's throw | 900 ms | spins and flickers ease-out (cubic), three hops |
+| The die's wiggle (focused on the top bar) | 4 × 90 ms | tween |
 
 No parallax. Ambient and animated backgrounds are a wallpaper choice (L1, §6b),
 never the default. Honour the system animation scale.

@@ -45,6 +45,22 @@ class GuidePlexWrites(
     }
 
     /**
+     * Left a guide program you'd seen from its start, short of its watched point (P5,
+     * [PlaceRules.leftOff]): Plex's resume point, so Up Next, Plezy and every Plex app carry
+     * on from there once the guide has moved on. Nothing with the setting off, or for a kid
+     * without a Plex user. True when Plex took it.
+     */
+    suspend fun leftOff(ratingKey: String, positionMs: Long): Boolean {
+        if (!safely(false) { counting() }) return false
+        val viewer = safely(null) { viewers.current() } ?: return false
+        return safely(false) {
+            api.setPosition(viewer.access, ratingKey, positionMs)
+            log("player: $ratingKey left off at ${positionMs / 1_000} s in Plex")
+            true
+        }
+    }
+
+    /**
      * Before a branch into Plezy or Plex (plan §2): [write] for [ratingKey], waiting
      * [timeoutMillis] at most. Writing nothing counts as written. The setting doesn't apply:
      * the branch is the viewer's own choice to carry on.
