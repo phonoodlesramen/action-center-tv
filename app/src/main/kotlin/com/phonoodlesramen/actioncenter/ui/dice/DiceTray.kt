@@ -551,5 +551,5 @@ private val GROUND_GAP = 14.dp
 private val SHADOW_HEIGHT = 10.dp
 private val CHIP_HEIGHT = 30.dp
 private val DIAL_HEIGHT = 38.dp
-private val DIALS_HEIGHT = 3 * 38.dp + 2 * 2.dp
+private val DIALS_HEIGHT = DIAL_HEIGHT * 3 + 2.dp * 2
 private val DIAL_LABEL_WIDTH = 60.dp
