@@ -39,6 +39,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusProperties
 import androidx.compose.ui.focus.focusRequester
@@ -304,7 +305,8 @@ private fun Stage(
     val shown = tray.landed?.title
     Box(Modifier.fillMaxWidth().height(STAGE_HEIGHT)) {
         if (shown != null) {
-            Box(Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ART_SHARE)) {
+            // Clipped: the placeholder art (no art yet, or none) draws past its box otherwise.
+            Box(Modifier.align(Alignment.CenterEnd).fillMaxHeight().fillMaxWidth(ART_SHARE).clipToBounds()) {
                 TitleArt(id = shown.ratingKey, image = shown.art, lateNight = lateNight, modifier = Modifier.fillMaxSize())
                 Box(
                     Modifier.fillMaxSize().background(
@@ -456,7 +458,9 @@ private fun Buttons(
 private fun Dials(tray: TrayState, onChoose: (DiceFilters) -> Unit) {
     val deck = tray.deck
     val filters = tray.filters
-    Column(Modifier.fillMaxWidth().height(DIALS_HEIGHT).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+    // Kept while the table is read, so the tray doesn't jump when the dials come; gone when there's nothing to roll.
+    val height = if (tray.emptyTable) 0.dp else DIALS_HEIGHT
+    Column(Modifier.fillMaxWidth().height(height).padding(horizontal = 20.dp), verticalArrangement = Arrangement.spacedBy(2.dp)) {
         if (deck != null && !deck.isEmpty) {
             val kinds = remember(deck, filters) { deck.kinds(filters) }
             val genres = remember(deck, filters) { deck.genres(filters) }

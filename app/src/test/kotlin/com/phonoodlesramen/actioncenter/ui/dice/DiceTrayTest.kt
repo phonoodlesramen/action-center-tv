@@ -1,10 +1,14 @@
 package com.phonoodlesramen.actioncenter.ui.dice
 
 import androidx.activity.ComponentActivity
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.test.assertIsFocused
 import androidx.compose.ui.test.assertIsSelected
@@ -30,6 +34,7 @@ import com.phonoodlesramen.actioncenter.ui.home.HomeActions
 import com.phonoodlesramen.actioncenter.ui.home.HomeScreen
 import com.phonoodlesramen.actioncenter.ui.home.SampleHomeState
 import com.phonoodlesramen.actioncenter.ui.theme.ActionCenterTheme
+import com.phonoodlesramen.actioncenter.ui.theme.Palette
 import java.time.LocalDate
 import kotlin.random.Random
 import org.junit.Assert.assertEquals
@@ -89,6 +94,8 @@ class DiceTrayTest {
     private fun tray(table: DiceTable = table(), profile: ActiveProfile = ActiveProfile.owner("Alex")) {
         compose.setContent {
             ActionCenterTheme {
+                // The home's own background behind the tray's scrim, as on the TV.
+                Box(Modifier.fillMaxSize().background(Palette.Background))
                 key(opened) {
                     DiceTray(
                         profile = profile,
