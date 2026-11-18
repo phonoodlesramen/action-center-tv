@@ -1241,8 +1241,8 @@ strip tile.
   for the app with Artlist's image generation (Nano Banana 2.1, with web search), each from a
   public-domain aerial photograph of the stadium (USDA NAIP, from The National Map), so the
   stadium's shape, its orientation and its surroundings are true. The new Highmark Stadium,
-  newer than the aerials, is from the words alone. No lettering, logos or sponsors' names: what
-  the generator added is blurred out. Shipped in `assets/nfl/cities/` as 1280 px WebP at
+  newer than the aerials, is from the words alone. The prompts ask for no lettering or logos;
+  the few signs the generator drew anyway are left as drawn. Shipped in `assets/nfl/cities/` as 1280 px WebP at
   quality 75, about 130 KB each and 4.1 MB in all. `NflCities.art` lists each with what it
   shows and where its stadium is, so a crop keeps the stadium in view, from the scoreboard's
   wide band to Marquee's tall halves. The teams that share a stadium are seen from opposite

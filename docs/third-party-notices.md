@@ -63,9 +63,10 @@ Agriculture Imagery Program (NAIP), from the USGS National Map's imagery service
 (imagery.nationalmap.gov; "USGS, USDA, The National Map: Orthoimagery"), which is in the public
 domain. The aerials themselves aren't shipped.
 
-The pictures show buildings as seen from public places (17 U.S.C. § 120(a)), with no logos,
-team marks, sponsors' names or other lettering: what the generator drew was blurred out. The
-app crops, desaturates and tints them.
+The pictures show buildings as seen from public places (17 U.S.C. § 120(a)). They were asked
+for with no logos, team marks or lettering; a few stadium and sponsor signs the generator drew
+anyway are left as they are, and those names and marks belong to their owners. The app crops,
+desaturates and tints the pictures.
 
 ## NFL data and team logos (Phase 13)
 
