@@ -1,0 +1,122 @@
+name: Release
+
+# Cuts a release from the browser: Actions › Release › Run workflow, with the version.
+# It checks the version and that CI passed on main's newest commit, tags that commit
+# v<version>, then starts CI and the guide station's workflow on the tag. They check, sign
+# and publish the release just as for a tag pushed from a terminal (docs/releasing.md).
+# A tag pushed with a workflow's own token starts no workflows, so this one starts them.
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version, such as 1.4.0 (or 1.4.0-rc.1 for a pre-release)'
+        required: true
+        type: string
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  tag:
+    name: Tag main and start the release
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      # To push the tag.
+      contents: write
+      # To read CI's runs, and start CI and the station's workflow on the tag.
+      actions: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - name: Releases come from main
+        if: github.ref != 'refs/heads/main'
+        run: |
+          echo "::error title=Not main::Run Release from main: pick main under 'Use workflow from'."
+          exit 1
+
+      # All of history and the tags, to check the version is new.
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Check the version
+        id: version
+        env:
+          INPUT: ${{ inputs.version }}
+        run: |
+          # "v1.4.0" and " 1.4.0 " are taken as 1.4.0.
+          version="$(tr -d '[:space:]' <<< "$INPUT")"
+          version="${version#v}"
+          if ! [[ "$version" =~ ^[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z]+(\.[0-9A-Za-z]+)*)?$ ]]; then
+            echo "::error title=Not a version::'$INPUT' isn't a version like 1.4.0, or 1.4.0-rc.1 for a pre-release."
+            exit 1
+          fi
+          tag="v$version"
+          if git rev-parse -q --verify "refs/tags/$tag" > /dev/null; then
+            echo "::error title=Already tagged::$tag already exists. A pushed tag never moves: pick the next version."
+            exit 1
+          fi
+          # The newest release, pre-releases aside. A new version, or a pre-release of one,
+          # comes after it: 1.4.0 or 1.4.0-rc.1 after 1.3.0, not 1.3.0-rc.2.
+          latest="$(git tag --list 'v*' | grep -v -- - | sed 's/^v//' | sort -V | tail -n 1 || true)"
+          core="${version%%-*}"
+          if [ -n "$latest" ]; then
+            newest="$(printf '%s\n%s\n' "$latest" "$core" | sort -V | tail -n 1)"
+            if [ "$core" = "$latest" ] || [ "$newest" != "$core" ]; then
+              echo "::error title=Not newer::$version doesn't come after the latest release, $latest."
+              exit 1
+            fi
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+
+      - name: Check CI passed on main
+        run: |
+          sha="$(git rev-parse HEAD)"
+          state="$(gh run list --workflow ci.yml --branch main --event push --commit "$sha" --limit 1 \
+            --json status,conclusion --jq '.[0] // empty | "\(.status) \(.conclusion)"')"
+          case "$state" in
+            "completed success") echo "CI passed on ${sha::7}." ;;
+            completed*)
+              echo "::error title=CI failed on main::CI failed on main's newest commit, ${sha::7}. Fix main first."
+              exit 1 ;;
+            "")
+              echo "::error title=No CI run::CI hasn't run on main's newest commit, ${sha::7}."
+              exit 1 ;;
+            *)
+              echo "::error title=CI still running::CI is still running on main's newest commit, ${sha::7}. Run Release again once it passes."
+              exit 1 ;;
+          esac
+
+      - name: Tag main
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git tag -a "$TAG" -m "Action Center ${TAG#v}"
+          git push origin "refs/tags/$TAG"
+
+      # If this fails, the tag is there: start them from Actions › CI and Actions › Guide
+      # station › Run workflow, choosing the tag under 'Use workflow from'.
+      - name: Start CI and the guide station on the tag
+        env:
+          TAG: ${{ steps.version.outputs.tag }}
+        run: |
+          gh workflow run ci.yml --ref "$TAG"
+          gh workflow run station.yml --ref "$TAG"
+          query="branch%3A$TAG"
+          {
+            echo "### $TAG is tagged"
+            echo
+            echo "CI now checks, signs and publishes it, in about 10 minutes:"
+            echo
+            echo "- [CI on $TAG]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/ci.yml?query=$query)"
+            echo "- [The guide station on $TAG]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/actions/workflows/station.yml?query=$query)"
+            echo "- [The release, once it's published]($GITHUB_SERVER_URL/$GITHUB_REPOSITORY/releases/tag/$TAG)"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -4,6 +4,7 @@ name: CI
 # - Pull requests, from forks or not, are built and never signed.
 # - Pushes to main sign the APK and upload it (scripts/install.ps1 -FromCi).
 # - A `v*` tag on main also publishes a GitHub Release (docs/releasing.md).
+#   Actions › Release › Run workflow (release.yml) tags main and starts this on the tag.
 # Only the sign job reads the signing key, and it runs no code from the repository: the
 # build, its plugins and its dependencies never run beside the key.
 on:

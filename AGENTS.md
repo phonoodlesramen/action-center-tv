@@ -49,7 +49,7 @@ means `guide-core/src/commonMain/kotlin/com/phonoodlesramen/actioncenter/`.
 | Weather | `weather` | `OpenMeteoClient.kt` |
 | Theme, tokens, icons | `ui/theme` | `Tokens.kt`, `Icons.kt`, `BrandIcons.kt` |
 | Device scripts (PowerShell 7) | `scripts/` | `ShieldAdb.psm1`, `install.ps1`, `set-default-home.ps1` |
-| CI and releases | `.github/workflows/` | `ci.yml`, `station.yml`, `docs/releasing.md` |
+| CI and releases | `.github/workflows/` | `ci.yml`, `station.yml`, `release.yml`, `docs/releasing.md` |
 | The website (GitHub Pages) | `site/` | `site/README.md`, `site/public/`, `site.yml` |
 
 The docs:
