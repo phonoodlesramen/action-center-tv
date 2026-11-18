@@ -10,9 +10,11 @@ sign their own builds.
 | A pull request, from a fork or not | Lint, unit tests, a release build, the script tests, and the station's tests when it changed | No. A pull request's code never reaches the signing key | No |
 | A push to `main` | The same | Yes, uploaded as the `action-center-release` artifact (`./scripts/install.ps1 -FromCi`) | The short SHA and `latest`, when the station changed |
 | A `v*` tag on `main` | The same | Yes, published as a GitHub Release | The short SHA and the version |
+| Actions › Release › Run workflow | Checks the version and that `main` passed CI, tags `main`, then starts the two above on the tag | As for a tag | As for a tag |
 
-The workflows are `.github/workflows/ci.yml` and `.github/workflows/station.yml`. Their
-actions are pinned to commit SHAs, with the version in a comment.
+The workflows are `.github/workflows/ci.yml`, `.github/workflows/station.yml` and
+`.github/workflows/release.yml`. Their actions are pinned to commit SHAs, with the version in
+a comment.
 
 **Where the key is used:** only in `ci.yml`'s sign job, which never runs for a pull
 request.
@@ -61,30 +63,45 @@ one means everyone uninstalls first.
 
 ## Cutting a release
 
-1. **Check that `main` is green.**
-2. **Pick the version:**
+1. **Pick the version:**
    - a patch (1.2.1) for fixes;
    - a minor (1.3.0) for features;
    - a major (2.0.0) when the TVs and the guide station have to update together.
-3. **Tag `main` and push the tag:**
-   ```bash
-   git switch main && git pull
-   git tag -a v1.3.0 -m "Action Center 1.3.0"
-   git push origin v1.3.0
-   ```
-   A tag with a hyphen, such as `v1.3.0-rc.1`, makes a pre-release. `releases/latest` skips
-   it; `./scripts/install.ps1 -FromRelease -Tag v1.3.0-rc.1` installs it.
-4. **CI runs the checks again,** then publishes the release with:
+
+   A version with a hyphen, such as 1.3.0-rc.1, makes a pre-release. `releases/latest`
+   skips it; `./scripts/install.ps1 -FromRelease -Tag v1.3.0-rc.1` installs it.
+2. **Tag `main`,** in the browser or from a terminal.
+   - **In the browser:** open the repository's **Actions** tab, choose **Release** on the
+     left, then **Run workflow**. Leave **Use workflow from** on `main`, type the version
+     (1.3.0) and press **Run workflow**. It checks that:
+     - the version is new and comes after the latest release;
+     - CI passed on `main`'s newest commit. If it's still running, run Release again once
+       it passes.
+
+     Then it tags that commit (v1.3.0) and starts CI and the guide station's workflow on
+     the tag. Its run page links to both.
+   - **From a terminal,** once `main` is green:
+     ```bash
+     git switch main && git pull
+     git tag -a v1.3.0 -m "Action Center 1.3.0"
+     git push origin v1.3.0
+     ```
+
+   Don't make the release on the **Releases** page: CI publishes it, and fails if a release
+   with that tag is already there.
+3. **CI runs the checks again,** then publishes the release with:
    - `app-release.apk`, `app-release.apk.sha256`, `update.json` ([below](#updatejson)) and
      `LICENSE.txt`;
    - notes with the APK's SHA-256 and the signing certificate's, then the pull requests
      merged since the last release.
 
    The station's workflow pushes `ghcr.io/<owner>/guide-station:1.3.0`.
-5. **Try it:** `./scripts/install.ps1 -FromRelease -Tag v1.3.0`.
+4. **Try it:** `./scripts/install.ps1 -FromRelease -Tag v1.3.0`.
 
 **If the release fails:**
 - for a passing reason, such as a network error, re-run the failed jobs from the run's page;
+- if Release tagged `main` but didn't start CI, start it yourself: **Actions › CI › Run
+  workflow**, with the tag under **Use workflow from** (and the same for **Guide station**);
 - otherwise, fix it on `main` and tag the next patch version. Don't move a tag that's been
   pushed.
 
