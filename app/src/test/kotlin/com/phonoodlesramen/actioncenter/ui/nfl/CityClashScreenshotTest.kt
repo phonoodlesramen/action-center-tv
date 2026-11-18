@@ -25,7 +25,6 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Rule
 import org.junit.Test
-import org.junit.rules.TemporaryFolder
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
@@ -35,8 +34,7 @@ import org.robolectric.annotation.GraphicsMode
  * Two cities (ui-spec "Two cities") behind each matchup, from [SampleNfl]: the home's game-day
  * card, the Games tab's panel live and before kickoff, a game's details live, before kickoff and
  * once it's over, and Marquee's backdrop on game day, with the app's own pictures
- * (`src/main/assets/nfl/cities/`); a team without one yet has a made-up skyline drawn for these
- * tests (`src/test/resources/nfl/`). Coil runs unconfined, so they're decoded before each capture. Record with
+ * (`src/main/assets/nfl/cities/`). Coil runs unconfined, so they're decoded before each capture. Record with
  * `./gradlew :app:testDebugUnitTest --tests '*CityClashScreenshotTest' -Proborazzi.test.record=true`.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -46,24 +44,16 @@ class CityClashScreenshotTest {
     @get:Rule
     val compose = createComposeRule()
 
-    @get:Rule
-    val folder = TemporaryFolder()
-
     private lateinit var cities: NflCityImages
 
     @Before
     fun setUp() {
         SingletonImageLoader.setUnsafe(ImageLoader.Builder(ApplicationProvider.getApplicationContext()).coroutineContext(Dispatchers.Unconfined).build())
-        val standIns = mapOf("CHI" to copy("standin-dusk.jpg"), "SEA" to copy("standin-blue-hour.jpg"))
-        cities = NflCityImages { abbr -> File(ASSETS, NflCities.asset(abbr)).takeIf { it.isFile } ?: standIns[abbr] }
+        cities = NflCityImages { abbr -> File(ASSETS, NflCities.asset(abbr)).takeIf { it.isFile } }
     }
 
     @After
     fun resetImages() = SingletonImageLoader.reset()
-
-    private fun copy(name: String): File = folder.newFile(name).apply {
-        writeBytes(checkNotNull(CityClashScreenshotTest::class.java.getResourceAsStream("/nfl/$name")) { "no $name" }.use { it.readBytes() })
-    }
 
     private companion object {
         /** The app's assets, from the module's folder, where the tests run. */

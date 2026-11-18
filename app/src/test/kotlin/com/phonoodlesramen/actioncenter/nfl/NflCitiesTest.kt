@@ -6,7 +6,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The teams' city pictures (ui-spec "Two cities"): one each, shipped with the app, and small. */
+/** The teams' city pictures (ui-spec "Two cities"): one for each of the 32, shipped with the app, and small. */
 class NflCitiesTest {
     /** The app's assets, from the module's folder, where the tests run. */
     private val folder = File("src/main/assets/${NflCities.DIR}")
@@ -25,12 +25,20 @@ class NflCitiesTest {
     }
 
     @Test
-    fun `each picture is 1280 px wide and under 150 KB, so all 32 stay near 3 MB`() {
-        folder.listFiles()!!.forEach { file ->
-            assertTrue("${file.name}: ${file.length() / 1024} KB", file.length() < 150 * 1024)
+    fun `every team has its picture`() {
+        assertEquals(SampleNfl.teams.map { it.abbr }.toSet(), NflCities.art.keys)
+    }
+
+    @Test
+    fun `each picture is 1280 px wide and under 175 KB, and all 32 stay under 4,608 KB`() {
+        val files = folder.listFiles()!!
+        files.forEach { file ->
+            assertTrue("${file.name}: ${file.length() / 1024} KB", file.length() < 175 * 1024)
             // ImageIO reads no WebP, so the width is read from the file's VP8 header.
             assertEquals(file.name, 1280, WebP.width(file))
         }
+        val total = files.sumOf { it.length() }
+        assertTrue("${total / 1024} KB in all", total < 4608 * 1024)
     }
 
     /** Just enough of WebP's RIFF container to read a lossy picture's width. */

@@ -121,9 +121,9 @@ Plezy carry on once the guide has moved on (§4 Pick up where you left off).
 your library and it lands on a title, loaded a little toward what you've never seen; three dials
 (What, Genre, Decade) narrow the table (§4 The die).
 
-**Two cities (11/18/2026)**: the NFL's matchups stand each team's bigger logo over a picture of
-its city, the two meeting in a fade before kickoff and a zig-zag once it's on; once it's over,
-the loser's city goes dark (§4 The NFL, Two cities).
+**Two cities (11/18/2026)**: the NFL's matchups stand each team's bigger logo over a drone's view
+of its home stadium in its city at dusk, the two meeting in a fade before kickoff and a zig-zag
+once it's on; once it's over, the loser's city goes dark (§4 The NFL, Two cities).
 
 The prototype shows the Phase 1 layout.
 
@@ -1233,14 +1233,22 @@ from about 38 dp up (12 sp at least); smaller circles are plain, the abbreviatio
 beside them.
 
 **Two cities** (11/18/2026; `nfl/NflCities.kt`, `ui/nfl/CityClash.kt`): every matchup stands
-each team's logo over a picture of its city, away on the left, home on the right: the game-day
+each team's logo over a picture of its home ground, away on the left, home on the right: the game-day
 card, the Games tab's info panel, the game details' scoreboard, and Marquee's game backdrop and
 strip tile.
-- **The pictures:** one iconic view per city at blue hour, made for the app with Artlist's image
-  generation (Nano Banana 2.1, with web search so the landmarks are right) and shipped in
-  `assets/nfl/cities/` as 1280 px WebP, about 75 KB each. `NflCities.art` lists each with what it
-  shows and where its interest is, so a crop keeps it in view. Teams that share a city have
-  different views of it (docs/third-party-notices.md).
+- **The pictures:** one for each of the 32 teams: a low drone shot of its home stadium at blue
+  hour, close and lit, with its city around it (the skyline, the river, the lake). They're made
+  for the app with Artlist's image generation (Nano Banana 2.1, with web search), each from a
+  public-domain aerial photograph of the stadium (USDA NAIP, from The National Map), so the
+  stadium's shape, its orientation and its surroundings are true. The new Highmark Stadium,
+  newer than the aerials, is from the words alone. No lettering, logos or sponsors' names: what
+  the generator added is blurred out. Shipped in `assets/nfl/cities/` as 1280 px WebP at
+  quality 75, about 130 KB each and 4.1 MB in all. `NflCities.art` lists each with what it
+  shows and where its stadium is, so a crop keeps the stadium in view, from the scoreboard's
+  wide band to Marquee's tall halves. The teams that share a stadium are seen from opposite
+  sides: the Giants from the west with Manhattan behind, the Jets from the east over the
+  Meadowlands; the Rams from the south-west towards downtown, the Chargers from the north-east
+  towards the Pacific (docs/third-party-notices.md).
 - **How they look:** each at 60% colour, under the dark of `background` (50%; the card 60%,
   Marquee 30% under its own scrims), with the team's colour from its outer edge (42% to 10%),
   so the two sit together and the words stay readable.

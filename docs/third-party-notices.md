@@ -53,11 +53,19 @@ limitations under the License.
 
 ## NFL city pictures (ui-spec "Two cities")
 
-The app ships one picture of each team's city (`app/src/main/assets/nfl/cities/`). They were
-made for the project with Artlist's AI image generation (artlist.io, Nano Banana 2.1), on the
-maintainer's Artlist plan, under Artlist's terms for AI-generated content. They show public
-places only: no logos, team marks or stadium branding. The app crops, desaturates and tints
-them.
+The app ships one picture for each team (`app/src/main/assets/nfl/cities/`): its home stadium
+and the city around it, as from a drone at dusk. They were made for the project with Artlist's
+AI image generation (artlist.io, Nano Banana 2.1), on the maintainer's Artlist plan, under
+Artlist's terms for AI-generated content. They aren't photographs.
+
+Each was generated from an aerial photograph of the stadium, for its layout: USDA's National
+Agriculture Imagery Program (NAIP), from the USGS National Map's imagery service
+(imagery.nationalmap.gov; "USGS, USDA, The National Map: Orthoimagery"), which is in the public
+domain. The aerials themselves aren't shipped.
+
+The pictures show buildings as seen from public places (17 U.S.C. § 120(a)), with no logos,
+team marks, sponsors' names or other lettering: what the generator drew was blurred out. The
+app crops, desaturates and tints them.
 
 ## NFL data and team logos (Phase 13)
 
