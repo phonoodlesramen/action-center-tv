@@ -1241,13 +1241,16 @@ strip tile.
   for the app with Artlist's image generation (Nano Banana 2.1, with web search), each from a
   public-domain aerial photograph of the stadium (USDA NAIP, from The National Map), so the
   stadium's shape, its orientation and its surroundings are true. The new Highmark Stadium,
-  newer than the aerials, is from the words alone. The prompts ask for no lettering or logos;
-  the few signs the generator drew anyway are left as drawn. Shipped in `assets/nfl/cities/` as 1280 px WebP at
+  newer than the aerials, is from the words alone. Each was then checked against real photos
+  of the stadium (Wikimedia Commons, the Library of Congress) for its form, which end faces
+  where and what's around it, and corrected where it was wrong. The prompts ask for no
+  lettering or logos; the few signs the generator drew anyway are left as drawn. Shipped in
+  `assets/nfl/cities/` as 1280 px WebP at
   quality 75, about 130 KB each and 4.1 MB in all. `NflCities.art` lists each with what it
   shows and where its stadium is, so a crop keeps the stadium in view, from the scoreboard's
   wide band to Marquee's tall halves. The teams that share a stadium are seen from opposite
-  sides: the Giants from the west with Manhattan behind, the Jets from the east over the
-  Meadowlands; the Rams from the south-west towards downtown, the Chargers from the north-east
+  sides: the Giants from the north-west with Manhattan behind, the Jets from the south over
+  the racetrack and the Meadowlands; the Rams from the south-west towards downtown, the Chargers from the north-east
   towards the Pacific (docs/third-party-notices.md).
 - **How they look:** each at 60% colour, under the dark of `background` (50%; the card 60%,
   Marquee 30% under its own scrims), with the team's colour from its outer edge (42% to 10%),

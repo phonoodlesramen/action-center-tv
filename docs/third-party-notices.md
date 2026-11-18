@@ -61,7 +61,10 @@ Artlist's terms for AI-generated content. They aren't photographs.
 Each was generated from an aerial photograph of the stadium, for its layout: USDA's National
 Agriculture Imagery Program (NAIP), from the USGS National Map's imagery service
 (imagery.nationalmap.gov; "USGS, USDA, The National Map: Orthoimagery"), which is in the public
-domain. The aerials themselves aren't shipped.
+domain. Pittsburgh's was also generated from a photograph by Carol M. Highsmith, "Aerial view
+of Pittsburgh, Pennsylvania, with a focus on Heinz Field" (2019), from the Carol M. Highsmith
+Archive at the Library of Congress, which she dedicated to the public domain. Neither the
+aerials nor that photograph is shipped.
 
 The pictures show buildings as seen from public places (17 U.S.C. § 120(a)). They were asked
 for with no logos, team marks or lettering; a few stadium and sponsor signs the generator drew
