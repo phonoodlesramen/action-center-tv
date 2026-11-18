@@ -8,8 +8,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.produceState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
@@ -38,18 +36,17 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import com.phonoodlesramen.actioncenter.nfl.CityPhoto
+import com.phonoodlesramen.actioncenter.nfl.CityArt
 import com.phonoodlesramen.actioncenter.nfl.Clash
 import com.phonoodlesramen.actioncenter.nfl.NflCities
-import com.phonoodlesramen.actioncenter.nfl.NflCityFiles
+import com.phonoodlesramen.actioncenter.nfl.NflCityImages
 import com.phonoodlesramen.actioncenter.nfl.NflGame
 import com.phonoodlesramen.actioncenter.nfl.NflTeam
 import com.phonoodlesramen.actioncenter.nfl.NflView
 import com.phonoodlesramen.actioncenter.ui.theme.Palette
-import java.io.File
 
-/** Where city photos come from: the app's cache through [NflCityFiles]; previews have none. */
-val LocalNflCities = staticCompositionLocalOf { NflCityFiles.None }
+/** Where city pictures come from: the app's own ([NflCityImages.Bundled]); previews and tests have none unless they say. */
+val LocalNflCities = staticCompositionLocalOf { NflCityImages.None }
 
 /** How a game's two cities meet: [Clash.seam], and whose city is dark ([Clash.dimmed]). */
 @Immutable
@@ -61,15 +58,15 @@ data class ClashLook(val seam: Clash.Seam = Clash.Seam.FADE, val dimmed: String?
 
 /**
  * Two cities (ui-spec "Two cities"): the away team's city on the left and the home team's on the
- * right, each tinted towards its team's colour at its outer edge, meeting in the middle across
- * the [look]'s seam: a fade before kickoff, a zig-zag once it's on (the clash). Without a photo,
+ * right, each a picture shipped with the app, tinted towards its team's colour at its outer edge, meeting in the middle across
+ * the [look]'s seam: a fade before kickoff, a zig-zag once it's on (the clash). Without a picture,
  * a side is its team's colour washed over whatever's behind (a card's own surface), as the bands
  * were before.
  *
  * A zig-zag gets a light line along it where nothing's written over the middle: [line] is the
  * part of the height it's drawn in, fading in and out at its ends; null draws none, and the
  * cities meet at the cut alone. Each side is a little more than half the width, so the teeth
- * have a city behind them; each photo is decoded at that size times [detail], never larger.
+ * have a city behind them; each picture is decoded at that size times [detail], never larger.
  */
 @Composable
 fun CityClash(
@@ -83,9 +80,9 @@ fun CityClash(
     /** A zig-zag's tooth, top to top; the height is split into whole teeth near this. */
     tooth: Dp = 22.dp,
     line: ClosedFloatingPointRange<Float>? = 0f..1f,
-    /** How much of its drawn size a photo is decoded at: a backdrop stretched to the screen takes half. */
+    /** How much of its drawn size a picture is decoded at: a backdrop stretched to the screen takes half. */
     detail: Float = 1f,
-    /** How dark the photos are kept, for the words over them. */
+    /** How dark the pictures are kept, for the words over them. */
     shade: Float = SHADE,
 ) {
     BoxWithConstraints(modifier.clip(shape)) {
@@ -121,7 +118,7 @@ fun CityClash(
 /** How much of the width a side covers: half, and room for the teeth and the fade. */
 private const val SIDE = 0.62f
 
-/** How dark the photos are kept by default: the band's words sit on them. */
+/** How dark the pictures are kept by default: the band's words sit on them. */
 internal const val SHADE = 0.5f
 
 /** How much darker the loser's city goes once it's over. */
@@ -166,7 +163,7 @@ internal fun zigzag(size: Size, tooth: Float): Path {
     }
 }
 
-/** The light line along the zig-zag, over a soft dark one so it holds on a bright photo, drawn in [band] of the height. */
+/** The light line along the zig-zag, over a soft dark one so it holds on a bright picture, drawn in [band] of the height. */
 @Composable
 private fun SeamLine(tooth: Dp, band: ClosedFloatingPointRange<Float>, modifier: Modifier) {
     Box(
@@ -194,19 +191,17 @@ private fun SeamLine(tooth: Dp, band: ClosedFloatingPointRange<Float>, modifier:
 private const val LINE_EDGE = 0.06f
 
 /**
- * One side: the city's photo, a little desaturated, with the dark of the surface over it and the
- * team's colour strongest at the outer edge; darker still when [dim]. Without a photo, the
+ * One side: the city's picture, a little desaturated, with the dark of the surface over it and
+ * the team's colour strongest at the outer edge; darker still when [dim]. Without a picture, the
  * team's colour alone.
  */
 @Composable
 private fun CitySide(abbr: String, team: NflTeam?, fromLeft: Boolean, dim: Boolean, px: Size, shade: Float, modifier: Modifier) {
-    val cities = LocalNflCities.current
-    val file by produceState<File?>(null, abbr, cities) { value = cities.file(abbr) }
+    val image = LocalNflCities.current.image(abbr)
     val colour = NflColors.wash(team)
     Box(modifier) {
-        val loaded = file
-        if (loaded != null) {
-            CityPhotoImage(loaded, NflCities.photos[abbr], px, Modifier.fillMaxSize())
+        if (image != null) {
+            CityImage(image, NflCities.art[abbr], px, Modifier.fillMaxSize())
             Box(Modifier.fillMaxSize().background(Palette.Background.copy(alpha = shade)))
             Box(Modifier.fillMaxSize().background(tint(colour, fromLeft, outer = TINT_OUTER, inner = TINT_INNER)))
         } else {
@@ -216,11 +211,11 @@ private fun CitySide(abbr: String, team: NflTeam?, fromLeft: Boolean, dim: Boole
     }
 }
 
-/** A photo's team colour, outer edge and inner. */
+/** A picture's team colour, outer edge and inner. */
 private const val TINT_OUTER = 0.42f
 private const val TINT_INNER = 0.1f
 
-/** Without a photo, the colour's a little stronger, as the bands' washes were. */
+/** Without a picture, the colour's a little stronger, as the bands' washes were. */
 private const val WASH_OUTER = 0.5f
 private const val WASH_INNER = 0.12f
 
@@ -231,17 +226,17 @@ private fun tint(colour: Color, fromLeft: Boolean, outer: Float, inner: Float): 
         Brush.horizontalGradient(0f to colour.copy(alpha = inner), 1f to colour.copy(alpha = outer))
     }
 
-/** The photo, cropped to fill with its interest in view, at 60% colour so the cities sit together. */
+/** The picture, cropped to fill with its interest in view, at 60% colour so the cities sit together. */
 @Composable
-private fun CityPhotoImage(file: File, photo: CityPhoto?, px: Size, modifier: Modifier) {
+private fun CityImage(image: Any, art: CityArt?, px: Size, modifier: Modifier) {
     val context = LocalContext.current
     val width = px.width.toInt()
     val height = px.height.toInt()
     AsyncImage(
-        model = remember(file, width, height) { ImageRequest.Builder(context).data(file).size(width, height).build() },
+        model = remember(image, width, height) { ImageRequest.Builder(context).data(image).size(width, height).build() },
         contentDescription = null,
         contentScale = ContentScale.Crop,
-        alignment = BiasAlignment((photo?.focusX ?: 0.5f) * 2 - 1, (photo?.focusY ?: 0.5f) * 2 - 1),
+        alignment = BiasAlignment((art?.focusX ?: 0.5f) * 2 - 1, (art?.focusY ?: 0.5f) * 2 - 1),
         colorFilter = remember { ColorFilter.colorMatrix(ColorMatrix().apply { setToSaturation(SATURATION) }) },
         modifier = modifier,
     )

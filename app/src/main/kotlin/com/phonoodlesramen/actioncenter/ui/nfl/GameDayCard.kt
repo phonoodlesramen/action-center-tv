@@ -59,7 +59,7 @@ import com.phonoodlesramen.actioncenter.ui.wallpaper.cardSurface
  *
  * Behind it, the two teams' cities ([CityClash], ui-spec "Two cities"), away on the left, meeting
  * in a fade before kickoff and a zig-zag cut once it's on, the loser's dark once it's over;
- * without photos, each team's colour washes in from its side. OK opens the NFL screen on this game (F3); hold OK or Menu for [cardSheet].
+ * without pictures, each team's colour washes in from its side. OK opens the NFL screen on this game (F3); hold OK or Menu for [cardSheet].
  *
  * The score line takes what the card has left, so at 115% it still fits the card's 92 dp.
  */

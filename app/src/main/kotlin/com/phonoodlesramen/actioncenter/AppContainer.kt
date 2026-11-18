@@ -52,7 +52,6 @@ import com.phonoodlesramen.actioncenter.home.HomeViewModel
 import com.phonoodlesramen.actioncenter.media.SharedFolders
 import com.phonoodlesramen.actioncenter.nfl.DataStoreNfl
 import com.phonoodlesramen.actioncenter.nfl.EspnClient
-import com.phonoodlesramen.actioncenter.nfl.NflCityPhotos
 import com.phonoodlesramen.actioncenter.nfl.NflLogos
 import com.phonoodlesramen.actioncenter.nfl.NflSource
 import com.phonoodlesramen.actioncenter.player.DataStoreSpots
@@ -608,9 +607,6 @@ class AppContainer(
 
     /** Team logos, each fetched once into the cache directory: from the station while paired, else ESPN's. */
     val nflLogos by lazy { NflLogos(File(app.cacheDir, "nfl-logos"), guideStation, espn, log = { Log.i(NFL_LOG_TAG, it) }) }
-
-    /** The teams' city photos (ui-spec "Two cities"), each fetched once into the cache directory from Wikimedia Commons. */
-    val nflCities by lazy { NflCityPhotos(File(app.cacheDir, "nfl-cities"), http, log = { Log.i(NFL_LOG_TAG, it) }) }
 
     /** The operator's folders in shared storage: wallpapers and app banners (L2, L7). */
     val sharedFolders by lazy { SharedFolders.android(app) }

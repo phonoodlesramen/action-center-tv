@@ -6,43 +6,51 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
-/** The city photos' list (ui-spec "Two cities"): free to use as the app uses them, and credited. */
+/** The teams' city pictures (ui-spec "Two cities"): one each, shipped with the app, and small. */
 class NflCitiesTest {
-    private val photos = NflCities.photos
+    /** The app's assets, from the module's folder, where the tests run. */
+    private val folder = File("src/main/assets/${NflCities.DIR}")
 
     @Test
-    fun `every photo is public domain, CC0 or CC BY, never share-alike`() {
-        photos.forEach { (team, photo) ->
-            val licence = photo.licence
-            val ok = licence == "Public domain" || licence == "CC0" || Regex("""CC BY \d\.\d""").matches(licence)
-            assertTrue("$team: ${photo.file} is $licence", ok)
-        }
-    }
-
-    @Test
-    fun `every photo is a team's, its own, with a place, an author and its interest in the frame`() {
+    fun `every city listed has its picture, and every picture is listed`() {
         val teams = SampleNfl.teams.map { it.abbr }.toSet()
-        photos.forEach { (team, photo) ->
+        NflCities.art.forEach { (team, art) ->
             assertTrue("$team isn't a team", team in teams)
-            assertTrue("$team: ${photo.file}", Regex(""".+\.(jpe?g|png|tiff?)""", RegexOption.IGNORE_CASE).matches(photo.file))
-            assertTrue("$team: no place", photo.place.isNotBlank())
-            assertTrue("$team: no author", photo.author.isNotBlank())
-            assertTrue("$team: focus", photo.focusX in 0f..1f && photo.focusY in 0f..1f)
+            assertTrue("$team: no ${NflCities.asset(team)}", File("src/main/assets", NflCities.asset(team)).isFile)
+            assertTrue("$team: no place", art.place.isNotBlank())
+            assertTrue("$team: focus", art.focusX in 0f..1f && art.focusY in 0f..1f)
         }
-        assertEquals("two teams share a photo", photos.size, photos.values.map { it.file }.toSet().size)
+        val listed = NflCities.art.keys.map { File(NflCities.asset(it)).name }.toSet()
+        assertEquals("pictures nobody uses", emptySet<String>(), folder.list()!!.toSet() - listed)
     }
 
     @Test
-    fun `every photo is credited in the third-party notices`() {
-        val notices = File("../docs/third-party-notices.md").readText()
-        photos.forEach { (team, photo) ->
-            assertTrue("$team: ${photo.file} isn't credited", notices.contains(photo.file))
+    fun `each picture is 1280 px wide and under 150 KB, so all 32 stay near 3 MB`() {
+        folder.listFiles()!!.forEach { file ->
+            assertTrue("${file.name}: ${file.length() / 1024} KB", file.length() < 150 * 1024)
+            // ImageIO reads no WebP, so the width is read from the file's VP8 header.
+            assertEquals(file.name, 1280, WebP.width(file))
+        }
+    }
+
+    /** Just enough of WebP's RIFF container to read a lossy picture's width. */
+    private object WebP {
+        fun width(file: File): Int {
+            val b = file.readBytes()
+            check(String(b, 0, 4) == "RIFF" && String(b, 8, 4) == "WEBP") { "${file.name} isn't a WebP" }
+            return when (val chunk = String(b, 12, 4)) {
+                // A lossy frame: its start code, then a 14-bit width.
+                "VP8 " -> ((b[26].toInt() and 0xFF) or ((b[27].toInt() and 0xFF) shl 8)) and 0x3FFF
+                // An extended header: the canvas width less one, in 24 bits.
+                "VP8X" -> 1 + ((b[24].toInt() and 0xFF) or ((b[25].toInt() and 0xFF) shl 8) or ((b[26].toInt() and 0xFF) shl 16))
+                else -> error("${file.name}: $chunk")
+            }
         }
     }
 
     @Test
-    fun `Commons is asked for the file by name, at the width drawn`() {
-        val url = NflCities.url(CityPhoto("A made-up bridge", "Made-up bridge at dusk.jpg", "A. Nobody", "CC0"), 1280)
-        assertEquals("https://commons.wikimedia.org/wiki/Special:FilePath/Made-up%20bridge%20at%20dusk.jpg?width=1280", url.toString())
+    fun `the app's own pictures load from its assets`() {
+        assertEquals("file:///android_asset/nfl/cities/phi.webp", NflCityImages.Bundled.image("PHI"))
+        assertEquals(null, NflCityImages.Bundled.image("XYZ"))
     }
 }

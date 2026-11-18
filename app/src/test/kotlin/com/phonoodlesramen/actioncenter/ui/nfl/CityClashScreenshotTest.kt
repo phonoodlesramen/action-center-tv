@@ -9,7 +9,8 @@ import coil3.SingletonImageLoader
 import com.github.takahirom.roborazzi.captureRoboImage
 import com.phonoodlesramen.actioncenter.home.HomeLayout
 import com.phonoodlesramen.actioncenter.nfl.GameState
-import com.phonoodlesramen.actioncenter.nfl.NflCityFiles
+import com.phonoodlesramen.actioncenter.nfl.NflCities
+import com.phonoodlesramen.actioncenter.nfl.NflCityImages
 import com.phonoodlesramen.actioncenter.nfl.NflView
 import com.phonoodlesramen.actioncenter.ui.TV_1080P
 import com.phonoodlesramen.actioncenter.ui.guide.SampleGuide
@@ -33,9 +34,9 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * Two cities (ui-spec "Two cities") behind each matchup, from [SampleNfl]: the home's game-day
  * card, the Games tab's panel live and before kickoff, a game's details live, before kickoff and
- * once it's over, and Marquee's backdrop on game day. The photos are two made-up skylines drawn
- * for these tests (`src/test/resources/nfl/`), not real places: the away cities at dusk, the home
- * ones at the blue hour. Coil runs unconfined, so they're decoded before each capture. Record with
+ * once it's over, and Marquee's backdrop on game day, with the app's own pictures
+ * (`src/main/assets/nfl/cities/`); a team without one yet has a made-up skyline drawn for these
+ * tests (`src/test/resources/nfl/`). Coil runs unconfined, so they're decoded before each capture. Record with
  * `./gradlew :app:testDebugUnitTest --tests '*CityClashScreenshotTest' -Proborazzi.test.record=true`.
  */
 @RunWith(RobolectricTestRunner::class)
@@ -48,15 +49,13 @@ class CityClashScreenshotTest {
     @get:Rule
     val folder = TemporaryFolder()
 
-    private lateinit var cities: NflCityFiles
+    private lateinit var cities: NflCityImages
 
     @Before
     fun setUp() {
         SingletonImageLoader.setUnsafe(ImageLoader.Builder(ApplicationProvider.getApplicationContext()).coroutineContext(Dispatchers.Unconfined).build())
-        val dusk = copy("standin-dusk.jpg")
-        val blueHour = copy("standin-blue-hour.jpg")
-        val files = mapOf("PHI" to dusk, "CHI" to dusk, "WSH" to blueHour, "SEA" to blueHour)
-        cities = NflCityFiles { files[it] }
+        val standIns = mapOf("CHI" to copy("standin-dusk.jpg"), "SEA" to copy("standin-blue-hour.jpg"))
+        cities = NflCityImages { abbr -> File(ASSETS, NflCities.asset(abbr)).takeIf { it.isFile } ?: standIns[abbr] }
     }
 
     @After
@@ -64,6 +63,11 @@ class CityClashScreenshotTest {
 
     private fun copy(name: String): File = folder.newFile(name).apply {
         writeBytes(checkNotNull(CityClashScreenshotTest::class.java.getResourceAsStream("/nfl/$name")) { "no $name" }.use { it.readBytes() })
+    }
+
+    private companion object {
+        /** The app's assets, from the module's folder, where the tests run. */
+        val ASSETS = File("src/main/assets")
     }
 
     private fun capture(name: String) = compose.onRoot().captureRoboImage("src/test/screenshots/$name.png")

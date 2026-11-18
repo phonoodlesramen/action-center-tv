@@ -121,7 +121,7 @@ Plezy carry on once the guide has moved on (§4 Pick up where you left off).
 your library and it lands on a title, loaded a little toward what you've never seen; three dials
 (What, Genre, Decade) narrow the table (§4 The die).
 
-**Two cities (11/18/2026)**: the NFL's matchups stand each team's bigger logo over a photo of
+**Two cities (11/18/2026)**: the NFL's matchups stand each team's bigger logo over a picture of
 its city, the two meeting in a fade before kickoff and a zig-zag once it's on; once it's over,
 the loser's city goes dark (§4 The NFL, Two cities).
 
@@ -1233,13 +1233,14 @@ from about 38 dp up (12 sp at least); smaller circles are plain, the abbreviatio
 beside them.
 
 **Two cities** (11/18/2026; `nfl/NflCities.kt`, `ui/nfl/CityClash.kt`): every matchup stands
-each team's logo over a photo of its city, away on the left, home on the right: the game-day
+each team's logo over a picture of its city, away on the left, home on the right: the game-day
 card, the Games tab's info panel, the game details' scoreboard, and Marquee's game backdrop and
 strip tile.
-- **The photos:** one iconic view per city, from Wikimedia Commons, public domain, CC0 or CC BY
-  (a credit, nothing more), listed in `NflCities.photos` with the place, the author, the licence
-  and where its interest is, so a crop keeps it in view. Teams that share a city have different
-  views of it. The credits are in `docs/third-party-notices.md`.
+- **The pictures:** one iconic view per city at blue hour, made for the app with Artlist's image
+  generation (Nano Banana 2.1, with web search so the landmarks are right) and shipped in
+  `assets/nfl/cities/` as 1280 px WebP, about 75 KB each. `NflCities.art` lists each with what it
+  shows and where its interest is, so a crop keeps it in view. Teams that share a city have
+  different views of it (docs/third-party-notices.md).
 - **How they look:** each at 60% colour, under the dark of `background` (50%; the card 60%,
   Marquee 30% under its own scrims), with the team's colour from its outer edge (42% to 10%),
   so the two sit together and the words stay readable.
@@ -1250,11 +1251,10 @@ strip tile.
   top bar to above the strip; the strip tile's. The card and the info panel have the cut alone.
 - **Once it's over,** the loser's city goes dark (38% more), as a final's loser is faint on
   its tile. A tie, a game still on and a hidden score (F10) leave both lit.
-- **Fetching:** each photo once, from Commons (`Special:FilePath`, 1280 px wide), into the
-  cache, paired or not; a failure waits 10 minutes. A photo is decoded at the size drawn,
-  never larger: a side is 62% of the width, so the teeth have a city behind them; Marquee's
-  at half the screen's pixels, as its art is. While a photo's missing, the team's colour
-  washes in from its side, as the bands did before.
+- **Nothing to fetch:** the pictures ship with the app. One is decoded at the size drawn, never
+  larger: a side is 62% of the width, so the teeth have a city behind them; Marquee's at half
+  the screen's pixels, as its art is. A team without one has its colour washing in from its
+  side, as the bands did before.
 
 **Hide scores** (F10, proposal C): today's games say "Score hidden" on the card, the row,
 the Games tab, details and team pages. While any of them is hidden, the standings are this
