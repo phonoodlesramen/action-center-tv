@@ -1,6 +1,5 @@
 package com.phonoodlesramen.actioncenter.ui.nfl
 
-import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -17,7 +16,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
@@ -59,8 +57,9 @@ import com.phonoodlesramen.actioncenter.ui.wallpaper.cardSurface
  * - the foot: down and distance, the red zone and how many more are live; or the time to kickoff;
  *   "Scores from 2:41 PM" first when the copy is old (F11).
  *
- * The away team's colour washes in from the left and the home team's from the right. OK opens the
- * NFL screen on this game (F3); hold OK or Menu for [cardSheet].
+ * Behind it, the two teams' cities ([CityClash], ui-spec "Two cities"), away on the left, meeting
+ * in a fade before kickoff and a zig-zag cut once it's on, the loser's dark once it's over;
+ * without photos, each team's colour washes in from its side. OK opens the NFL screen on this game (F3); hold OK or Menu for [cardSheet].
  *
  * The score line takes what the card has left, so at 115% it still fits the card's 92 dp.
  */
@@ -77,18 +76,10 @@ fun GameDayCard(
     /** Where focus goes once Not today takes the card away: Quick Watch is back in its place. */
     afterNotToday: FocusRequester? = null,
 ) {
-    val away = view.team(game.away)
-    val home = view.team(game.home)
     val hidden = view.hidden(game, nowMillis)
     val yours = game.away in view.settings.yourTeams || game.home in view.settings.yourTeams
     val sheet = { openSheet(cardSheet(game, view, nowMillis, watch, actions, self, afterNotToday)) }
     val shape = RoundedCornerShape(Layout.CardRadius)
-    val wash = Brush.horizontalGradient(
-        0f to NflColors.wash(away).copy(alpha = WASH),
-        0.38f to Color.Transparent,
-        0.62f to Color.Transparent,
-        1f to NflColors.wash(home).copy(alpha = WASH),
-    )
     Surface(
         onClick = { actions.openNfl(NflOpen(NflPage.Tab(NflTab.GAMES, gameId = game.id), NflOpen.CARD)) },
         onLongClick = sheet,
@@ -106,7 +97,9 @@ fun GameDayCard(
         scale = cardLift,
         border = focusRing(shape),
     ) {
-        Box(Modifier.fillMaxSize().cardSurface(LocalCardSurface.current, shape).background(wash, shape)) {
+        Box(Modifier.fillMaxSize().cardSurface(LocalCardSurface.current, shape)) {
+            // Words cross the middle from top to bottom, so the cities meet at the cut alone, with no line.
+            CityClash(game, view, nowMillis, Modifier.matchParentSize(), shape = shape, tooth = CARD_TOOTH, line = null, shade = CARD_SHADE)
             Column(Modifier.fillMaxSize().padding(horizontal = 12.dp, vertical = 8.dp)) {
                 CardEyebrow(game, view, yours)
                 ScoreLine(game, view, hidden, Modifier.weight(1f).fillMaxWidth())
@@ -122,8 +115,11 @@ fun GameDayCard(
     }
 }
 
-/** How strongly each team's colour washes in. */
-private const val WASH = 0.33f
+/** The card's zig-zag: four teeth down its 92 dp. */
+private val CARD_TOOTH = 22.dp
+
+/** The card's words are small, so its cities are kept darker than a band's. */
+private const val CARD_SHADE = 0.6f
 
 /**
  * "NFL · YOUR TEAM · ● LIVE · 1:45 3RD", and the network's badge on the right. Short of room (115%),

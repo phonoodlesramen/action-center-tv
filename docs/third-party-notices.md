@@ -51,6 +51,18 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
+## NFL city photos (ui-spec "Two cities")
+
+The app doesn't ship them: a TV fetches each team's city photo at run time from Wikimedia
+Commons (`commons.wikimedia.org`, `upload.wikimedia.org`), once, and keeps it in its cache. They
+are public domain, CC0 or CC BY, chosen for that; never share-alike, since the app crops,
+desaturates and tints them. Each is listed in `NflCities.photos`
+(`app/src/main/kotlin/com/phonoodlesramen/actioncenter/nfl/NflCities.kt`) with its file on
+Commons, where its author, licence and source are recorded, and credited here:
+
+| Team | Photo | Author | Licence |
+|---|---|---|---|
+
 ## NFL data and team logos (Phase 13)
 
 The app doesn't ship them: the guide station (or an unpaired TV) fetches them at run time
