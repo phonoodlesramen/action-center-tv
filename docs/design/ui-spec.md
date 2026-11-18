@@ -121,6 +121,10 @@ Plezy carry on once the guide has moved on (§4 Pick up where you left off).
 your library and it lands on a title, loaded a little toward what you've never seen; three dials
 (What, Genre, Decade) narrow the table (§4 The die).
 
+**Two cities (11/18/2026)**: the NFL's matchups stand each team's bigger logo over a drone's view
+of its home stadium in its city at dusk, the two meeting in a fade before kickoff and a zig-zag
+once it's on; once it's over, the loser's city goes dark (§4 The NFL, Two cities).
+
 The prototype shows the Phase 1 layout.
 
 **Tags:** [REQ] brief requirement · [U*n*] UI decision · [PROP] proposal, not settled
@@ -1093,8 +1097,8 @@ resizer, cached on the TV at the size drawn, never larger. Times are the house's
   before a kickoff until the day's last game ends. Then Quick Watch comes back.
 - **Which game:** your team's while it's on; else the closest live game (the smallest
   margin, the later quarter first); else the next kickoff (`NflRules.featured`).
-- **Anatomy** (12 dp padding), on the card surface with the away team's colour at 33% on
-  the left and the home team's on the right, fading to the surface in the middle:
+- **Anatomy** (12 dp padding), on the card surface over the two teams' cities (**Two
+  cities**, below; the cut alone, no line, since the words cross the middle):
   - **Eyebrow:** "NFL", then "· YOUR TEAM" for your team's game, then "· ● LIVE · 1:45 3RD"
     (the dot and LIVE in `live` red) or "· 8:15 PM". The network badge is on the right.
   - **The score line**, 36 dp, one grid:
@@ -1148,8 +1152,9 @@ guide). It opens at once from the copy.
   landing on the open tab; on Standings, Down from a tab lands on the open view's pill.
 - **Games:**
   - **The info panel** (864×128 dp) for the focused game:
-    - both teams (52 dp logos, the name 20 sp bold, the record dim), the scores (40 sp
-      bold), the status between them, and the situation or the venue under it;
+    - both teams (64 dp logos, the name 20 sp bold, the record dim) over their two cities
+      (**Two cities**, the cut alone), the scores (40 sp bold), the status between them, and
+      the situation or the venue under it;
     - on the right (300 dp, a hairline rule before it): "WHERE TO WATCH", the first way
       (16 sp, medium), "Also: …" (bodySmall), and the hint "OK to watch · hold OK for
       more" or "OK for details · hold OK for more".
@@ -1187,8 +1192,9 @@ guide). It opens at once from the copy.
     header line (D).
   - OK on a team opens its page.
 - **Game details** (a page on the NFL screen's own stack, `NflPage`):
-  - the scoreboard (84 dp logos, the city and name, "2-5 · 3rd in NFC East", 56 sp scores,
-    the status and situation between them, on the two teams' colours);
+  - the scoreboard (148 dp: 96 dp logos, the city and name, "2-5 · 3rd in NFC East", 56 sp
+    scores, the status and situation between them on a plate, `background` at 72%), over the
+    two teams' cities (**Two cities**: the clash's line runs behind the plate);
   - the score by quarter on the left, with the venue, the networks and the last play;
   - team stats on the right, as paired bars;
   - buttons: each way to watch (two at most; a missing app dimmed), both teams, Standings.
@@ -1225,6 +1231,41 @@ hidden, a game's sheet lists one way to watch, so Show score fits in five rows.
 **Logos** while one is missing: a circle in the team's colour, with the abbreviation inside
 from about 38 dp up (12 sp at least); smaller circles are plain, the abbreviation always
 beside them.
+
+**Two cities** (11/18/2026; `nfl/NflCities.kt`, `ui/nfl/CityClash.kt`): every matchup stands
+each team's logo over a picture of its home ground, away on the left, home on the right: the game-day
+card, the Games tab's info panel, the game details' scoreboard, and Marquee's game backdrop and
+strip tile.
+- **The pictures:** one for each of the 32 teams: a low drone shot of its home stadium at blue
+  hour, close and lit, with its city around it (the skyline, the river, the lake). They're made
+  for the app with Artlist's image generation (Nano Banana 2.1, with web search), each from a
+  public-domain aerial photograph of the stadium (USDA NAIP, from The National Map), so the
+  stadium's shape, its orientation and its surroundings are true. The new Highmark Stadium,
+  newer than the aerials, is from the words alone. Each was then checked against real photos
+  of the stadium (Wikimedia Commons, the Library of Congress) for its form, which end faces
+  where and what's around it, and corrected where it was wrong. The prompts ask for no
+  lettering or logos; the few signs the generator drew anyway are left as drawn. Shipped in
+  `assets/nfl/cities/` as 1280 px WebP at
+  quality 75, about 130 KB each and 4.1 MB in all. `NflCities.art` lists each with what it
+  shows and where its stadium is, so a crop keeps the stadium in view, from the scoreboard's
+  wide band to Marquee's tall halves. The teams that share a stadium are seen from opposite
+  sides: the Giants from the north-west with Manhattan behind, the Jets from the south over
+  the racetrack and the Meadowlands; the Rams from the south-west towards downtown, the Chargers from the north-east
+  towards the Pacific (docs/third-party-notices.md).
+- **How they look:** each at 60% colour, under the dark of `background` (50%; the card 60%,
+  Marquee 30% under its own scrims), with the team's colour from its outer edge (42% to 10%),
+  so the two sit together and the words stay readable.
+- **How they meet:** before kickoff they fade into each other across a fifth of the width;
+  once it's on, a zig-zag cut down the middle (teeth about 22 dp, top to top), the clash.
+  Where nothing's written over the middle, a light line runs along the zig-zag (1.5 dp, white
+  at 85%, over a 5 dp dark one): the scoreboard's, behind its plate; Marquee's, from below the
+  top bar to above the strip; the strip tile's. The card and the info panel have the cut alone.
+- **Once it's over,** the loser's city goes dark (38% more), as a final's loser is faint on
+  its tile. A tie, a game still on and a hidden score (F10) leave both lit.
+- **Nothing to fetch:** the pictures ship with the app. One is decoded at the size drawn, never
+  larger: a side is 62% of the width, so the teeth have a city behind them; Marquee's at half
+  the screen's pixels, as its art is. A team without one has its colour washing in from its
+  side, as the bands did before.
 
 **Hide scores** (F10, proposal C): today's games say "Score hidden" on the card, the row,
 the Games tab, details and team pages. While any of them is hidden, the standings are this
@@ -1445,7 +1486,7 @@ has none.
 |---|---|---|---|
 | Weeknight | Weeknight evening (M1) | Tonight's Pick (the finish-it pick leads it, M3) · a taller Quick Watch: three rows and "1h 49m until 10:30" at its foot | the pick, then Quick Watch |
 | Weekend morning | Weekend morning | the lens card's title, the family lens by then, as the hero ("For the family", Watch again, Trailer, Next) · **Who's watching?**: each kid's avatar, 64 dp, one press from their home (K11), and "Maya and Leo each get their own home." The top bar leaves its small avatars out | the family lens's title |
-| Game day | While the game-day card is up (F1), whatever the time | the game-day card, hero-sized · **Around the league**: today's other games, live first, then those to come, then the latest finals, three at most; OK opens one in the NFL screen | the game: the team colours wash in from each side, "Eagles at Commanders", the score, and Watch in the first app that has it, then Game details |
+| Game day | While the game-day card is up (F1), whatever the time | the game-day card, hero-sized · **Around the league**: today's other games, live first, then those to come, then the latest finals, three at most; OK opens one in the NFL screen | the game: its two cities (**Two cities**), "Eagles at Commanders", the score, and Watch in the first app that has it, then Game details |
 | Late night | Late night | the comfort rewatch as the hero, dimmed (§2) · Quick Watch as "Fits in the next 45 minutes" (M3) | the comfort rewatch, then Quick Watch |
 
 Weekend evenings and daytime keep the usual home.

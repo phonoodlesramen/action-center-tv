@@ -294,9 +294,9 @@ private fun Byes(ctx: NflContext, byes: List<String>) {
 }
 
 /**
- * The info panel (864×128) for the focused game: both teams (52 dp logos, the name, the record),
- * the scores with the status over them, the situation or the venue under; on the right, past a
- * hairline, where to watch it and what OK does.
+ * The info panel (864×128) for the focused game: both teams (64 dp logos, the name, the record)
+ * over their two cities ([CityClash]), the scores with the status over them, the situation or the
+ * venue under; on the right, past a hairline, where to watch it and what OK does.
  */
 @Composable
 private fun InfoPanel(ctx: NflContext, game: NflGame, modifier: Modifier = Modifier) {
@@ -304,21 +304,10 @@ private fun InfoPanel(ctx: NflContext, game: NflGame, modifier: Modifier = Modif
     val hidden = view.hidden(game, ctx.nowMillis)
     val ways = waysFor(game, view, ctx.watch)
     Row(modifier.background(Palette.Surface, RoundedCornerShape(Layout.CardRadius))) {
-        Column(Modifier.weight(INFO_TEAMS).fillMaxHeight().padding(horizontal = 18.dp, vertical = 12.dp), verticalArrangement = Arrangement.Center) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                InfoSide(ctx, game, game.away, home = false, Modifier.weight(1f))
-                InfoMiddle(ctx, game, hidden)
-                InfoSide(ctx, game, game.home, home = true, Modifier.weight(1f))
-            }
-            Text(
-                text = situation(ctx, game, hidden),
-                style = MaterialTheme.typography.bodyMedium,
-                color = Palette.TextDim,
-                textAlign = TextAlign.Center,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
-            )
+        Box(Modifier.weight(INFO_TEAMS).fillMaxHeight()) {
+            // The clock, the scores and the situation fill the middle, so the cities meet at the cut alone.
+            CityClash(game, view, ctx.nowMillis, Modifier.matchParentSize(), shape = TeamsShape, line = null)
+            InfoTeams(ctx, game, hidden, Modifier.fillMaxSize())
         }
         Box(Modifier.width(1.dp).fillMaxHeight().background(NflColors.Hairline))
         Column(Modifier.weight(INFO_SIDE).fillMaxHeight().padding(horizontal = 18.dp, vertical = 14.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
@@ -348,11 +337,38 @@ private fun InfoPanel(ctx: NflContext, game: NflGame, modifier: Modifier = Modif
     }
 }
 
+/** The panel's teams, the scores between them, and the situation under. */
+@Composable
+private fun InfoTeams(ctx: NflContext, game: NflGame, hidden: Boolean, modifier: Modifier = Modifier) {
+    Column(modifier.padding(horizontal = 18.dp, vertical = 12.dp), verticalArrangement = Arrangement.Center) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            InfoSide(ctx, game, game.away, home = false, Modifier.weight(1f))
+            InfoMiddle(ctx, game, hidden)
+            InfoSide(ctx, game, game.home, home = true, Modifier.weight(1f))
+        }
+        Text(
+            text = situation(ctx, game, hidden),
+            style = MaterialTheme.typography.bodyMedium,
+            color = Palette.TextDim,
+            textAlign = TextAlign.Center,
+            maxLines = 1,
+            overflow = TextOverflow.Ellipsis,
+            modifier = Modifier.fillMaxWidth().padding(top = 6.dp),
+        )
+    }
+}
+
+/** The teams' part's corners: the panel's on the left, square against the hairline. */
+private val TeamsShape = RoundedCornerShape(topStart = Layout.CardRadius, bottomStart = Layout.CardRadius)
+
 /** The teams' part of the panel and the "where to watch" part: 564 and 300 of its 864 dp. */
 private const val INFO_TEAMS = 564f
 private const val INFO_SIDE = 300f
 
-/** One team in the panel: the 52 dp logo, the name (20 sp, bold) and the record; the home team's mirrored. */
+/** The panel's logos, a size up from the tiles' so each team stands over its city. */
+private val INFO_LOGO = 64.dp
+
+/** One team in the panel: the 64 dp logo, the name (20 sp, bold) and the record; the home team's mirrored. */
 @Composable
 private fun InfoSide(ctx: NflContext, game: NflGame, abbr: String, home: Boolean, modifier: Modifier = Modifier) {
     val view = ctx.view
@@ -363,7 +379,7 @@ private fun InfoSide(ctx: NflContext, game: NflGame, abbr: String, home: Boolean
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = if (home) Arrangement.spacedBy(10.dp, Alignment.End) else Arrangement.spacedBy(10.dp),
     ) {
-        if (!home) TeamLogo(abbr, team, 52.dp)
+        if (!home) TeamLogo(abbr, team, INFO_LOGO)
         Column(Modifier.weight(1f, fill = false), horizontalAlignment = if (home) Alignment.End else Alignment.Start) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
                 if (home && abbr in view.settings.yourTeams) Icon(AppIcons.Star, contentDescription = "Your team", tint = LocalAccent.current, modifier = Modifier.size(14.dp))
@@ -378,7 +394,7 @@ private fun InfoSide(ctx: NflContext, game: NflGame, abbr: String, home: Boolean
             }
             Text(record, style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim, maxLines = 1)
         }
-        if (home) TeamLogo(abbr, team, 52.dp)
+        if (home) TeamLogo(abbr, team, INFO_LOGO)
     }
 }
 

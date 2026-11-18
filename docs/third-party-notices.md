@@ -51,6 +51,26 @@ See the License for the specific language governing permissions and
 limitations under the License.
 ```
 
+## NFL city pictures (ui-spec "Two cities")
+
+The app ships one picture for each team (`app/src/main/assets/nfl/cities/`): its home stadium
+and the city around it, as from a drone at dusk. They were made for the project with Artlist's
+AI image generation (artlist.io, Nano Banana 2.1), on the maintainer's Artlist plan, under
+Artlist's terms for AI-generated content. They aren't photographs.
+
+Each was generated from an aerial photograph of the stadium, for its layout: USDA's National
+Agriculture Imagery Program (NAIP), from the USGS National Map's imagery service
+(imagery.nationalmap.gov; "USGS, USDA, The National Map: Orthoimagery"), which is in the public
+domain. Pittsburgh's was also generated from a photograph by Carol M. Highsmith, "Aerial view
+of Pittsburgh, Pennsylvania, with a focus on Heinz Field" (2019), from the Carol M. Highsmith
+Archive at the Library of Congress, which she dedicated to the public domain. Neither the
+aerials nor that photograph is shipped.
+
+The pictures show buildings as seen from public places (17 U.S.C. § 120(a)). They were asked
+for with no logos, team marks or lettering; a few stadium and sponsor signs the generator drew
+anyway are left as they are, and those names and marks belong to their owners. The app crops,
+desaturates and tints the pictures.
+
 ## NFL data and team logos (Phase 13)
 
 The app doesn't ship them: the guide station (or an unpaired TV) fetches them at run time

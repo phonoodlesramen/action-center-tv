@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -22,7 +23,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.focusRestorer
-import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -78,7 +78,7 @@ internal fun GameDetails(ctx: NflContext, page: NflPage.Game, focusKey: String?,
             Eyebrow("· ${slotLabel(ctx, game)}", Modifier.weight(1f))
             Text(NflText.time(ctx.nowMillis, view.zone), style = MaterialTheme.typography.titleMedium, maxLines = 1)
         }
-        Scoreboard(ctx, game, hidden, Modifier.fillMaxWidth().height(132.dp))
+        Scoreboard(ctx, game, hidden, Modifier.fillMaxWidth().height(SCOREBOARD_HEIGHT))
         Spacer(Modifier.height(16.dp))
         Row(Modifier.fillMaxWidth().weight(1f).clipToBounds(), horizontalArrangement = Arrangement.spacedBy(32.dp)) {
             Column(Modifier.weight(400f)) {
@@ -151,18 +151,32 @@ private fun slotLabel(ctx: NflContext, game: NflGame): String =
 @Composable
 private fun Scoreboard(ctx: NflContext, game: NflGame, hidden: Boolean, modifier: Modifier) {
     val view = ctx.view
-    val wash = Brush.horizontalGradient(
-        0f to NflColors.wash(view.team(game.away)).copy(alpha = 0.31f),
-        0.35f to Palette.Surface,
-        0.65f to Palette.Surface,
-        1f to NflColors.wash(view.team(game.home)).copy(alpha = 0.31f),
-    )
-    Row(
-        modifier.background(Palette.Surface, RoundedCornerShape(12.dp)).background(wash, RoundedCornerShape(12.dp)).padding(horizontal = 20.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
+    Box(modifier.background(Palette.Surface, ScoreboardShape)) {
+        CityClash(game, view, ctx.nowMillis, Modifier.matchParentSize(), shape = ScoreboardShape, tooth = 25.dp)
+        ScoreboardRow(ctx, game, hidden, Modifier.fillMaxSize())
+    }
+}
+
+/** The scoreboard's band: 148 dp, room for the 96 dp logos over their cities. */
+private val SCOREBOARD_HEIGHT = 148.dp
+private val ScoreboardShape = RoundedCornerShape(12.dp)
+
+/** The plate under the clock, between the two cities. */
+private const val PLATE = 0.72f
+private val PlateShape = RoundedCornerShape(10.dp)
+
+/** Both sides and, between them, the clock, the down and distance or the kickoff. */
+@Composable
+private fun ScoreboardRow(ctx: NflContext, game: NflGame, hidden: Boolean, modifier: Modifier) {
+    val view = ctx.view
+    Row(modifier.padding(horizontal = 20.dp), verticalAlignment = Alignment.CenterVertically) {
         BigSide(ctx, game, game.away, home = false, hidden, Modifier.weight(1f))
-        Column(Modifier.padding(horizontal = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+        // The scoreboard's plate: the clash's line runs behind it, showing above and below.
+        Column(
+            // As wide as the column was before the plate: 12 dp either side, now inside it.
+            Modifier.background(Palette.Background.copy(alpha = PLATE), PlateShape).padding(horizontal = 12.dp, vertical = 10.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
             val big = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
             when (game.state) {
                 GameState.LIVE -> {
@@ -197,9 +211,9 @@ private fun BigSide(ctx: NflContext, game: NflGame, abbr: String, home: Boolean,
     val record = (if (home) game.homeRecord else game.awayRecord) ?: standing?.record.orEmpty()
     val place = standing?.let { "${NflText.ordinal(it.divisionRank)} in ${team?.divisionName ?: ""}" }
     val score = if (hidden || game.state == GameState.PRE) "" else scoreOf(game, home)
-    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (home) Arrangement.spacedBy(14.dp, Alignment.End) else Arrangement.spacedBy(14.dp)) {
+    Row(modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = if (home) Arrangement.spacedBy(10.dp, Alignment.End) else Arrangement.spacedBy(10.dp)) {
         if (home && score.isNotEmpty()) BigScore(score)
-        if (!home) TeamLogo(abbr, team, 84.dp)
+        if (!home) TeamLogo(abbr, team, BIG_LOGO)
         Column(Modifier.weight(1f, fill = false), horizontalAlignment = if (home) Alignment.End else Alignment.Start) {
             FitText(
                 team?.location ?: abbr,
@@ -209,10 +223,13 @@ private fun BigSide(ctx: NflContext, game: NflGame, abbr: String, home: Boolean,
             Text(team?.name ?: "", style = MaterialTheme.typography.titleLarge.copy(fontSize = 20.sp, lineHeight = 26.sp), maxLines = 1)
             Text(listOfNotNull(record.ifEmpty { null }, place).joinToString(" · "), style = MaterialTheme.typography.bodyMedium, color = Palette.TextDim, maxLines = 1, overflow = TextOverflow.Ellipsis)
         }
-        if (home) TeamLogo(abbr, team, 84.dp)
+        if (home) TeamLogo(abbr, team, BIG_LOGO)
         if (!home && score.isNotEmpty()) BigScore(score)
     }
 }
+
+/** The scoreboard's logos, each standing over its city. */
+private val BIG_LOGO = 96.dp
 
 @Composable
 private fun BigScore(score: String) {

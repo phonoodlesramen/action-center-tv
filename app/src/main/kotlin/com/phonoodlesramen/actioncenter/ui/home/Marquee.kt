@@ -47,6 +47,7 @@ import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.tv.material3.ClickableSurfaceDefaults
 import androidx.tv.material3.MaterialTheme
@@ -62,13 +63,15 @@ import com.phonoodlesramen.actioncenter.home.StripBadge
 import com.phonoodlesramen.actioncenter.home.StripCard
 import com.phonoodlesramen.actioncenter.home.TonightStrip
 import com.phonoodlesramen.actioncenter.nfl.GameState
+import com.phonoodlesramen.actioncenter.nfl.NflTeam
 import com.phonoodlesramen.actioncenter.nfl.WatchOptions
 import com.phonoodlesramen.actioncenter.ui.art.LocalArtUrls
 import com.phonoodlesramen.actioncenter.ui.art.LogoArt
 import com.phonoodlesramen.actioncenter.ui.art.TitleArt
 import com.phonoodlesramen.actioncenter.ui.art.placeholderArt
 import com.phonoodlesramen.actioncenter.ui.art.rememberLogoBox
-import com.phonoodlesramen.actioncenter.ui.nfl.NflColors
+import com.phonoodlesramen.actioncenter.ui.nfl.CityClash
+import com.phonoodlesramen.actioncenter.ui.nfl.ClashLook
 import com.phonoodlesramen.actioncenter.ui.nfl.NflOpen
 import com.phonoodlesramen.actioncenter.ui.nfl.NflPage
 import com.phonoodlesramen.actioncenter.ui.nfl.NflTab
@@ -198,26 +201,49 @@ private val TileShape = RoundedCornerShape(Grid.TileRadius)
 
 /**
  * What a backdrop shows: a title's placeholder ([id]) and its Plex art; or, for a game, its two
- * teams' colours washing in from either side ([wash]).
+ * teams' cities ([clash], ui-spec "Two cities").
  */
 @Immutable
-internal data class BackdropArt(val id: String, val image: String?, val wash: Pair<Color, Color>? = null)
+internal data class BackdropArt(val id: String, val image: String?, val clash: ClashSides? = null)
 
-/** A strip card's art: a game's team colours, else its title art. */
+/**
+ * A game's two sides, away on the left. How they meet ([ClashLook]) isn't part of it, so a game
+ * that kicks off or ends changes its seam rather than crossfading the backdrop.
+ */
+@Immutable
+internal data class ClashSides(val away: NflTeam?, val awayAbbr: String, val home: NflTeam?, val homeAbbr: String)
+
+/** A strip card's art: a game's two cities, else its title art. */
 internal fun StripCard.backdrop(): BackdropArt = when (this) {
-    is StripCard.Game -> BackdropArt(artId, null, NflColors.wash(view.team(game.away)) to NflColors.wash(view.team(game.home)))
+    is StripCard.Game -> BackdropArt(artId, null, ClashSides(view.team(game.away), game.away, view.team(game.home), game.home))
     else -> BackdropArt(artId, image)
 }
 
-/** A game's wash: the away team's colour from the left, the home team's from the right, dark between (the mockup's). */
-private fun Modifier.teamWash(wash: Pair<Color, Color>): Modifier = background(Palette.Background).background(
-    Brush.horizontalGradient(
-        0f to wash.first.copy(alpha = 0.55f),
-        0.42f to wash.first.copy(alpha = 0.12f),
-        0.58f to wash.second.copy(alpha = 0.12f),
-        1f to wash.second.copy(alpha = 0.55f),
-    ),
-)
+/** How a game card's cities meet; a plain fade for any other card. */
+internal fun StripCard.clashLook(): ClashLook = when (this) {
+    is StripCard.Game -> ClashLook.of(game, view.hidden(game, nowMillis))
+    else -> ClashLook()
+}
+
+/** A game's two cities on the dark of the home, the clash's line drawn in [line] of the height. */
+@Composable
+private fun GameClash(sides: ClashSides, look: ClashLook, tooth: Dp, line: ClosedFloatingPointRange<Float>, detail: Float, modifier: Modifier = Modifier) {
+    CityClash(
+        sides.away,
+        sides.awayAbbr,
+        sides.home,
+        sides.homeAbbr,
+        look,
+        modifier.background(Palette.Background),
+        tooth = tooth,
+        line = line,
+        detail = detail,
+        shade = BACKDROP_SHADE,
+    )
+}
+
+/** The backdrop has its own scrims for its words, so its cities are kept less dark than a band's. */
+private const val BACKDROP_SHADE = 0.3f
 
 /**
  * The shown card's art over the whole screen, and its scrims: dark at the left for the title,
@@ -237,7 +263,7 @@ internal fun MarqueeBackdrop(card: StripCard, lateNight: Boolean, faded: () -> F
             compositingStrategy = CompositingStrategy.ModulateAlpha
         },
     ) {
-        BackdropCrossfade(card.backdrop(), lateNight, Modifier.fillMaxSize())
+        BackdropCrossfade(card.backdrop(), lateNight, Modifier.fillMaxSize(), card.clashLook())
         Box(Modifier.fillMaxSize().background(SideScrim))
         Box(Modifier.fillMaxSize().background(FootScrim))
         Box(Modifier.fillMaxSize().background(TopScrim))
@@ -269,7 +295,7 @@ private val TopScrim = Brush.verticalGradient(
  * done, whichever of the two shows more stays underneath, and the other is let go.
  */
 @Composable
-internal fun BackdropCrossfade(target: BackdropArt, lateNight: Boolean, modifier: Modifier = Modifier) {
+internal fun BackdropCrossfade(target: BackdropArt, lateNight: Boolean, modifier: Modifier = Modifier, look: ClashLook = ClashLook()) {
     var front by remember { mutableStateOf(target) }
     var back by remember { mutableStateOf<BackdropArt?>(null) }
     val fade = remember { Animatable(1f) }
@@ -292,7 +318,7 @@ internal fun BackdropCrossfade(target: BackdropArt, lateNight: Boolean, modifier
                 } else {
                     Modifier
                 }
-                BackdropLayer(art, lateNight, Modifier.fillMaxSize().then(layer))
+                BackdropLayer(art, lateNight, look, Modifier.fillMaxSize().then(layer))
             }
         }
     }
@@ -300,11 +326,13 @@ internal fun BackdropCrossfade(target: BackdropArt, lateNight: Boolean, modifier
 
 /**
  * One backdrop: the title's placeholder, then its art decoded at [BACKDROP_WIDTH_PX]×
- * [BACKDROP_HEIGHT_PX] and stretched to the screen. Late night darkens it, as it dims all art.
+ * [BACKDROP_HEIGHT_PX] and stretched to the screen; or a game's two cities, each decoded at half
+ * the screen's pixels each way too. Late night darkens it, as it dims all art.
  */
 @Composable
-private fun BackdropLayer(art: BackdropArt, lateNight: Boolean, modifier: Modifier = Modifier) {
-    Box(art.wash?.let { modifier.teamWash(it) } ?: modifier.placeholderArt(art.id)) {
+private fun BackdropLayer(art: BackdropArt, lateNight: Boolean, look: ClashLook, modifier: Modifier = Modifier) {
+    Box(if (art.clash != null) modifier else modifier.placeholderArt(art.id)) {
+        art.clash?.let { GameClash(it, look, tooth = BACKDROP_TOOTH, line = BACKDROP_LINE, detail = 0.5f, modifier = Modifier.fillMaxSize()) }
         val url = art.image?.let { LocalArtUrls.current.url(it, BACKDROP_WIDTH_PX, BACKDROP_HEIGHT_PX) }
         if (url != null) {
             AsyncImage(
@@ -320,6 +348,15 @@ private fun BackdropLayer(art: BackdropArt, lateNight: Boolean, modifier: Modifi
         if (lateNight) Box(Modifier.fillMaxSize().background(Color.Black.copy(alpha = LATE_NIGHT_DIM)))
     }
 }
+
+/** A game backdrop's zig-zag tooth: ten down the screen. */
+private val BACKDROP_TOOTH = 54.dp
+
+/** The backdrop's line: below the top bar, and gone before the strip and the rows. */
+private val BACKDROP_LINE = 0.16f..0.66f
+
+/** A game strip card's: five down the tile. */
+private val TILE_TOOTH = 16.dp
 
 /** Late night's art at 75% brightness (spec §2), as a veil over the whole backdrop. */
 private const val LATE_NIGHT_DIM = 0.25f
@@ -589,8 +626,8 @@ private fun StripTile(
             scale = cardLift,
             border = focusRing(TileShape),
         ) {
-            val wash = card.backdrop().wash
-            if (wash != null) Box(Modifier.fillMaxSize().teamWash(wash)) else TitleArt(card.artId, card.image, lateNight, Modifier.fillMaxSize())
+            val clash = card.backdrop().clash
+            if (clash != null) GameClash(clash, card.clashLook(), tooth = TILE_TOOTH, line = 0f..1f, detail = 1f, modifier = Modifier.fillMaxSize()) else TitleArt(card.artId, card.image, lateNight, Modifier.fillMaxSize())
             Badge(card.badge, Modifier.align(Alignment.TopStart).padding(6.dp))
             card.progress?.let { progress ->
                 Box(Modifier.align(Alignment.BottomStart).fillMaxWidth().height(3.dp).background(Color.White.copy(alpha = 0.22f))) {

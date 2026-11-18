@@ -97,6 +97,8 @@ import com.phonoodlesramen.actioncenter.ui.home.HomeFocus
 import com.phonoodlesramen.actioncenter.ui.home.HomeScreen
 import com.phonoodlesramen.actioncenter.ui.home.backToCardFocus
 import com.phonoodlesramen.actioncenter.ui.home.rows.LocalChannelsAndApps
+import com.phonoodlesramen.actioncenter.ui.nfl.LocalNflCities
+import com.phonoodlesramen.actioncenter.nfl.NflCityImages
 import com.phonoodlesramen.actioncenter.ui.nfl.LocalNflLogos
 import com.phonoodlesramen.actioncenter.ui.nfl.NflOpen
 import com.phonoodlesramen.actioncenter.ui.nfl.NflScreen
@@ -274,6 +276,7 @@ class HomeActivity : ComponentActivity() {
                 LocalWallpaperSources provides container.wallpaperSources,
                 LocalChannelsAndApps provides container.channelsAndApps,
                 LocalNflLogos provides container.nflLogos,
+                LocalNflCities provides NflCityImages.Bundled,
                 LocalSetup provides setup,
                 LocalUpdates provides updates,
             ) {
