@@ -27,7 +27,7 @@ object NflCities {
         "CLE" to CityArt("Huntington Bank Field on the Lake Erie shore, downtown Cleveland behind it", focusY = 0.52f),
         "PIT" to CityArt("Acrisure Stadium where the three rivers meet, Pittsburgh", focusX = 0.43f, focusY = 0.52f),
         "HOU" to CityArt("NRG Stadium beside the Astrodome, downtown Houston on the horizon", focusX = 0.42f, focusY = 0.45f),
-        "IND" to CityArt("Lucas Oil Stadium's brick south end, downtown Indianapolis behind it", focusX = 0.51f),
+        "IND" to CityArt("Lucas Oil Stadium and its window wall, downtown Indianapolis behind it", focusX = 0.51f),
         "JAX" to CityArt("EverBank Stadium on the St. Johns River, Jacksonville", focusX = 0.56f, focusY = 0.52f),
         "TEN" to CityArt("Nissan Stadium across the Cumberland from downtown Nashville", focusX = 0.51f, focusY = 0.52f),
         "DEN" to CityArt("Empower Field at Mile High, the Rockies behind it, Denver", focusX = 0.49f, focusY = 0.42f),
